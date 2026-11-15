@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Profile } from '../types';
+import type { Activity, Profile } from '../types';
+import { applyMoves, suggestWeekFix } from './suggest';
 import { addDays, dayIndex, mondayOf, nextMonday } from './dates';
 import { PROTOTYPE_USER } from './fixtures';
 import { allowedGoals, allowedNutritionMode, effectiveProfile, isAdult, loseFatBlockedReason, targetWeightAllowed } from './guardrails';
@@ -202,13 +203,79 @@ describe('workouts and prescriptions (SPEC §6.2–6.4)', () => {
       for (const eq of ['home_db', 'gym', 'bodyweight'] as const) {
         const tpl = defaultWeekTemplate(days, [], eq, ['glutes', 'chest']);
         expect(tpl.days.flat().filter((s) => s.kind === 'strength')).toHaveLength(days);
-        expect(validateTemplate(tpl, eq, ['glutes'])).toEqual([]);
+        expect(validateTemplate(tpl, eq, ['glutes']).filter((w) => w.severity === 'rule')).toEqual([]);
       }
     }
   });
 });
 
-describe('weekly placement (SPEC §6.3)', () => {
+describe('weekly placement (SPEC §6.3 + recovery rules)', () => {
+  const walk: Activity = { id: 'w', type: 'walk', label: 'Walk', days: [0, 1, 2, 3, 4, 5, 6] };
+  const strengthDaysOf = (t: ReturnType<typeof defaultWeekTemplate>) => t.days.map((d, i) => (d.some((s) => s.kind === 'strength') ? i : -1)).filter((i) => i >= 0);
+
+  it('never puts full-body sessions on consecutive days, for any single activity pattern', () => {
+    const types = ['run', 'classes', 'sports', 'yoga'] as const;
+    for (const n of [2, 3]) {
+      for (let mask = 0; mask < 128; mask++) {
+        for (const type of types) {
+          const days = [0, 1, 2, 3, 4, 5, 6].filter((d) => mask & (1 << d));
+          const t = defaultWeekTemplate(n, [walk, { id: 'x', type, label: 'X', days }], 'home_db', []);
+          const on = strengthDaysOf(t);
+          expect(on).toHaveLength(n);
+          for (const d of on) expect(on.includes((d + 1) % 7), `${n} days, ${type} on ${days}`).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('keeps an easy day between full-body sessions when the week allows it', () => {
+    const t = defaultWeekTemplate(3, [walk, { id: 'r', type: 'run', label: 'Run', days: [1, 3] }, { id: 'y', type: 'yoga', label: 'Yoga', days: [2] }], 'home_db', []);
+    expect(validateTemplate(t, 'home_db', []).filter((w) => w.severity === 'rule')).toEqual([]);
+  });
+
+  it('handles a packed week (run Thu, class Mon–Thu, sports Mon) without back-to-back days, and suggests 2 days', () => {
+    const acts: Activity[] = [
+      walk,
+      { id: 'r', type: 'run', label: 'Run', days: [3] },
+      { id: 'c', type: 'classes', label: 'Class', days: [0, 1, 2, 3] },
+      { id: 's', type: 'sports', label: 'Sports', days: [0] },
+    ];
+    const t = defaultWeekTemplate(3, acts, 'home_db', []);
+    const on = strengthDaysOf(t);
+    expect(on).not.toEqual([4, 5, 6]);
+    for (const d of on) expect(on.includes((d + 1) % 7)).toBe(false);
+    const fix = suggestWeekFix({ strengthDays: 3, activities: acts, equipment: 'home_db', focusAreas: [] });
+    expect(fix?.kind).toBe('days');
+    const two = defaultWeekTemplate(2, acts, 'home_db', []);
+    expect(validateTemplate(two, 'home_db', []).filter((w) => w.severity === 'rule')).toEqual([]);
+  });
+
+  it('suggests moving an activity when one move fixes the week', () => {
+    // Spin Mon/Wed/Fri already works (lift on spin days, easy days between): no suggestion.
+    expect(suggestWeekFix({ strengthDays: 3, activities: [walk, { id: 'c', type: 'classes', label: 'Spin', days: [0, 2, 4] }], equipment: 'home_db', focusAreas: [] })).toBeNull();
+    const acts: Activity[] = [walk, { id: 'c', type: 'classes', label: 'Spin', days: [0, 1, 2, 3] }];
+    const fix = suggestWeekFix({ strengthDays: 3, activities: acts, equipment: 'home_db', focusAreas: [] });
+    expect(fix?.kind).toBe('moves');
+    expect(fix?.text).toBe('If you can, move Tuesday’s spin to Saturday. Then every strength session gets the recovery it needs.');
+    if (fix?.kind === 'moves') {
+      const moved = defaultWeekTemplate(3, applyMoves(acts, fix.moves), 'home_db', []);
+      expect(validateTemplate(moved, 'home_db', []).filter((w) => w.severity === 'rule')).toEqual([]);
+    }
+  });
+
+  it('lets 4-day splits go back to back, but never three in a row or the same session twice running', () => {
+    const t = defaultWeekTemplate(4, [walk], 'home_db', []);
+    expect(strengthDaysOf(t)).toEqual([0, 1, 3, 4]);
+    const three = applyOps(t, [{ op: 'move', sessionId: 'str-3', toDay: 'wed' }]);
+    expect(validateTemplate(three, 'home_db', []).some((w) => /in a row/.test(w.text))).toBe(true);
+  });
+
+  it('warns when a full-body day lands next to another', () => {
+    const t = defaultWeekTemplate(2, [walk], 'home_db', []);
+    const moved = applyOps(t, [{ op: 'move', sessionId: 'str-2', toDay: 'tue' }]);
+    expect(validateTemplate(moved, 'home_db', []).some((w) => /rest day between/.test(w.text))).toBe(true);
+  });
+
   it('places the prototype week: strength Mon/Thu, run Tue, Pilates Sat, daily walks', () => {
     const tpl = defaultWeekTemplate(2, PROTOTYPE_USER.activities, 'home_db', PROTOTYPE_USER.focusAreas);
     const summary = tpl.days.map((d) => d.filter((s) => !(s.kind === 'activity' && s.type === 'walk')).map((s) => (s.kind === 'strength' ? s.workout : s.type)));
@@ -216,8 +283,8 @@ describe('weekly placement (SPEC §6.3)', () => {
     expect(tpl.days.every((d) => d.some((s) => s.kind === 'activity' && s.type === 'walk'))).toBe(true);
   });
 
-  it('moves strength off the user’s activity days when it can', () => {
-    const tpl = defaultWeekTemplate(2, [{ id: 'y', type: 'yoga', label: 'Yoga', days: [0, 3] }], 'gym', []);
+  it('moves strength off the user’s hard activity days when it can', () => {
+    const tpl = defaultWeekTemplate(2, [{ id: 'y', type: 'run', label: 'Run', days: [0, 3] }], 'gym', []);
     const strengthDays = tpl.days.map((d, i) => (d.some((s) => s.kind === 'strength') ? i : -1)).filter((i) => i >= 0);
     expect(strengthDays.some((d) => d === 0 || d === 3)).toBe(false);
   });
@@ -389,8 +456,8 @@ describe('schedule ops (SPEC §9–10.2)', () => {
     expect(tpl.days[0].some((s) => s.id === 'str-1')).toBe(true);
   });
   it('warns on back-to-back same-pattern sessions and busy days', () => {
-    const t = applyOps(tpl, [{ op: 'move', sessionId: 'str-2', toDay: 'mon' }]);
-    expect(validateTemplate(t, 'home_db', [])).toEqual([]);
+    const t = applyOps(tpl, [{ op: 'move', sessionId: 'str-2', toDay: 'sat' }]);
+    expect(validateTemplate(t, 'home_db', []).filter((w) => w.severity === 'rule')).toEqual([]);
     const four = defaultWeekTemplate(4, [], 'home_db', []);
     const clash = applyOps(four, [{ op: 'move', sessionId: 'str-3', toDay: 'tue' }]);
     expect(validateTemplate(clash, 'home_db', []).length).toBeGreaterThan(0);

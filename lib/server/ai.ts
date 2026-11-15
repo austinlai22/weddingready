@@ -188,6 +188,11 @@ The schedule is given as days mon to sun, each with sessions that have an id and
 - {"op":"add","activity":"<activity in plain words, e.g. yoga>","day":"<day>"}
 - {"op":"remove","sessionId":"<existing id>"}
 - {"op":"swap","a":"<existing id>","b":"<existing id>"}
+Training rules to respect unless the request explicitly overrides them:
+- With 2 or 3 strength sessions (full body), never put two on consecutive days, and leave at least one easy day (rest, walk, yoga or Pilates) between any two of them.
+- With 4 or 5 strength sessions, two in a row is fine but never the same session twice in a row, never more than two in a row with 4 sessions (three with 5), and keep at least one easy day in the week.
+- Runs, classes, sports and rides are hard sessions: avoid more than one of them on a strength day.
+If the request would break a rule, still do what was asked and say so briefly in the summary.
 Only use session ids that appear in the schedule. Only add activities, never strength sessions. Keep the same number of strength sessions unless the request clearly asks to remove one. Use the fewest operations that do what was asked.
 "summary" is one short sentence describing the change. If the request can't be done with these operations, or isn't about the schedule, return no operations and say why in the summary.
 

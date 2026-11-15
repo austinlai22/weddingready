@@ -71,7 +71,7 @@ export function emptyDraft(units: Units = defaultUnits()): Draft {
     job: '',
     walkMinutes: '',
     steps: '',
-    nutritionMode: '',
+    nutritionMode: 'habits_numbers',
     nutritionTouched: false,
     diet: 'none',
     avoid: '',
@@ -159,22 +159,27 @@ export function draftFromProfile(p: Profile): Draft {
   };
 }
 
-export const STEP_COUNT = 12;
+// Setup screens. Each groups several question sets (SPEC §5 steps, listed in
+// `checks`) so the flow is 5 short screens plus the plan summary.
+export const SETUP_SCREENS = [
+  { title: 'Let’s get you wedding ready.', intro: 'A free plan that works back from your wedding date and tells you what to do each day. About 2 minutes.', checks: [2] },
+  { title: 'About you', intro: 'For your protein and energy estimates. It stays on this device.', checks: [3] },
+  { title: 'Your goals', intro: 'What you’re wearing picks your focus muscles. Change them if you like.', checks: [4, 5, 6] },
+  { title: 'Your week', intro: 'We’ll fit strength training around what you already do.', checks: [7, 8, 9] },
+  { title: 'Food and health', intro: 'Pick the level of detail that feels good, and anything we should know.', checks: [10, 11] },
+  { title: 'Your plan', intro: 'Here’s what the next few months look like.', checks: [] },
+] as const;
 
-export const STEP_TITLES = [
-  'Welcome',
-  'The date',
-  'About you',
-  'Your outfit',
-  'Your goals',
-  'Focus areas',
-  'Training',
-  'Your activities',
-  'Daily movement',
-  'Food',
-  'Anything we should know?',
-  'Your plan',
-];
+export const STEP_COUNT = SETUP_SCREENS.length;
+
+/** First problem on a setup screen (1-based), or null. */
+export function validateScreen(screen: number, d: Draft, today: string): string | null {
+  for (const step of SETUP_SCREENS[screen - 1]?.checks ?? []) {
+    const e = validateStep(step, d, today);
+    if (e) return e;
+  }
+  return null;
+}
 
 /** Validation for one step (1-based). Returns a short, friendly message or null. */
 export function validateStep(step: number, d: Draft, today: string): string | null {
@@ -256,7 +261,9 @@ export function profileFromDraft(d: Draft, startDate: string): Profile {
   if (loseFatBlockedReason({ safety, weightKg, heightCm })) goals = goals.filter((g) => g !== 'lose_fat');
   if (!goals.length) goals = ['maintain'];
   const nutritionMode: NutritionMode = safety.edHistory ? 'portions_only' : (d.nutritionMode || defaultNutritionMode(safety));
-  const walk = d.walkMinutes.trim() ? Math.round(num(d.walkMinutes)) : undefined;
+  // A daily walk added as an activity counts as daily walking when no number was typed.
+  const dailyWalk = d.activities.find((a) => a.type === 'walk' && new Set(a.days).size === 7 && a.minutes);
+  const walk = d.walkMinutes.trim() ? Math.round(num(d.walkMinutes)) : dailyWalk?.minutes;
   const steps = d.steps.trim() ? Math.round(num(d.steps)) : undefined;
   return {
     version: 1,

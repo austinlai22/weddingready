@@ -23,6 +23,9 @@ import { useApp } from '@/lib/state/store';
 import { DAY_IDS, type SessionRef, type WeekTemplate } from '@/lib/types';
 import { useOnline } from '@/lib/ui';
 import { Grip } from '../ui/icons';
+import { WeekAdvice } from './WeekAdvice';
+import { applyMoves, suggestWeekFix } from '@/lib/engine/suggest';
+import { useUi } from '@/lib/ui';
 
 function chipLabel(s: SessionRef, strengthDays: number): string {
   return s.kind === 'strength' ? workoutMeta(s.workout, strengthDays).tag : s.label;
@@ -87,6 +90,9 @@ export function ScheduleEditor({ plan, today }: { plan: Plan; today: string }) {
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const [err, setErr] = useState('');
+  const [adviceDismissed, setAdviceDismissed] = useState(false);
+  const patchProfile = useApp((s) => s.patchProfile);
+  const showToast = useUi((s) => s.showToast);
   const justDragged = useRef(false);
 
   const sensors = useSensors(
@@ -132,6 +138,18 @@ export function ScheduleEditor({ plan, today }: { plan: Plan; today: string }) {
   };
 
   const warnings = validateTemplate(template, p.equipment, p.focusAreas);
+  const rules = warnings.filter((w) => w.severity === 'rule');
+  const tips = warnings.filter((w) => w.severity === 'note');
+  // Offer a fix only for the suggested week; once someone edits it, the warnings speak for themselves.
+  const suggestion = !overrides && !adviceDismissed && rules.length ? suggestWeekFix(p) : null;
+  const applySuggestion = () => {
+    if (!suggestion) return;
+    const before = { activities: p.activities, strengthDays: p.strengthDays };
+    if (suggestion.kind === 'moves') patchProfile({ activities: applyMoves(p.activities, suggestion.moves) });
+    else if (suggestion.kind === 'days') patchProfile({ strengthDays: suggestion.strengthDays });
+    track('settings_changed', { field: suggestion.kind === 'moves' ? 'activities_suggested' : 'strength_days_suggested' });
+    showToast('Your week is updated.', () => patchProfile(before));
+  };
   const all = template.days.flatMap((d, i) => d.map((s) => ({ s, day: i })));
   const activeSession = active ? all.find((x) => x.s.id === active)?.s : null;
   const menuSession = menuFor ? all.find((x) => x.s.id === menuFor) : null;
@@ -200,12 +218,19 @@ export function ScheduleEditor({ plan, today }: { plan: Plan; today: string }) {
         />
       )}
 
+      {suggestion && <WeekAdvice suggestion={suggestion} onApply={suggestion.kind === 'lighter' ? undefined : applySuggestion} onDismiss={() => setAdviceDismissed(true)} />}
+
       {(warnings.length > 0 || history.length > 0 || err) && (
         <div className="banner" role="status" aria-live="polite" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {err && <p className="err">{err}</p>}
-          {warnings.map((w) => (
+          {rules.map((w) => (
             <p key={w.text}>
               <strong>Heads up.</strong> {w.text}
+            </p>
+          ))}
+          {tips.map((w) => (
+            <p key={w.text}>
+              <strong>Tip.</strong> {w.text}
             </p>
           ))}
           {history.length > 0 && (
@@ -382,7 +407,7 @@ function AskAi({ plan, template, onApply }: { plan: Plan; template: WeekTemplate
             </div>
           </div>
           {afterWarnings.map((w) => (
-            <p key={w.text} className="small"><strong>Heads up.</strong> {w.text}</p>
+            <p key={w.text} className="small"><strong>{w.severity === 'rule' ? 'Heads up.' : 'Tip.'}</strong> {w.text}</p>
           ))}
           <div className="row" style={{ gap: 8 }}>
             <button

@@ -34,18 +34,19 @@ test('drag a session to another day, then undo', async ({ page }) => {
   con.expectClean();
 });
 
-test('warns when the same lifts land on back-to-back days', async ({ page }) => {
+test('warns when full-body days land back to back, including Sunday into Monday', async ({ page }) => {
   await page.clock.install({ time: MONDAY });
   await seed(page);
   await page.goto('/plan');
+  await expect(page.getByText('Heads up.')).toHaveCount(0);
   await page.getByRole('button', { name: /^Str B\./ }).click();
   await page.getByLabel('Move to').selectOption('6');
   await page.getByRole('button', { name: 'Move', exact: true }).click();
-  // B on Sunday, A on Monday: different main lifts, no warning
-  await expect(page.getByText('Heads up.')).toHaveCount(0);
+  await expect(page.getByText(/Sunday and Monday are both strength days/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Reset to suggested' })).toBeVisible();
   await page.getByRole('button', { name: 'Reset to suggested' }).click();
   await expect(page.getByLabel('Thursday', { exact: true }).getByRole('button', { name: /^Str B\./ })).toBeVisible();
+  await expect(page.getByText('Heads up.')).toHaveCount(0);
 });
 
 test('AI schedule edit: preview, then apply', async ({ page }) => {

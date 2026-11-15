@@ -19,7 +19,10 @@ import {
 } from '@/components/setup/Fields';
 import { ExpectationLine } from '@/components/setup/ExpectationLine';
 import { track } from '@/lib/analytics';
-import { defaultStart, emptyDraft, profileFromDraft, STEP_COUNT, STEP_TITLES, validateStep, type Draft } from '@/lib/draft';
+import { defaultStart, emptyDraft, profileFromDraft, SETUP_SCREENS, STEP_COUNT, validateScreen, type Draft } from '@/lib/draft';
+import { WeekAdvice } from '@/components/plan/WeekAdvice';
+import { applyMoves, suggestWeekFix } from '@/lib/engine/suggest';
+import { validateTemplate } from '@/lib/engine/schedule';
 import { DAY_ABBR, fmtDayLong, fmtShort, todayISO } from '@/lib/engine/dates';
 import { ED_HELPLINE, MIN_AGE } from '@/lib/engine/guardrails';
 import { buildPlan, targetsFor, weeksBucket } from '@/lib/engine/plan';
@@ -27,20 +30,6 @@ import { templateForWeek } from '@/lib/engine/schedule';
 import { workoutMeta } from '@/lib/engine/workouts';
 import { useApp } from '@/lib/state/store';
 
-const INTRO: Record<number, string> = {
-  1: 'A free plan that works back from your wedding date and tells you what to do each day. About 3 minutes to set up.',
-  2: 'Everything is planned backwards from this.',
-  3: 'For your protein and energy estimates.',
-  4: 'This picks your starting focus areas.',
-  5: 'What matters most to you?',
-  6: 'The muscles you want to show off.',
-  7: 'We’ll fit workouts to your week and your kit.',
-  8: 'Walks, runs, classes, sports: anything you already do.',
-  9: 'Your everyday movement counts.',
-  10: 'Pick the level of detail that feels good to you.',
-  11: '',
-  12: 'Here’s what the next few months look like.',
-};
 
 function Setup() {
   const router = useRouter();
@@ -63,15 +52,11 @@ function Setup() {
   }, [step]);
 
   const under18 = err === `under-${MIN_AGE}`;
+  const screen = SETUP_SCREENS[step - 1];
   const next = () => {
-    const e = validateStep(step, d, today);
+    const e = validateScreen(step, d, today);
     setErr(e);
     if (e) return;
-    // Daily walks from step 8 prefill the walking minutes on step 9.
-    if (step === 8 && !d.walkMinutes) {
-      const daily = d.activities.find((a) => a.type === 'walk' && a.days.length === 7);
-      if (daily?.minutes) set({ walkMinutes: String(daily.minutes) });
-    }
     track('setup_step_completed', { step });
     setStep((s) => Math.min(STEP_COUNT, s + 1));
   };
@@ -115,9 +100,9 @@ function Setup() {
 
         <header className="stack-8">
           <h1 id="setup-title" tabIndex={-1} className="display" style={{ margin: 0, fontSize: step === 1 ? 44 : 36, lineHeight: 1.1, outline: 'none' }}>
-            {step === 1 ? 'Let’s get you wedding ready.' : STEP_TITLES[step - 1]}
+            {screen.title}
           </h1>
-          {INTRO[step] && <p style={{ fontSize: 17, lineHeight: 1.5, color: '#4A3D42' }}>{INTRO[step]}</p>}
+          <p style={{ fontSize: 17, lineHeight: 1.5, color: '#4A3D42' }}>{screen.intro}</p>
         </header>
 
         {under18 ? (
@@ -139,18 +124,34 @@ function Setup() {
             }}
             noValidate
           >
-            {step === 1 && <NameFields d={d} set={set} />}
-            {step === 2 && <DateFields d={d} set={set} today={today} />}
-            {step === 3 && <BodyFields d={d} set={set} />}
-            {step === 4 && <OutfitFields d={d} set={set} />}
-            {step === 5 && <GoalFields d={d} set={set} />}
-            {step === 6 && <FocusFields d={d} set={set} />}
-            {step === 7 && <TrainingFields d={d} set={set} />}
-            {step === 8 && <ActivityFields d={d} set={set} />}
-            {step === 9 && <MovementFields d={d} set={set} />}
-            {step === 10 && <FoodFields d={d} set={set} />}
-            {step === 11 && <SafetyFields d={d} set={set} />}
-            {step === 12 && <Summary d={d} today={today} onStart={start} />}
+            {step === 1 && (
+              <>
+                <NameFields d={d} set={set} />
+                <DateFields d={d} set={set} today={today} />
+              </>
+            )}
+            {step === 2 && <BodyFields d={d} set={set} />}
+            {step === 3 && (
+              <>
+                <Group title="What are you wearing?"><OutfitFields d={d} set={set} /></Group>
+                <Group title="Goals"><GoalFields d={d} set={set} /></Group>
+                <Group title="Focus areas"><FocusFields d={d} set={set} /></Group>
+              </>
+            )}
+            {step === 4 && (
+              <>
+                <Group title="Strength training"><TrainingFields d={d} set={set} /></Group>
+                <Group title="What you already do"><ActivityFields d={d} set={set} /></Group>
+                <Group title="Everyday movement"><MovementFields d={d} set={set} /></Group>
+              </>
+            )}
+            {step === 5 && (
+              <>
+                <Group title="Food"><FoodFields d={d} set={set} /></Group>
+                <Group title="Anything we should know?"><SafetyFields d={d} set={set} /></Group>
+              </>
+            )}
+            {step === STEP_COUNT && <Summary d={d} set={set} today={today} onStart={start} />}
 
             {err && (
               <p role="alert" className="err" style={{ fontSize: 15 }}>
@@ -159,7 +160,7 @@ function Setup() {
             )}
             {step < STEP_COUNT && (
               <button type="submit" className="btn-primary">
-                {step === 1 ? 'Start' : 'Next'}
+                {step === STEP_COUNT - 1 ? 'See my plan' : 'Next'}
               </button>
             )}
           </form>
@@ -170,7 +171,16 @@ function Setup() {
   );
 }
 
-function Summary({ d, today, onStart }: { d: Draft; today: string; onStart: (startDate: string) => void }) {
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="stack-10">
+      <h2 className="h3">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function Summary({ d, set, today, onStart }: { d: Draft; set: SetDraft; today: string; onStart: (startDate: string) => void }) {
   const monday = defaultStart(today, d.weddingDate);
   const plan = useMemo(() => buildPlan(profileFromDraft(d, monday)), [d, monday]);
   const p = plan.profile;
@@ -178,6 +188,8 @@ function Summary({ d, today, onStart }: { d: Draft; today: string; onStart: (sta
   const week = templateForWeek(p, null, plan.timeline.startMonday);
   const mondayIsToday = monday === today;
   const goalsDropped = d.goals.includes('lose_fat') && !p.goals.includes('lose_fat');
+  const issues = validateTemplate(week, p.equipment, p.focusAreas).filter((w) => w.severity === 'rule');
+  const suggestion = issues.length ? suggestWeekFix(p) : null;
   return (
     <div className="stack-12">
       <section className="hero" style={{ gap: 14 }}>
@@ -211,6 +223,21 @@ function Summary({ d, today, onStart }: { d: Draft; today: string; onStart: (sta
         ))}
         <p className="tiny muted">You can drag things around later in Plan.</p>
       </div>
+      {issues.map((w) => (
+        <p key={w.text} className="banner small"><strong>Heads up.</strong> {w.text}</p>
+      ))}
+      {suggestion && (
+        <WeekAdvice
+          suggestion={suggestion}
+          onApply={
+            suggestion.kind === 'moves'
+              ? () => set((cur) => ({ ...cur, activities: applyMoves(cur.activities, suggestion.moves) }))
+              : suggestion.kind === 'days'
+                ? () => set({ strengthDays: suggestion.strengthDays })
+                : undefined
+          }
+        />
+      )}
 
       <ExpectationLine plan={plan} />
       {plan.suggestCardio && <p className="banner small">Optional: 1–2 easy cardio sessions a week help with fat loss. You can add them any time.</p>}

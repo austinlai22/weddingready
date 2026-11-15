@@ -282,7 +282,7 @@ export function MovementFields({ d, set }: F) {
           <input className="input" type="number" inputMode="numeric" min={0} max={60000} value={d.steps} onChange={(e) => set({ steps: e.target.value })} />
         </label>
       </div>
-      <p className="small muted">Optional. Rough is fine.</p>
+      <p className="small muted">Optional, and rough is fine. A daily walk you added above already counts.</p>
     </div>
   );
 }
@@ -335,7 +335,13 @@ export function SafetyFields({ d, set }: F) {
   const toggle = (k: 'pregnantOrPostpartum' | 'edHistory' | 'medicalCondition') =>
     set((cur) => {
       const safety = { ...cur.safety, [k]: !cur.safety[k], none: false };
-      return { ...cur, safety, nutritionMode: safety.edHistory ? 'portions_only' : cur.nutritionMode };
+      // ED history: portions only. Pregnancy: numbers off by default unless the person already chose a style.
+      const nutritionMode = safety.edHistory
+        ? 'portions_only'
+        : safety.pregnantOrPostpartum && !cur.nutritionTouched
+          ? 'habits'
+          : cur.nutritionMode;
+      return { ...cur, safety, nutritionMode };
     });
   return (
     <div className="stack-8">

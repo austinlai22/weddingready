@@ -1,8 +1,7 @@
 import { z } from 'zod';
 import { ACTIVITY_TYPES, DAY_IDS, type ActivityType, type Equipment, type FocusArea, type Profile, type SessionRef, type WeekTemplate } from '../types';
 import { DAY_NAMES } from './dates';
-import { defaultWeekTemplate } from './split';
-import { mainPatterns, type Pattern } from './workouts';
+import { defaultWeekTemplate, shapeOf, weekIssues } from './split';
 
 export function cloneTemplate(t: WeekTemplate): WeekTemplate {
   return { days: t.days.map((d) => d.map((s) => ({ ...s }))), effectiveFrom: t.effectiveFrom };
@@ -21,31 +20,22 @@ export function templateForWeek(p: Profile, overrides: WeekTemplate | null, mond
 export interface ScheduleWarning {
   day: number;
   text: string;
+  severity: 'rule' | 'note';
 }
 
-function patternsOf(s: SessionRef, equipment: Equipment, focus: FocusArea[]): Pattern[] {
-  return s.kind === 'strength' ? mainPatterns(s.workout, equipment, focus) : [];
-}
-
-/** Warnings only, never blocks (SPEC §9). */
+/** Warnings only, never blocks (SPEC §9). Same training rules the default placement uses. */
 export function validateTemplate(t: WeekTemplate, equipment: Equipment, focus: FocusArea[]): ScheduleWarning[] {
   const warnings: ScheduleWarning[] = [];
   const nonWalk = (d: SessionRef[]) => d.filter((s) => !(s.kind === 'activity' && s.type === 'walk'));
   for (let d = 0; d < 7; d++) {
     const count = nonWalk(t.days[d]).length;
-    if (count > 2) warnings.push({ day: d, text: `${DAY_NAMES[d]} has ${count} sessions. Two a day is plenty.` });
-    const today = t.days[d].flatMap((s) => patternsOf(s, equipment, focus));
-    const dupes = today.filter((p, i) => today.indexOf(p) !== i);
-    if (dupes.length) warnings.push({ day: d, text: `${DAY_NAMES[d]} trains the same main lift twice.` });
-    const next = (d + 1) % 7;
-    const tomorrow = new Set(t.days[next].flatMap((s) => patternsOf(s, equipment, focus)));
-    if (today.some((p) => tomorrow.has(p))) {
-      warnings.push({
-        day: next,
-        text: `${DAY_NAMES[d]} and ${DAY_NAMES[next]} train the same main lifts back to back. A rest day between helps you recover.`,
-      });
-    }
+    const hasStrength = t.days[d].some((s) => s.kind === 'strength');
+    // Strength days are checked by weekIssues (busy_day); this covers days of the person's own activities.
+    if (count > 2 && !hasStrength) warnings.push({ day: d, severity: 'rule', text: `${DAY_NAMES[d]} has ${count} sessions. Two a day is plenty.` });
+    const strength = t.days[d].filter((s) => s.kind === 'strength').length;
+    if (strength > 1) warnings.push({ day: d, severity: 'rule', text: `${DAY_NAMES[d]} has ${strength} strength sessions. Spread them out.` });
   }
+  for (const i of weekIssues(shapeOf(t), equipment, focus)) warnings.push({ day: i.day, text: i.text, severity: i.severity });
   return warnings;
 }
 
