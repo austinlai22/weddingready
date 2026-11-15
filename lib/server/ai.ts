@@ -1,26 +1,30 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
+import { ApiError as GeminiApiError, GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 import { DAY_IDS, type WeekTemplate } from '../types';
 import { ScheduleOpSchema, type ScheduleOp } from '../engine/schedule';
 import { costUSD } from './limits';
 
-// SPEC §10. The model string is set by the spec (claude-sonnet-5-5) and can be
-// overridden with AI_MODEL. Server-side fallback ("default") retries a policy
-// decline on the server-chosen fallback model inside the same call.
+// SPEC §10. Claude (the spec's model, claude-sonnet-5-5, overridable with
+// AI_MODEL) answers when its account is usable. Google's Gemini free tier
+// (GEMINI_MODEL, default gemini-3.8-flash) answers when there's no Anthropic key
+// or the Anthropic account can't be used (no credits, key rejected). Both are
+// held to the same Zod schemas and the same checks below.
 
 export const AI_MODEL = process.env.AI_MODEL || 'claude-sonnet-5-5';
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 
 export class AiUnavailable extends Error {}
 export class AiBadOutput extends Error {}
 export class AiRefused extends Error {}
 
-let client: Anthropic | null = null;
-function getClient(): Anthropic {
-  if (!process.env.ANTHROPIC_API_KEY) throw new AiUnavailable('ANTHROPIC_API_KEY is not set');
-  client ??= new Anthropic({ maxRetries: 1, timeout: 30_000 });
-  return client;
+export function aiConfigured(env: Record<string, string | undefined> = process.env): boolean {
+  return !!(env.ANTHROPIC_API_KEY || env.GEMINI_API_KEY);
 }
+
+let anthropic: Anthropic | null = null;
+let gemini: GoogleGenAI | null = null;
 
 /** Keeps user text inside its delimiters: no angle brackets, no control characters, capped length. */
 export function asData(text: string, max: number): string {
@@ -32,18 +36,26 @@ export function asData(text: string, max: number): string {
 }
 
 /**
- * Problems with the API account itself (bad key, no credits, no access) mean
- * AI is off for everyone, not that this request failed: the routes answer 503
- * and the app falls back to manual entry. Logged without any user text.
+ * Problems with the Anthropic account itself (bad key, no credits, no access)
+ * mean Claude is off, not that this request failed. Logged without user text.
  */
-function accountProblem(e: unknown): AiUnavailable | null {
+function anthropicAccountProblem(e: unknown): AiUnavailable | null {
   if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) {
-    console.warn(`AI unavailable: the Anthropic API key was rejected (${e.status}).`);
+    console.warn(`AI: the Anthropic API key was rejected (${e.status}).`);
     return new AiUnavailable('key rejected');
   }
   if (e instanceof Anthropic.BadRequestError && /credit balance/i.test(e.message)) {
-    console.warn('AI unavailable: the Anthropic account has no API credits (Console → Plans & Billing).');
+    console.warn('AI: the Anthropic account has no API credits (Console → Plans & Billing).');
     return new AiUnavailable('no credits');
+  }
+  return null;
+}
+
+/** Gemini: a rejected key or a used-up free quota means Gemini is off for now. */
+function geminiAccountProblem(e: unknown): AiUnavailable | null {
+  if (e instanceof GeminiApiError && [401, 403, 429].includes(e.status)) {
+    console.warn(e.status === 429 ? 'AI: the Gemini free quota is used up for now.' : `AI: the Gemini API key was rejected (${e.status}).`);
+    return new AiUnavailable(e.status === 429 ? 'quota' : 'key rejected');
   }
   return null;
 }
@@ -53,22 +65,22 @@ interface CallResult<T> {
   usd: number;
 }
 
-async function callStructured<S extends z.ZodType>(schema: S, system: string, user: string): Promise<CallResult<z.infer<S>>> {
-  const anthropic = getClient();
+async function callClaude<S extends z.ZodType>(schema: S, system: string, user: string): Promise<CallResult<z.infer<S>>> {
+  anthropic ??= new Anthropic({ maxRetries: 1, timeout: 30_000 });
   let usd = 0;
   for (let attempt = 0; attempt < 2; attempt++) {
     const response = await anthropic.beta.messages
       .parse({
-      model: AI_MODEL,
-      max_tokens: 2000,
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      output_config: { effort: 'low', format: betaZodOutputFormat(schema) },
-      system,
-      messages: [{ role: 'user', content: user }],
-    })
+        model: AI_MODEL,
+        max_tokens: 2000,
+        betas: ['server-side-fallback-2026-07-01'],
+        fallbacks: 'default',
+        output_config: { effort: 'low', format: betaZodOutputFormat(schema) },
+        system,
+        messages: [{ role: 'user', content: user }],
+      })
       .catch((e: unknown) => {
-        throw accountProblem(e) ?? e;
+        throw anthropicAccountProblem(e) ?? e;
       });
     usd += costUSD(response.model, response.usage.input_tokens, response.usage.output_tokens);
     if (response.stop_reason === 'refusal') throw new AiRefused('declined');
@@ -77,6 +89,54 @@ async function callStructured<S extends z.ZodType>(schema: S, system: string, us
     if (checked?.success) return { data: checked.data, usd };
   }
   throw Object.assign(new AiBadOutput('invalid output after retry'), { usd });
+}
+
+/** Zod schema → JSON Schema for Gemini's structured output. */
+function jsonSchemaFor(schema: z.ZodType): unknown {
+  const json = { ...(z.toJSONSchema(schema) as Record<string, unknown>) };
+  delete json.$schema;
+  return json;
+}
+
+async function callGemini<S extends z.ZodType>(schema: S, system: string, user: string): Promise<CallResult<z.infer<S>>> {
+  gemini ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const responseJsonSchema = jsonSchemaFor(schema);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const response = await gemini.models
+      .generateContent({
+        model: GEMINI_MODEL,
+        contents: user,
+        config: { systemInstruction: system, responseMimeType: 'application/json', responseJsonSchema, maxOutputTokens: 2000 },
+      })
+      .catch((e: unknown) => {
+        throw geminiAccountProblem(e) ?? e;
+      });
+    if (response.promptFeedback?.blockReason) throw new AiRefused('blocked');
+    let parsed: unknown = null;
+    try {
+      parsed = JSON.parse(response.text ?? '');
+    } catch {
+      parsed = null;
+    }
+    const checked = parsed == null ? null : schema.safeParse(parsed);
+    if (checked?.success) return { data: checked.data, usd: 0 }; // free tier
+  }
+  throw Object.assign(new AiBadOutput('invalid output after retry'), { usd: 0 });
+}
+
+/** Claude first when it has a key; Gemini when Claude has no key or its account can't be used. */
+async function callStructured<S extends z.ZodType>(schema: S, system: string, user: string): Promise<CallResult<z.infer<S>>> {
+  const hasClaude = !!process.env.ANTHROPIC_API_KEY;
+  const hasGemini = !!process.env.GEMINI_API_KEY;
+  if (hasClaude) {
+    try {
+      return await callClaude(schema, system, user);
+    } catch (e) {
+      if (!(e instanceof AiUnavailable) || !hasGemini) throw e;
+    }
+  }
+  if (hasGemini) return callGemini(schema, system, user);
+  throw new AiUnavailable('no AI key set');
 }
 
 // ---------- Meal estimate (SPEC §10.1) ----------

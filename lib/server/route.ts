@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { AiBadOutput, AiRefused, AiUnavailable } from './ai';
+import { AiBadOutput, AiRefused, AiUnavailable, aiConfigured } from './ai';
 import { budgetLeft, count, recordSpend } from './limits';
 import type { Store } from './store';
 
@@ -19,7 +19,7 @@ export async function readJson(request: Request, maxBytes = 8_000): Promise<unkn
 
 /** Shared budget gate + error mapping for the AI routes. Only anonymous counts are recorded. */
 export async function runAi<T>(store: Store, name: string, work: () => Promise<{ data: T; usd: number }>, respond: (data: T) => Response) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!aiConfigured()) {
     await count(store, name, 'unavailable');
     return fail(503, 'AI help isn’t switched on right now. You can still enter it yourself.', 'ai_unavailable');
   }

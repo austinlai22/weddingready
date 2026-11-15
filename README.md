@@ -43,8 +43,10 @@ See `.env.example`.
 
 | Variable | Needed for |
 |---|---|
-| `ANTHROPIC_API_KEY` | AI meal estimates and schedule edits. Server only. |
+| `ANTHROPIC_API_KEY` | AI meal estimates and schedule edits with Claude. Server only. Used first when its account has API credits. |
 | `AI_MODEL` | Optional. Defaults to `claude-sonnet-5-5` (the spec's model). |
+| `GEMINI_API_KEY` | Free AI with Google's Gemini API free tier (key from aistudio.google.com/apikey). Answers when there's no Anthropic key or no Anthropic credits. Google may use free-tier requests to improve its products; the privacy page says so. |
+| `GEMINI_MODEL` | Optional. Defaults to `gemini-3.8-flash` (free tier, stable). |
 | `AI_DAILY_BUDGET_USD` | Global daily spend cap. Default `2`. When it's hit, AI routes return 503 and the UI falls back to manual entry. |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_*`) | Rate limits and spend tracking across serverless instances. Required in production. |
 | `RATE_LIMIT_SECRET` | HMAC secret for hashing device IDs and IPs in rate-limit keys |
@@ -82,7 +84,7 @@ data/            exercises.json, foods.json (generated), foods.source.json, meal
 
 **Persistence.** Zustand `persist` writes to `localStorage` under `weddingready-v1`. Every load and every import is parsed with Zod. If saved data is invalid, the raw copy is backed up under `weddingready-backup-<timestamp>`, the app starts fresh, and it says so.
 
-**AI.** Both routes call `claude-sonnet-5-5` through `client.beta.messages.parse` with:
+**AI.** Claude is tried first. If there's no Anthropic key, or the account has no credits or rejects the key, Google's Gemini free tier (`gemini-3.8-flash`, structured JSON output from the same Zod schemas) answers instead, so the app can run at no cost. A used-up Gemini quota turns AI off until it resets, and the app falls back to manual entry. Spend on Gemini counts as $0. Claude calls use `client.beta.messages.parse` with:
 - Zod structured output.
 - Effort `low`.
 - Server-side refusal fallback (`fallbacks: "default"`).
@@ -128,7 +130,8 @@ The verification run found 12 prototype values off by more than 10%, and the scr
 
 - **An RD/CPT review is required before any paid launch.** It needs to cover the activity factor, the deficit cap, the floors, protein and fat ranges, the expectations framing, the prescriptions and the progression rules. Note: the fixture target (~1,705 kcal) sits below the prototype's hand-set 1,700–1,950. That gap is expected and left for the review, not tuned away.
 - Restaurant estimates are unverified. AI estimates can be wrong; users can edit them before saving.
-- **The AI routes are covered only by mocked tests**; they haven't been run against the live API. With a mocked SDK, unit tests cover output validation, retry, refusal, unknown ops, rate limits and the spend cap; the e2e tests mock the HTTP routes. Run one live request after adding `ANTHROPIC_API_KEY`.
+- **The spec names Claude; Gemini is an addition** so the app can run free. Gemini's free limits aren't published (check AI Studio) and Google has cut them before.
+- **The AI routes are covered only by mocked tests** until a live key is added. With a mocked SDK, unit tests cover output validation, retry, refusal, unknown ops, rate limits and the spend cap; the e2e tests mock the HTTP routes. Run one live request after adding `ANTHROPIC_API_KEY`.
 - The PostHog dashboard script follows PostHog's insights API and HogQL but hasn't been run against a live project.
 - There is no exercise video yet (placeholder cards). Media licensing is open item §17.2.
 - There are no accounts or sync. Data lives in one browser on one device, so use Export for backups.
