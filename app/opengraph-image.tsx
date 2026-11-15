@@ -1,23 +1,27 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { ImageResponse } from 'next/og';
+import { LogoSvg } from '@/lib/logo';
 
-export const alt = 'WeddingReady: a training and food plan that works back from your wedding date';
+export const alt = 'WeddingReady: a plan for every day until your wedding';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-export default function OpenGraphImage() {
+// Fraunces is stored in the repo (assets/fonts, SIL Open Font License) so the
+// share image renders the same in offline builds.
+export default async function OpenGraphImage() {
+  const fraunces = await readFile(path.join(process.cwd(), 'assets', 'fonts', 'Fraunces-SemiBold.ttf'));
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', background: '#3B1F2E', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '80px 96px', color: '#FBF6F3' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div style={{ width: 64, height: 64, borderRadius: 16, background: '#4A2A3B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ width: 34, height: 34, borderRadius: 9999, border: '5px solid #E4C79A', display: 'flex' }} />
-          </div>
-          <div style={{ fontSize: 36, fontWeight: 700 }}>WeddingReady</div>
+      <div style={{ width: '100%', height: '100%', background: '#FBF6F3', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '72px 88px', color: '#2A1F23' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          <LogoSvg size={64} />
+          <div style={{ fontFamily: 'Fraunces', fontSize: 38 }}>WeddingReady</div>
         </div>
-        <div style={{ fontSize: 76, fontWeight: 700, lineHeight: 1.05, marginTop: 48, maxWidth: 900 }}>Feel strong on your wedding day.</div>
-        <div style={{ fontSize: 32, color: '#EADCE2', marginTop: 28, maxWidth: 900 }}>A free training and food plan that works back from your date.</div>
+        <div style={{ fontFamily: 'Fraunces', fontSize: 80, lineHeight: 1.04, letterSpacing: -2, maxWidth: 960 }}>A plan for every day between now and your wedding.</div>
+        <div style={{ display: 'flex', fontSize: 30, color: '#6E5F65' }}>Workouts, meals and a countdown. Free.</div>
       </div>
     ),
-    size,
+    { ...size, fonts: [{ name: 'Fraunces', data: fraunces, weight: 600, style: 'normal' }] },
   );
 }
