@@ -7,7 +7,18 @@ import { PROTOTYPE_USER } from '../engine/fixtures';
 
 const parse = vi.fn();
 vi.mock('@anthropic-ai/sdk', () => {
+  class APIError extends Error {
+    constructor(public status: number, message: string) {
+      super(message);
+    }
+  }
+  class BadRequestError extends APIError {}
+  class AuthenticationError extends APIError {}
+  class PermissionDeniedError extends APIError {}
   class Anthropic {
+    static BadRequestError = BadRequestError;
+    static AuthenticationError = AuthenticationError;
+    static PermissionDeniedError = PermissionDeniedError;
     beta = { messages: { parse } };
   }
   return { default: Anthropic };
@@ -85,6 +96,18 @@ describe('AI calls', () => {
     expect((await estimateMeal({ deviceId: 'device-1234', slot: 'd', item: 'a car', quantity: '1' })).data).toBeNull();
     parse.mockResolvedValueOnce({ stop_reason: 'refusal', model: 'claude-sonnet-5-5', usage, parsed_output: null });
     await expect(estimateMeal({ deviceId: 'device-1234', slot: 'd', item: 'x', quantity: '1' })).rejects.toBeInstanceOf(AiRefused);
+  });
+
+  it('treats a missing-credits or rejected-key error as AI being off', async () => {
+    const { estimateMeal, AiUnavailable } = await import('./ai');
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    parse.mockRejectedValueOnce(new (Anthropic as unknown as { BadRequestError: new (s: number, m: string) => Error }).BadRequestError(400, 'Your credit balance is too low to access the Anthropic API.'));
+    await expect(estimateMeal({ deviceId: 'device-1234', slot: 'd', item: 'pho', quantity: '1 bowl' })).rejects.toBeInstanceOf(AiUnavailable);
+    parse.mockRejectedValueOnce(new (Anthropic as unknown as { AuthenticationError: new (s: number, m: string) => Error }).AuthenticationError(401, 'invalid x-api-key'));
+    await expect(estimateMeal({ deviceId: 'device-1234', slot: 'd', item: 'pho', quantity: '1 bowl' })).rejects.toBeInstanceOf(AiUnavailable);
+    expect(warn).toHaveBeenCalledTimes(2);
+    warn.mockRestore();
   });
 
   it('rejects schedule ops that point at sessions not in the week', async () => {

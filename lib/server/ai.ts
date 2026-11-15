@@ -31,6 +31,23 @@ export function asData(text: string, max: number): string {
     .trim();
 }
 
+/**
+ * Problems with the API account itself (bad key, no credits, no access) mean
+ * AI is off for everyone, not that this request failed: the routes answer 503
+ * and the app falls back to manual entry. Logged without any user text.
+ */
+function accountProblem(e: unknown): AiUnavailable | null {
+  if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) {
+    console.warn(`AI unavailable: the Anthropic API key was rejected (${e.status}).`);
+    return new AiUnavailable('key rejected');
+  }
+  if (e instanceof Anthropic.BadRequestError && /credit balance/i.test(e.message)) {
+    console.warn('AI unavailable: the Anthropic account has no API credits (Console → Plans & Billing).');
+    return new AiUnavailable('no credits');
+  }
+  return null;
+}
+
 interface CallResult<T> {
   data: T;
   usd: number;
@@ -40,7 +57,8 @@ async function callStructured<S extends z.ZodType>(schema: S, system: string, us
   const anthropic = getClient();
   let usd = 0;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const response = await anthropic.beta.messages.parse({
+    const response = await anthropic.beta.messages
+      .parse({
       model: AI_MODEL,
       max_tokens: 2000,
       betas: ['server-side-fallback-2026-07-01'],
@@ -48,7 +66,10 @@ async function callStructured<S extends z.ZodType>(schema: S, system: string, us
       output_config: { effort: 'low', format: betaZodOutputFormat(schema) },
       system,
       messages: [{ role: 'user', content: user }],
-    });
+    })
+      .catch((e: unknown) => {
+        throw accountProblem(e) ?? e;
+      });
     usd += costUSD(response.model, response.usage.input_tokens, response.usage.output_tokens);
     if (response.stop_reason === 'refusal') throw new AiRefused('declined');
     const parsed = response.stop_reason === 'max_tokens' ? null : response.parsed_output;
