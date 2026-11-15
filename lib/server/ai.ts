@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
-import { ApiError as GeminiApiError, GoogleGenAI } from '@google/genai';
+import { ApiError as GeminiApiError, GoogleGenAI, ThinkingLevel } from '@google/genai';
 import { z } from 'zod';
 import { DAY_IDS, type WeekTemplate } from '../types';
 import { ScheduleOpSchema, type ScheduleOp } from '../engine/schedule';
@@ -8,12 +8,17 @@ import { costUSD } from './limits';
 
 // SPEC §10. Claude (the spec's model, claude-sonnet-5-5, overridable with
 // AI_MODEL) answers when its account is usable. Google's Gemini free tier
-// (GEMINI_MODEL, default gemini-3.8-flash) answers when there's no Anthropic key
-// or the Anthropic account can't be used (no credits, key rejected). Both are
-// held to the same Zod schemas and the same checks below.
+// (GEMINI_MODEL, default gemini-3.6-flash) answers when there's no Anthropic key
+// or the Anthropic account can't be used (no credits, key rejected). Free
+// Gemini models get overloaded at busy times, so a busy model hands over to the
+// next free one. Every answer is held to the same Zod schemas and checks.
 
 export const AI_MODEL = process.env.AI_MODEL || 'claude-sonnet-5-5';
-export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+// gemini-3.8-flash is newer but often overloaded on the free tier, so the
+// default is the previous Flash model, with Flash-Lite as the backup.
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+const GEMINI_FALLBACKS = ['gemini-3.5-flash-lite'];
+export const GEMINI_MODELS = [GEMINI_MODEL, ...GEMINI_FALLBACKS.filter((m) => m !== GEMINI_MODEL)];
 
 export class AiUnavailable extends Error {}
 export class AiBadOutput extends Error {}
@@ -25,6 +30,17 @@ export function aiConfigured(env: Record<string, string | undefined> = process.e
 
 let anthropic: Anthropic | null = null;
 let gemini: GoogleGenAI | null = null;
+
+// Short per-instance cooldowns, so requests don't wait on a provider that just
+// said it can't help: Claude without credits for 10 minutes, an overloaded
+// free model for 2. Cleared by a restart or when the time passes.
+const skipUntil = new Map<string, number>();
+const coolingDown = (key: string) => (skipUntil.get(key) ?? 0) > Date.now();
+const coolDown = (key: string, ms: number) => skipUntil.set(key, Date.now() + ms);
+export function resetCooldowns() {
+  skipUntil.clear();
+  thinkingRejected.clear();
+}
 
 /** Keeps user text inside its delimiters: no angle brackets, no control characters, capped length. */
 export function asData(text: string, max: number): string {
@@ -98,19 +114,57 @@ function jsonSchemaFor(schema: z.ZodType): unknown {
   return json;
 }
 
+/** Google's "model overloaded" and server errors: worth trying another free model. */
+function geminiBusy(e: unknown): boolean {
+  if (e instanceof GeminiApiError) return e.status === 503 || e.status === 500 || e.status === 504;
+  // Our 25 s timeout surfaces as an abort/timeout error.
+  return e instanceof Error && /abort|timed? ?out/i.test(`${e.name} ${e.message}`);
+}
+
 async function callGemini<S extends z.ZodType>(schema: S, system: string, user: string): Promise<CallResult<z.infer<S>>> {
-  gemini ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const ready = GEMINI_MODELS.filter((m) => !coolingDown(m));
+  for (const model of ready.length ? ready : GEMINI_MODELS) {
+    try {
+      return await callGeminiModel(model, schema, system, user);
+    } catch (e) {
+      if (!geminiBusy(e)) throw e;
+      coolDown(model, 2 * 60_000);
+      console.warn(`AI: ${model} is busy, trying the next free model.`);
+    }
+  }
+  throw new AiUnavailable('all free models busy');
+}
+
+// These are quick lookups: as little thinking as each model allows (minimal
+// roughly halves response time). gemini-3.8-flash doesn't accept MINIMAL.
+const THINKING: Record<string, ThinkingLevel> = { 'gemini-3.8-flash': ThinkingLevel.LOW };
+const thinkingRejected = new Set<string>();
+
+async function callGeminiModel<S extends z.ZodType>(model: string, schema: S, system: string, user: string): Promise<CallResult<z.infer<S>>> {
+  // No SDK retries (its default backs off for minutes on an overloaded model);
+  // callGemini moves to the next free model instead. 25 s cap per call.
+  gemini ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { timeout: 25_000, retryOptions: { attempts: 1 } } });
   const responseJsonSchema = jsonSchemaFor(schema);
   for (let attempt = 0; attempt < 2; attempt++) {
+    const thinkingConfig = thinkingRejected.has(model) ? undefined : { thinkingLevel: THINKING[model] ?? ThinkingLevel.MINIMAL };
     const response = await gemini.models
       .generateContent({
-        model: GEMINI_MODEL,
+        model,
         contents: user,
-        config: { systemInstruction: system, responseMimeType: 'application/json', responseJsonSchema, maxOutputTokens: 2000 },
+        config: { systemInstruction: system, responseMimeType: 'application/json', responseJsonSchema, maxOutputTokens: 2000, ...(thinkingConfig ? { thinkingConfig } : {}) },
       })
       .catch((e: unknown) => {
+        // A model that doesn't take this thinking level: remember, and retry this attempt without it.
+        if (e instanceof GeminiApiError && e.status === 400 && /thinking/i.test(e.message) && thinkingConfig) {
+          thinkingRejected.add(model);
+          return null;
+        }
         throw geminiAccountProblem(e) ?? e;
       });
+    if (!response) {
+      attempt--;
+      continue;
+    }
     if (response.promptFeedback?.blockReason) throw new AiRefused('blocked');
     let parsed: unknown = null;
     try {
@@ -128,11 +182,12 @@ async function callGemini<S extends z.ZodType>(schema: S, system: string, user: 
 async function callStructured<S extends z.ZodType>(schema: S, system: string, user: string): Promise<CallResult<z.infer<S>>> {
   const hasClaude = !!process.env.ANTHROPIC_API_KEY;
   const hasGemini = !!process.env.GEMINI_API_KEY;
-  if (hasClaude) {
+  if (hasClaude && !(hasGemini && coolingDown('claude'))) {
     try {
       return await callClaude(schema, system, user);
     } catch (e) {
       if (!(e instanceof AiUnavailable) || !hasGemini) throw e;
+      coolDown('claude', 10 * 60_000);
     }
   }
   if (hasGemini) return callGemini(schema, system, user);

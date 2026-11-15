@@ -36,8 +36,11 @@ export async function runAi<T>(store: Store, name: string, work: () => Promise<{
     const usd = (e as { usd?: number }).usd;
     if (usd) await recordSpend(store, usd);
     if (e instanceof AiUnavailable) {
-      await count(store, name, 'unavailable');
-      return fail(503, 'AI help isn’t switched on right now. You can still enter it yourself.', 'ai_unavailable');
+      const busy = /busy|quota/.test(e.message);
+      await count(store, name, busy ? 'busy' : 'unavailable');
+      return busy
+        ? fail(503, 'AI help is busy right now. Try again in a minute, or enter it yourself.', 'ai_busy')
+        : fail(503, 'AI help isn’t switched on right now. You can still enter it yourself.', 'ai_unavailable');
     }
     if (e instanceof AiRefused) {
       await count(store, name, 'refused');

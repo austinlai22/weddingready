@@ -46,7 +46,7 @@ See `.env.example`.
 | `ANTHROPIC_API_KEY` | AI meal estimates and schedule edits with Claude. Server only. Used first when its account has API credits. |
 | `AI_MODEL` | Optional. Defaults to `claude-sonnet-5-5` (the spec's model). |
 | `GEMINI_API_KEY` | Free AI with Google's Gemini API free tier (key from aistudio.google.com/apikey). Answers when there's no Anthropic key or no Anthropic credits. Google may use free-tier requests to improve its products; the privacy page says so. |
-| `GEMINI_MODEL` | Optional. Defaults to `gemini-3.8-flash` (free tier, stable). |
+| `GEMINI_MODEL` | Optional. Defaults to `gemini-3.6-flash` (free tier, stable; the newer `gemini-3.8-flash` is often overloaded on the free tier). `gemini-3.5-flash-lite` is the automatic backup when the main model is busy. |
 | `AI_DAILY_BUDGET_USD` | Global daily spend cap. Default `2`. When it's hit, AI routes return 503 and the UI falls back to manual entry. |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_*`) | Rate limits and spend tracking across serverless instances. Required in production. |
 | `RATE_LIMIT_SECRET` | HMAC secret for hashing device IDs and IPs in rate-limit keys |
@@ -84,7 +84,7 @@ data/            exercises.json, foods.json (generated), foods.source.json, meal
 
 **Persistence.** Zustand `persist` writes to `localStorage` under `weddingready-v1`. Every load and every import is parsed with Zod. If saved data is invalid, the raw copy is backed up under `weddingready-backup-<timestamp>`, the app starts fresh, and it says so.
 
-**AI.** Claude is tried first. If there's no Anthropic key, or the account has no credits or rejects the key, Google's Gemini free tier (`gemini-3.8-flash`, structured JSON output from the same Zod schemas) answers instead, so the app can run at no cost. A used-up Gemini quota turns AI off until it resets, and the app falls back to manual entry. Spend on Gemini counts as $0. Claude calls use `client.beta.messages.parse` with:
+**AI.** Claude is tried first. If there's no Anthropic key, or the account has no credits or rejects the key, Google's Gemini free tier (`gemini-3.6-flash`, structured JSON output from the same Zod schemas) answers instead, so the app can run at no cost. A used-up Gemini quota turns AI off until it resets, and the app falls back to manual entry. Spend on Gemini counts as $0. Claude calls use `client.beta.messages.parse` with:
 - Zod structured output.
 - Effort `low`.
 - Server-side refusal fallback (`fallbacks: "default"`).

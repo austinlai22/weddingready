@@ -34,7 +34,8 @@ vi.mock('@google/genai', () => {
   class GoogleGenAI {
     models = { generateContent };
   }
-  return { GoogleGenAI, ApiError };
+  const ThinkingLevel = { MINIMAL: 'MINIMAL', LOW: 'LOW' };
+  return { GoogleGenAI, ApiError, ThinkingLevel };
 });
 
 describe('AI input handling (SPEC §10)', () => {
@@ -73,7 +74,8 @@ describe('AI input handling (SPEC §10)', () => {
 });
 
 describe('AI calls', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    (await import('./ai')).resetCooldowns();
     process.env.ANTHROPIC_API_KEY = 'test-key';
     parse.mockReset();
   });
@@ -168,6 +170,7 @@ describe('rate limits and the daily budget', () => {
 });
 
 describe('Gemini free tier', () => {
+  beforeEach(async () => (await import('./ai')).resetCooldowns());
   const pho = { name: 'Pho', items: ['1 large bowl (~700 g)'], protein_g: 30, carbs_g: 60, fat_g: 12, kcal: 470, confidence: 'medium', note: 'Typical restaurant bowl', is_food: true };
   beforeEach(() => {
     parse.mockReset();
@@ -201,7 +204,40 @@ describe('Gemini free tier', () => {
     generateContent.mockResolvedValueOnce({ text: JSON.stringify(pho) });
     const r = await estimateMeal({ deviceId: 'device-1234', slot: 'd', item: 'pho', quantity: '1 bowl' });
     expect(r.data?.name).toBe('Pho');
+    // The next request skips Claude while it's cooling down.
+    generateContent.mockResolvedValueOnce({ text: JSON.stringify(pho) });
+    await estimateMeal({ deviceId: 'device-1234', slot: 'd', item: 'pho', quantity: '1 bowl' });
+    expect(parse).toHaveBeenCalledTimes(1);
     warn.mockRestore();
+  });
+
+  it('moves to the next free model when one is overloaded, and turns AI off when all are', async () => {
+    const { estimateMeal, AiUnavailable, GEMINI_MODELS, resetCooldowns } = await import('./ai');
+    const { ApiError } = await import('@google/genai');
+    const Busy = ApiError as unknown as new (s: number) => Error;
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    generateContent.mockRejectedValueOnce(new Busy(503)).mockResolvedValueOnce({ text: JSON.stringify(pho) });
+    expect((await estimateMeal({ deviceId: 'device-1234', slot: 'd', item: 'pho', quantity: '1 bowl' })).data?.name).toBe('Pho');
+    expect(generateContent.mock.calls.map((c) => c[0].model)).toEqual(GEMINI_MODELS.slice(0, 2));
+    generateContent.mockReset();
+    resetCooldowns();
+    generateContent.mockRejectedValue(new Busy(503));
+    await expect(estimateMeal({ deviceId: 'device-1234', slot: 'd', item: 'pho', quantity: '1 bowl' })).rejects.toBeInstanceOf(AiUnavailable);
+    expect(generateContent).toHaveBeenCalledTimes(GEMINI_MODELS.length);
+    warn.mockRestore();
+  });
+
+  it('asks for minimal thinking, and drops the setting for a model that rejects it', async () => {
+    const { estimateMeal } = await import('./ai');
+    const { ApiError } = await import('@google/genai');
+    generateContent
+      .mockRejectedValueOnce(new (ApiError as unknown as new (s: number, m: string) => Error)(400, 'Thinking level MINIMAL is not supported for this model.'))
+      .mockResolvedValueOnce({ text: JSON.stringify(pho) });
+    expect((await estimateMeal({ deviceId: 'device-1234', slot: 'd', item: 'pho', quantity: '1 bowl' })).data?.name).toBe('Pho');
+    const [first, second] = generateContent.mock.calls.map((c) => c[0]);
+    expect(first.config.thinkingConfig).toBeDefined();
+    expect(second.config.thinkingConfig).toBeUndefined();
+    expect(second.model).toBe(first.model);
   });
 
   it('retries bad JSON once, and treats a used-up quota as AI being off', async () => {
