@@ -36,6 +36,7 @@ Node 20.9+ is required. Vitest is pinned to 4.x because Vitest 5 needs Node 22.
 | `npm run lint` / `typecheck` | ESLint and TypeScript |
 | `npm run foods:verify` | Rebuilds `data/foods.json` from USDA FoodData Central (see [Food data](#food-data)) |
 | `npm run posthog:dashboard` | Creates the SPEC §1 metrics dashboard in PostHog |
+| `npm run demos:record` | Re-records the home page's demo clips from the real app (needs `next start -p 3100` running and ffmpeg with libx264) |
 
 ## Environment
 
@@ -75,6 +76,7 @@ lib/engine/      Pure, deterministic plan engine (no clock reads; "today" is pas
   plan.ts          Profile → Plan → DayPlan
 lib/state/       Zod schema mirroring SPEC §11, versioned migrations, Zustand persist store
 lib/server/      AI calls (Claude, structured output + Zod), rate limits, spend cap, store
+app/page.tsx     Home page (static; hero phone rendered by the real engine, demo clips in public/media/landing)
 app/(app)/       Train, Eat, Plan, Settings (client components behind a hydration gate)
 app/setup/       12-step onboarding
 app/api/         estimate-meal, edit-schedule

@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'WeddingReady',
     description: 'A training and nutrition plan that works back from your wedding date.',
     id: '/',
-    start_url: '/',
+    start_url: '/train',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',

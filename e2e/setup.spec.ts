@@ -8,7 +8,7 @@ async function basicsAndBody(page: Page) {
   await page.getByRole('button', { name: 'Next' }).click();
 
   await page.getByRole('radio', { name: 'lb, ft/in' }).click();
-  await page.getByLabel('Age').fill('26');
+  await page.getByLabel('Age', { exact: true }).fill('26');
   await page.getByRole('radio', { name: 'Female' }).click();
   await page.getByLabel('Feet').fill('5');
   await page.getByLabel('Inches').fill('4');
@@ -39,6 +39,8 @@ test('complete setup in 5 screens and see the plan', async ({ page }) => {
   const con = watchConsole(page);
   await page.clock.install({ time: SATURDAY });
   await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Feel strong on your wedding day.' })).toBeVisible();
+  await page.getByRole('link', { name: 'Start my plan' }).first().click();
   await expect(page).toHaveURL(/\/setup$/);
   await expect(page.getByText('Step 1 of 6')).toBeVisible();
   await basicsAndBody(page);
@@ -102,7 +104,7 @@ test('blocks under-18s with a friendly message', async ({ page }) => {
   await page.goto('/setup');
   await page.getByLabel('Wedding date').fill('2027-06-01');
   await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByLabel('Age').fill('16');
+  await page.getByLabel('Age', { exact: true }).fill('16');
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByRole('heading', { name: 'This plan is for adults' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next' })).toHaveCount(0);
