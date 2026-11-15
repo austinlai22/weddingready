@@ -84,7 +84,7 @@ export function fmtDayLong(iso: string): string {
   return `${DAY_NAMES[dayIndex(iso)]}, ${fmtShort(iso)}`;
 }
 
-/** "October 17, 2027" */
+/** "June 12, 2027" */
 export function fmtLong(iso: string): string {
   const { y, m, d } = parts(iso);
   return `${MONTHS_LONG[m - 1]} ${d}, ${y}`;

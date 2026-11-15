@@ -356,6 +356,18 @@ describe('meals', () => {
     const big = menuForDate('2026-11-16', { diet: 'none', avoid: [], kcal: 2500 });
     expect(big.main[0].k).toBeGreaterThan(small.main[0].k);
   });
+  it('writes natural amounts, keeps countable foods whole, and varies dinner from lunch', () => {
+    const all = [0, 1, 2, 3, 4, 5, 6].flatMap((i) => {
+      const m = menuForDate(`2026-11-${16 + i}`, { diet: 'none', avoid: [], kcal: 1400 });
+      return [...m.b, ...m.main, ...m.dinner];
+    });
+    const lines = all.flatMap((o) => o.lines);
+    expect(lines.some((l) => /\b(eggs? large|whites egg|cakes rice)\b/.test(l))).toBe(false);
+    expect(lines.some((l) => /[½¼¾] large eggs/.test(l))).toBe(false);
+    const m = menuForDate('2026-11-16', { diet: 'none', avoid: [], kcal: 1700 });
+    expect(m.dinner.map((o) => o.id)).not.toEqual(m.main.map((o) => o.id));
+  });
+
   it('always keeps the treat night option', () => {
     const m = menuForDate('2026-11-17', { diet: 'none', avoid: [], kcal: 1700, treat: 'ice cream' });
     expect(m.x[2].name).toBe('Ice cream night');

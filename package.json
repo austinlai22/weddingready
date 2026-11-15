@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "playwright test",
+    "e2e:mobile": "playwright test --project=mobile",
+    "foods:verify": "tsx scripts/verify-foods.ts",
+    "posthog:dashboard": "tsx scripts/posthog-dashboard.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
@@ -34,5 +40,8 @@
     "typescript": "^5",
     "vite": "^8.3.8",
     "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=20.9"
   }
 }

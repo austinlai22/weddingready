@@ -34,7 +34,7 @@
    {
     "food": "egg-large",
     "amount": 3,
-    "label": "{a} large eggs"
+    "label": "{n} large eggs"
    },
    {
     "food": "butter",
@@ -49,7 +49,7 @@
    {
     "food": "orange",
     "amount": 1,
-    "label": "{a} orange"
+    "label": "{n} orange"
    }
   ]
  },
@@ -212,12 +212,12 @@
    {
     "food": "egg-large",
     "amount": 2,
-    "label": "{a} large eggs"
+    "label": "{n} large eggs"
    },
    {
     "food": "egg-whites",
     "amount": 3,
-    "label": "{a} egg whites"
+    "label": "{n} egg whites"
    },
    {
     "food": "spinach-raw",
@@ -309,7 +309,7 @@
    {
     "food": "corn-tortilla",
     "amount": 3,
-    "label": "{a} corn tortillas"
+    "label": "{n} small corn tortillas"
    },
    {
     "food": "ground-turkey-93-lean-cooked",
@@ -482,7 +482,7 @@
    {
     "food": "egg-large",
     "amount": 2,
-    "label": "{a} hard-boiled eggs"
+    "label": "{n} hard-boiled eggs"
    },
    {
     "food": "feta-cheese",
@@ -728,7 +728,7 @@
    {
     "food": "egg-large",
     "amount": 2,
-    "label": "{a} hard-boiled eggs"
+    "label": "{n} hard-boiled eggs"
    }
   ],
   "fixed": true
@@ -764,7 +764,7 @@
    {
     "food": "rice-cake",
     "amount": 2,
-    "label": "{a} rice cakes"
+    "label": "{n} rice cakes"
    }
   ],
   "fixed": true
@@ -871,7 +871,7 @@
    {
     "food": "apple",
     "amount": 1,
-    "label": "{a} apple"
+    "label": "{n} apple"
    },
    {
     "food": "peanut-butter",

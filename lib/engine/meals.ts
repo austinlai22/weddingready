@@ -109,8 +109,11 @@ export function portionTier(kcal: number): number {
   return 1;
 }
 
-function roundToStep(a: number, step: number): number {
-  const s = step > 0 ? step : 0.25;
+// Measured units scale in their step; countable units (eggs, slices, tortillas) stay whole.
+const MEASURED = ['oz', 'cup', 'tbsp', 'tsp', 'whole'];
+
+function roundToStep(a: number, unit: string, step: number): number {
+  const s = MEASURED.includes(unit) ? (unit === 'oz' ? 0.5 : step > 0 ? step : 0.25) : 1;
   return Math.max(s, Math.round(a / s) * s);
 }
 
@@ -120,12 +123,12 @@ export function buildOption(t: MealTemplate, scale: number): MealOption {
   for (const item of t.items) {
     const food = FOOD_BY_ID.get(item.food);
     if (!food) continue;
-    const a = t.fixed || scale === 1 ? item.amount : roundToStep(item.amount * scale, food.unit === 'oz' ? 0.5 : food.step);
+    const a = t.fixed || scale === 1 ? item.amount : roundToStep(item.amount * scale, food.unit, food.step);
     p += food.protein * a;
     c += food.carbs * a;
     f += food.fat * a;
     k += food.kcal * a;
-    lines.push(item.label.replace('{a}', amountText(food, a)));
+    lines.push(item.label.replace('{a}', amountText(food, a)).replace('{n}', fmtAmt(a)));
   }
   return { id: t.id, name: t.name, lines, p: Math.round(p), c: Math.round(c), f: Math.round(f), k: Math.round(k), swap: t.swap };
 }
@@ -155,6 +158,7 @@ function rotate<T>(list: T[], offset: number, count: number): T[] {
 export interface DayMenu {
   b: MealOption[];
   main: MealOption[];
+  dinner: MealOption[];
   s: MealOption[];
   x: MealOption[];
 }
@@ -167,9 +171,14 @@ export function menuForDate(date: string, opts: { diet: Diet; avoid: string[]; k
   const pick = (slot: MealTemplate['slot'], count: number, s = scale) =>
     rotate(pool(slot), dayNo * count, count).map((t) => buildOption(t, s));
   const desserts = pick('x', 2, 1);
+  const mains = pool('main');
+  // Lunch and dinner draw from the same pool; dinner starts where lunch stops so they differ when the pool allows.
+  const lunch = rotate(mains, dayNo * 3, 3);
+  const dinner = mains.length >= 6 ? rotate(mains, dayNo * 3 + 3, 3) : lunch;
   return {
     b: pick('b', 3),
-    main: pick('main', 3),
+    main: lunch.map((t) => buildOption(t, scale)),
+    dinner: dinner.map((t) => buildOption(t, scale)),
     s: pick('s', 4, 1),
     x: [...desserts, treatOption(opts.treat)],
   };
@@ -178,7 +187,7 @@ export function menuForDate(date: string, opts: { diet: Diet; avoid: string[]; k
 export const SLOT_DEFS: { id: SlotId; label: string; menu: keyof DayMenu | null; ph: string }[] = [
   { id: 'b', label: 'Breakfast', menu: 'b', ph: 'e.g. bagel with cream cheese' },
   { id: 'l', label: 'Lunch', menu: 'main', ph: 'e.g. chicken burrito bowl' },
-  { id: 'd', label: 'Dinner', menu: 'main', ph: 'e.g. pepperoni pizza' },
+  { id: 'd', label: 'Dinner', menu: 'dinner', ph: 'e.g. pepperoni pizza' },
   { id: 's', label: 'Protein snack', menu: 's', ph: 'e.g. protein bar' },
   { id: 'x', label: 'Dessert', menu: 'x', ph: 'e.g. chocolate chip cookies' },
   { id: 'e', label: 'Extras & drinks', menu: null, ph: 'e.g. red wine' },
