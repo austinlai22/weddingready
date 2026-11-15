@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# USDA FDC bulk downloads (scripts/verify-foods.ts)
+/.cache
+/test-results
+/playwright-report
+/lighthouse

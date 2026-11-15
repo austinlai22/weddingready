@@ -1,0 +1,3151 @@
+[
+ {
+  "id": "chicken-breast-cooked",
+  "name": "Chicken breast, cooked",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 4,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171477
+  },
+  "prototype": [
+   47,
+   8.8,
+   0,
+   1
+  ],
+  "popular": true,
+  "tags": [
+   "poultry"
+  ]
+ },
+ {
+  "id": "chicken-thigh-cooked-skinless",
+  "name": "Chicken thigh, cooked, skinless",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 4,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 172388
+  },
+  "prototype": [
+   51,
+   7,
+   0,
+   2.3
+  ],
+  "tags": [
+   "poultry"
+  ]
+ },
+ {
+  "id": "ground-turkey-93-lean-cooked",
+  "name": "Ground turkey 93% lean, cooked",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 4,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 172851
+  },
+  "prototype": [
+   60,
+   7.7,
+   0,
+   3.3
+  ],
+  "tags": [
+   "poultry"
+  ]
+ },
+ {
+  "id": "ground-beef-90-lean-cooked",
+  "name": "Ground beef 90% lean, cooked",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 4,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 174031
+  },
+  "prototype": [
+   62,
+   7.4,
+   0,
+   3.3
+  ],
+  "tags": [
+   "meat"
+  ]
+ },
+ {
+  "id": "steak-sirloin-cooked",
+  "name": "Steak (sirloin), cooked",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 4,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168634
+  },
+  "prototype": [
+   53,
+   8.2,
+   0,
+   2
+  ],
+  "tags": [
+   "meat"
+  ]
+ },
+ {
+  "id": "pork-tenderloin-cooked",
+  "name": "Pork tenderloin, cooked",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 4,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168250
+  },
+  "prototype": [
+   41,
+   7.4,
+   0,
+   1
+  ],
+  "tags": [
+   "pork",
+   "meat"
+  ]
+ },
+ {
+  "id": "salmon-cooked",
+  "name": "Salmon, cooked",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 4,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 175168
+  },
+  "prototype": [
+   58,
+   6.3,
+   0,
+   3.5
+  ],
+  "popular": true,
+  "tags": [
+   "fish"
+  ]
+ },
+ {
+  "id": "shrimp-cooked",
+  "name": "Shrimp, cooked",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 4,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 175180
+  },
+  "prototype": [
+   34,
+   6.5,
+   0,
+   0.5
+  ],
+  "tags": [
+   "fish"
+  ]
+ },
+ {
+  "id": "white-fish-cod-cooked",
+  "name": "White fish (cod), cooked",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 4,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171956
+  },
+  "prototype": [
+   30,
+   6.5,
+   0,
+   0.3
+  ],
+  "tags": [
+   "fish"
+  ]
+ },
+ {
+  "id": "tuna-canned-in-water",
+  "name": "Tuna, canned in water",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 3,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173709
+  },
+  "prototype": [
+   33,
+   7.2,
+   0,
+   0.2
+  ],
+  "tags": [
+   "fish"
+  ]
+ },
+ {
+  "id": "tofu-firm",
+  "name": "Tofu, firm",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 4,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 172475
+  },
+  "prototype": [
+   41,
+   4.9,
+   0.8,
+   2.5
+  ],
+  "tags": [
+   "soy"
+  ]
+ },
+ {
+  "id": "tempeh",
+  "name": "Tempeh",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 3,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 174272
+  },
+  "prototype": null,
+  "tags": [
+   "soy"
+  ]
+ },
+ {
+  "id": "egg-large",
+  "name": "Egg, large",
+  "unit": "egg",
+  "gramsPerUnit": 50,
+  "defaultAmount": 2,
+  "step": 0.5,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171287
+  },
+  "prototype": [
+   72,
+   6.3,
+   0.4,
+   4.8
+  ],
+  "popular": true,
+  "tags": [
+   "egg"
+  ]
+ },
+ {
+  "id": "egg-whites",
+  "name": "Egg whites",
+  "unit": "white",
+  "gramsPerUnit": 33,
+  "defaultAmount": 3,
+  "step": 0.5,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 172183
+  },
+  "prototype": [
+   17,
+   3.6,
+   0.2,
+   0.1
+  ],
+  "tags": [
+   "egg"
+  ]
+ },
+ {
+  "id": "bacon-cooked",
+  "name": "Bacon, cooked",
+  "unit": "slice",
+  "gramsPerUnit": 11.5,
+  "defaultAmount": 2,
+  "step": 0.5,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168322
+  },
+  "prototype": [
+   43,
+   3,
+   0.1,
+   3.3
+  ],
+  "tags": [
+   "pork",
+   "meat"
+  ]
+ },
+ {
+  "id": "deli-turkey",
+  "name": "Deli turkey",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 3,
+  "step": 1,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 172941
+  },
+  "prototype": [
+   30,
+   5,
+   1,
+   0.5
+  ],
+  "tags": [
+   "poultry"
+  ]
+ },
+ {
+  "id": "protein-powder-whey-check-label",
+  "name": "Protein powder, whey (check label)",
+  "unit": "scoop",
+  "gramsPerUnit": 32,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173180
+  },
+  "prototype": [
+   120,
+   24,
+   3,
+   1.5
+  ],
+  "isLabelEstimate": true,
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "protein-powder-soy-check-label",
+  "name": "Protein powder, soy (check label)",
+  "unit": "scoop",
+  "gramsPerUnit": 32,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "protein",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173181
+  },
+  "prototype": null,
+  "isLabelEstimate": true,
+  "tags": [
+   "soy"
+  ]
+ },
+ {
+  "id": "protein-bar-check-label",
+  "name": "Protein bar (check label)",
+  "unit": "bar",
+  "gramsPerUnit": 50,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "protein",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2708117
+  },
+  "prototype": [
+   200,
+   20,
+   22,
+   7
+  ],
+  "isLabelEstimate": true,
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "greek-yogurt-nonfat-plain",
+  "name": "Greek yogurt, nonfat plain",
+  "unit": "cup",
+  "gramsPerUnit": 245,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170894
+  },
+  "prototype": [
+   133,
+   23,
+   8,
+   0.7
+  ],
+  "popular": true,
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "greek-yogurt-2-plain",
+  "name": "Greek yogurt, 2% plain",
+  "unit": "cup",
+  "gramsPerUnit": 245,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170903
+  },
+  "prototype": [
+   170,
+   23,
+   8,
+   4.5
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "cottage-cheese-2",
+  "name": "Cottage cheese, 2%",
+  "unit": "cup",
+  "gramsPerUnit": 226,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 172182
+  },
+  "prototype": [
+   184,
+   24,
+   10,
+   5
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "milk-2",
+  "name": "Milk, 2%",
+  "unit": "cup",
+  "gramsPerUnit": 244,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171267
+  },
+  "prototype": [
+   122,
+   8,
+   12,
+   4.8
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "milk-skim",
+  "name": "Milk, skim",
+  "unit": "cup",
+  "gramsPerUnit": 244,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171269
+  },
+  "prototype": [
+   83,
+   8.3,
+   12,
+   0.2
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "oat-milk-check-label",
+  "name": "Oat milk (check label)",
+  "unit": "cup",
+  "gramsPerUnit": 244,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2705412
+  },
+  "prototype": [
+   120,
+   3,
+   16,
+   5
+  ],
+  "isLabelEstimate": true
+ },
+ {
+  "id": "almond-milk-unsweetened",
+  "name": "Almond milk, unsweetened",
+  "unit": "cup",
+  "gramsPerUnit": 262,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 174832
+  },
+  "prototype": [
+   35,
+   1,
+   1.5,
+   2.5
+  ],
+  "tags": [
+   "nuts"
+  ]
+ },
+ {
+  "id": "soy-milk-unsweetened",
+  "name": "Soy milk, unsweetened",
+  "unit": "cup",
+  "gramsPerUnit": 243,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 175215
+  },
+  "prototype": null,
+  "tags": [
+   "soy"
+  ]
+ },
+ {
+  "id": "soy-yogurt",
+  "name": "Soy yogurt",
+  "unit": "cup",
+  "gramsPerUnit": 245,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2707444
+  },
+  "prototype": null,
+  "tags": [
+   "soy"
+  ]
+ },
+ {
+  "id": "coconut-yogurt",
+  "name": "Coconut yogurt",
+  "unit": "cup",
+  "gramsPerUnit": 226,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2707569
+  },
+  "prototype": null
+ },
+ {
+  "id": "cheddar-cheese",
+  "name": "Cheddar cheese",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 1,
+  "step": 1,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173414
+  },
+  "prototype": [
+   114,
+   7,
+   0.4,
+   9.4
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "mozzarella-part-skim",
+  "name": "Mozzarella, part-skim",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 1,
+  "step": 1,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170847
+  },
+  "prototype": [
+   72,
+   7,
+   0.8,
+   4.5
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "feta-cheese",
+  "name": "Feta cheese",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 1,
+  "step": 1,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173420
+  },
+  "prototype": [
+   75,
+   4,
+   1.2,
+   6
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "parmesan-grated",
+  "name": "Parmesan, grated",
+  "unit": "tbsp",
+  "gramsPerUnit": 5,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171247
+  },
+  "prototype": [
+   21,
+   1.9,
+   0.2,
+   1.4
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "cream-cheese",
+  "name": "Cream cheese",
+  "unit": "tbsp",
+  "gramsPerUnit": 14.5,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "dairy",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173418
+  },
+  "prototype": [
+   51,
+   0.9,
+   0.8,
+   5
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "butter",
+  "name": "Butter",
+  "unit": "tsp",
+  "gramsPerUnit": 4.7,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "fats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173430
+  },
+  "prototype": [
+   34,
+   0,
+   0,
+   3.8
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "black-beans-cooked",
+  "name": "Black beans, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 172,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "legumes",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173735
+  },
+  "prototype": [
+   227,
+   15.2,
+   40.8,
+   0.9
+  ]
+ },
+ {
+  "id": "chickpeas-cooked",
+  "name": "Chickpeas, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 164,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "legumes",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173757
+  },
+  "prototype": [
+   269,
+   14.5,
+   45,
+   4.2
+  ]
+ },
+ {
+  "id": "lentils-cooked",
+  "name": "Lentils, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 198,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "legumes",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 172421
+  },
+  "prototype": [
+   230,
+   17.9,
+   39.9,
+   0.8
+  ]
+ },
+ {
+  "id": "edamame-shelled",
+  "name": "Edamame, shelled",
+  "unit": "cup",
+  "gramsPerUnit": 155,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "legumes",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168411
+  },
+  "prototype": [
+   188,
+   18.4,
+   13.8,
+   8.1
+  ],
+  "tags": [
+   "soy"
+  ]
+ },
+ {
+  "id": "hummus",
+  "name": "Hummus",
+  "unit": "tbsp",
+  "gramsPerUnit": 15,
+  "defaultAmount": 2,
+  "step": 0.5,
+  "category": "legumes",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 174289
+  },
+  "prototype": [
+   35,
+   1,
+   2,
+   2.5
+  ]
+ },
+ {
+  "id": "white-rice-cooked",
+  "name": "White rice, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 158,
+  "defaultAmount": 0.75,
+  "step": 0.25,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168878
+  },
+  "prototype": [
+   206,
+   4.3,
+   44.6,
+   0.4
+  ],
+  "popular": true
+ },
+ {
+  "id": "brown-rice-cooked",
+  "name": "Brown rice, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 202,
+  "defaultAmount": 0.75,
+  "step": 0.25,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169704
+  },
+  "prototype": [
+   216,
+   5,
+   44.8,
+   1.8
+  ]
+ },
+ {
+  "id": "quinoa-cooked",
+  "name": "Quinoa, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 185,
+  "defaultAmount": 0.75,
+  "step": 0.25,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168917
+  },
+  "prototype": [
+   222,
+   8.1,
+   39.4,
+   3.6
+  ]
+ },
+ {
+  "id": "pasta-cooked",
+  "name": "Pasta, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 140,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169737
+  },
+  "prototype": [
+   221,
+   8.1,
+   43.2,
+   1.3
+  ],
+  "tags": [
+   "gluten"
+  ]
+ },
+ {
+  "id": "rice-noodles-cooked",
+  "name": "Rice noodles, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 175,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "grains",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2708356
+  },
+  "prototype": null
+ },
+ {
+  "id": "oats-dry",
+  "name": "Oats, dry",
+  "unit": "cup",
+  "gramsPerUnit": 81,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173904
+  },
+  "prototype": [
+   300,
+   10,
+   54,
+   5
+  ]
+ },
+ {
+  "id": "bread-whole-grain",
+  "name": "Bread, whole-grain",
+  "unit": "slice",
+  "gramsPerUnit": 32,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 172688
+  },
+  "prototype": [
+   81,
+   4,
+   14,
+   1.1
+  ],
+  "tags": [
+   "gluten"
+  ]
+ },
+ {
+  "id": "bread-white-or-sourdough",
+  "name": "Bread, white or sourdough",
+  "unit": "slice",
+  "gramsPerUnit": 32,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 172675
+  },
+  "prototype": [
+   93,
+   3.8,
+   18,
+   0.6
+  ],
+  "tags": [
+   "gluten"
+  ]
+ },
+ {
+  "id": "bread-gluten-free",
+  "name": "Bread, gluten-free",
+  "unit": "slice",
+  "gramsPerUnit": 28,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "grains",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2707797
+  },
+  "prototype": null
+ },
+ {
+  "id": "bagel-plain",
+  "name": "Bagel, plain",
+  "unit": "medium",
+  "gramsPerUnit": 105,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 174899
+  },
+  "prototype": [
+   270,
+   10.5,
+   53,
+   1.7
+  ],
+  "tags": [
+   "gluten"
+  ]
+ },
+ {
+  "id": "english-muffin",
+  "name": "English muffin",
+  "unit": "muffin",
+  "gramsPerUnit": 57,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 175063
+  },
+  "prototype": [
+   134,
+   4.4,
+   26,
+   1
+  ],
+  "tags": [
+   "gluten"
+  ]
+ },
+ {
+  "id": "corn-tortilla",
+  "name": "Corn tortilla",
+  "unit": "small",
+  "gramsPerUnit": 24,
+  "defaultAmount": 2,
+  "step": 0.5,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 175036
+  },
+  "prototype": [
+   52,
+   1.4,
+   10.7,
+   0.7
+  ]
+ },
+ {
+  "id": "flour-tortilla-8-inch",
+  "name": "Flour tortilla (8 inch)",
+  "unit": "tortilla",
+  "gramsPerUnit": 48,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 175037
+  },
+  "prototype": [
+   146,
+   3.9,
+   24.6,
+   3.6
+  ],
+  "tags": [
+   "gluten"
+  ]
+ },
+ {
+  "id": "potato-baked",
+  "name": "Potato, baked",
+  "unit": "medium",
+  "gramsPerUnit": 173,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170093
+  },
+  "prototype": [
+   161,
+   4.3,
+   36.6,
+   0.2
+  ]
+ },
+ {
+  "id": "sweet-potato-baked",
+  "name": "Sweet potato, baked",
+  "unit": "medium",
+  "gramsPerUnit": 114,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168483
+  },
+  "prototype": [
+   103,
+   2.3,
+   23.6,
+   0.2
+  ]
+ },
+ {
+  "id": "granola",
+  "name": "Granola",
+  "unit": "cup",
+  "gramsPerUnit": 110,
+  "defaultAmount": 0.25,
+  "step": 0.25,
+  "category": "grains",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2708461
+  },
+  "prototype": [
+   480,
+   12,
+   72,
+   18
+  ],
+  "tags": [
+   "gluten"
+  ]
+ },
+ {
+  "id": "cereal-cheerios-style",
+  "name": "Cereal, Cheerios-style",
+  "unit": "cup",
+  "gramsPerUnit": 28,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173884
+  },
+  "prototype": [
+   104,
+   3.4,
+   20.4,
+   1.9
+  ]
+ },
+ {
+  "id": "rice-cake",
+  "name": "Rice cake",
+  "unit": "cake",
+  "gramsPerUnit": 9,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "grains",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170250
+  },
+  "prototype": [
+   35,
+   0.7,
+   7.3,
+   0.3
+  ]
+ },
+ {
+  "id": "apple",
+  "name": "Apple",
+  "unit": "medium",
+  "gramsPerUnit": 182,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171688
+  },
+  "prototype": [
+   95,
+   0.5,
+   25,
+   0.3
+  ]
+ },
+ {
+  "id": "banana",
+  "name": "Banana",
+  "unit": "medium",
+  "gramsPerUnit": 118,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173944
+  },
+  "prototype": [
+   105,
+   1.3,
+   27,
+   0.4
+  ],
+  "popular": true
+ },
+ {
+  "id": "orange",
+  "name": "Orange",
+  "unit": "medium",
+  "gramsPerUnit": 131,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169097
+  },
+  "prototype": [
+   62,
+   1.2,
+   15.4,
+   0.2
+  ]
+ },
+ {
+  "id": "berries-mixed",
+  "name": "Berries, mixed",
+  "unit": "cup",
+  "gramsPerUnit": 150,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2709271
+  },
+  "prototype": [
+   65,
+   1,
+   15,
+   0.5
+  ]
+ },
+ {
+  "id": "strawberries",
+  "name": "Strawberries",
+  "unit": "cup",
+  "gramsPerUnit": 152,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 167762
+  },
+  "prototype": [
+   49,
+   1,
+   11.7,
+   0.5
+  ]
+ },
+ {
+  "id": "blueberries",
+  "name": "Blueberries",
+  "unit": "cup",
+  "gramsPerUnit": 148,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171711
+  },
+  "prototype": [
+   84,
+   1.1,
+   21,
+   0.5
+  ]
+ },
+ {
+  "id": "raspberries",
+  "name": "Raspberries",
+  "unit": "cup",
+  "gramsPerUnit": 123,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 167755
+  },
+  "prototype": null
+ },
+ {
+  "id": "grapes",
+  "name": "Grapes",
+  "unit": "cup",
+  "gramsPerUnit": 151,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 174683
+  },
+  "prototype": [
+   104,
+   1.1,
+   27,
+   0.2
+  ]
+ },
+ {
+  "id": "cherries",
+  "name": "Cherries",
+  "unit": "cup",
+  "gramsPerUnit": 154,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171719
+  },
+  "prototype": [
+   95,
+   1.6,
+   24,
+   0.3
+  ]
+ },
+ {
+  "id": "pineapple",
+  "name": "Pineapple",
+  "unit": "cup",
+  "gramsPerUnit": 165,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169124
+  },
+  "prototype": [
+   82,
+   0.9,
+   21.6,
+   0.2
+  ]
+ },
+ {
+  "id": "mango",
+  "name": "Mango",
+  "unit": "cup",
+  "gramsPerUnit": 165,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169910
+  },
+  "prototype": [
+   99,
+   1.4,
+   24.7,
+   0.6
+  ]
+ },
+ {
+  "id": "peach",
+  "name": "Peach",
+  "unit": "medium",
+  "gramsPerUnit": 150,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169928
+  },
+  "prototype": null
+ },
+ {
+  "id": "kiwi",
+  "name": "Kiwi",
+  "unit": "fruit",
+  "gramsPerUnit": 69,
+  "defaultAmount": 2,
+  "step": 0.5,
+  "category": "fruit",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168153
+  },
+  "prototype": null
+ },
+ {
+  "id": "avocado",
+  "name": "Avocado",
+  "unit": "whole",
+  "gramsPerUnit": 150,
+  "defaultAmount": 0.25,
+  "step": 0.25,
+  "category": "fats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171705
+  },
+  "prototype": [
+   240,
+   3,
+   12.8,
+   22
+  ]
+ },
+ {
+  "id": "broccoli-cooked",
+  "name": "Broccoli, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 156,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169967
+  },
+  "prototype": [
+   55,
+   3.7,
+   11.2,
+   0.6
+  ]
+ },
+ {
+  "id": "zucchini-cooked",
+  "name": "Zucchini, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 180,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169292
+  },
+  "prototype": null
+ },
+ {
+  "id": "green-beans-cooked",
+  "name": "Green beans, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 125,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169141
+  },
+  "prototype": null
+ },
+ {
+  "id": "cauliflower-cooked",
+  "name": "Cauliflower, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 124,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170397
+  },
+  "prototype": null
+ },
+ {
+  "id": "asparagus-cooked",
+  "name": "Asparagus, cooked",
+  "unit": "cup",
+  "gramsPerUnit": 180,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168390
+  },
+  "prototype": null
+ },
+ {
+  "id": "mixed-veggies-frozen-with-corn-and-peas",
+  "name": "Mixed veggies, frozen (with corn and peas)",
+  "unit": "cup",
+  "gramsPerUnit": 182,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170472
+  },
+  "prototype": null
+ },
+ {
+  "id": "salad-greens",
+  "name": "Salad greens",
+  "unit": "cup",
+  "gramsPerUnit": 36,
+  "defaultAmount": 2,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169249
+  },
+  "prototype": [
+   8,
+   0.6,
+   1.3,
+   0.1
+  ]
+ },
+ {
+  "id": "spinach-raw",
+  "name": "Spinach, raw",
+  "unit": "cup",
+  "gramsPerUnit": 30,
+  "defaultAmount": 2,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168462
+  },
+  "prototype": null
+ },
+ {
+  "id": "carrots",
+  "name": "Carrots",
+  "unit": "cup",
+  "gramsPerUnit": 128,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170393
+  },
+  "prototype": [
+   52,
+   1.2,
+   12,
+   0.3
+  ]
+ },
+ {
+  "id": "cucumber",
+  "name": "Cucumber",
+  "unit": "cup",
+  "gramsPerUnit": 104,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168409
+  },
+  "prototype": null
+ },
+ {
+  "id": "tomatoes",
+  "name": "Tomatoes",
+  "unit": "cup",
+  "gramsPerUnit": 180,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170457
+  },
+  "prototype": null
+ },
+ {
+  "id": "cabbage-or-slaw-mix",
+  "name": "Cabbage or slaw mix",
+  "unit": "cup",
+  "gramsPerUnit": 70,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169975
+  },
+  "prototype": null
+ },
+ {
+  "id": "corn",
+  "name": "Corn",
+  "unit": "cup",
+  "gramsPerUnit": 165,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168399
+  },
+  "prototype": [
+   140,
+   5,
+   30,
+   2
+  ]
+ },
+ {
+  "id": "peas",
+  "name": "Peas",
+  "unit": "cup",
+  "gramsPerUnit": 160,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "vegetables",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170017
+  },
+  "prototype": [
+   134,
+   8.6,
+   25,
+   0.4
+  ]
+ },
+ {
+  "id": "olive-oil",
+  "name": "Olive oil",
+  "unit": "tsp",
+  "gramsPerUnit": 4.5,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "fats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171413
+  },
+  "prototype": [
+   40,
+   0,
+   0,
+   4.5
+  ]
+ },
+ {
+  "id": "peanut-butter",
+  "name": "Peanut butter",
+  "unit": "tbsp",
+  "gramsPerUnit": 16,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "fats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 172470
+  },
+  "prototype": [
+   94,
+   3.5,
+   3.5,
+   8
+  ],
+  "tags": [
+   "nuts"
+  ]
+ },
+ {
+  "id": "almond-butter",
+  "name": "Almond butter",
+  "unit": "tbsp",
+  "gramsPerUnit": 16,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "fats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168588
+  },
+  "prototype": [
+   98,
+   3.4,
+   3,
+   8.9
+  ],
+  "tags": [
+   "nuts"
+  ]
+ },
+ {
+  "id": "almonds",
+  "name": "Almonds",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 1,
+  "step": 1,
+  "category": "fats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170567
+  },
+  "prototype": [
+   164,
+   6,
+   6,
+   14
+  ],
+  "tags": [
+   "nuts"
+  ]
+ },
+ {
+  "id": "walnuts-chopped",
+  "name": "Walnuts, chopped",
+  "unit": "tbsp",
+  "gramsPerUnit": 7.5,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "fats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170187
+  },
+  "prototype": [
+   46,
+   1.1,
+   1,
+   4.6
+  ],
+  "tags": [
+   "nuts"
+  ]
+ },
+ {
+  "id": "chia-seeds",
+  "name": "Chia seeds",
+  "unit": "tbsp",
+  "gramsPerUnit": 12,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "fats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170554
+  },
+  "prototype": [
+   58,
+   2,
+   5,
+   3.7
+  ]
+ },
+ {
+  "id": "mayo",
+  "name": "Mayo",
+  "unit": "tbsp",
+  "gramsPerUnit": 13.8,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "sauces",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171009
+  },
+  "prototype": [
+   94,
+   0.1,
+   0.1,
+   10.3
+  ],
+  "tags": [
+   "egg"
+  ]
+ },
+ {
+  "id": "vinaigrette-dressing",
+  "name": "Vinaigrette dressing",
+  "unit": "tbsp",
+  "gramsPerUnit": 16,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "sauces",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171417
+  },
+  "prototype": [
+   60,
+   0,
+   2,
+   6
+  ]
+ },
+ {
+  "id": "ranch-dressing",
+  "name": "Ranch dressing",
+  "unit": "tbsp",
+  "gramsPerUnit": 15,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "sauces",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173592
+  },
+  "prototype": [
+   65,
+   0.2,
+   0.9,
+   6.7
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "guacamole",
+  "name": "Guacamole",
+  "unit": "tbsp",
+  "gramsPerUnit": 15,
+  "defaultAmount": 2,
+  "step": 0.5,
+  "category": "sauces",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2709307
+  },
+  "prototype": [
+   25,
+   0.3,
+   1.4,
+   2.2
+  ]
+ },
+ {
+  "id": "salsa",
+  "name": "Salsa",
+  "unit": "tbsp",
+  "gramsPerUnit": 16,
+  "defaultAmount": 2,
+  "step": 0.5,
+  "category": "sauces",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 174524
+  },
+  "prototype": [
+   5,
+   0.2,
+   1,
+   0
+  ]
+ },
+ {
+  "id": "sour-cream",
+  "name": "Sour cream",
+  "unit": "tbsp",
+  "gramsPerUnit": 12,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "sauces",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171257
+  },
+  "prototype": [
+   24,
+   0.3,
+   0.6,
+   2.3
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "honey",
+  "name": "Honey",
+  "unit": "tbsp",
+  "gramsPerUnit": 21,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "sauces",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169640
+  },
+  "prototype": [
+   64,
+   0.1,
+   17.3,
+   0
+  ],
+  "tags": [
+   "honey"
+  ]
+ },
+ {
+  "id": "maple-syrup",
+  "name": "Maple syrup",
+  "unit": "tbsp",
+  "gramsPerUnit": 20,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "sauces",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169661
+  },
+  "prototype": [
+   52,
+   0,
+   13.4,
+   0
+  ]
+ },
+ {
+  "id": "ketchup",
+  "name": "Ketchup",
+  "unit": "tbsp",
+  "gramsPerUnit": 17,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "sauces",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168556
+  },
+  "prototype": [
+   20,
+   0.2,
+   5.3,
+   0
+  ]
+ },
+ {
+  "id": "soy-sauce",
+  "name": "Soy sauce",
+  "unit": "tbsp",
+  "gramsPerUnit": 16,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "sauces",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 174277
+  },
+  "prototype": [
+   9,
+   1.3,
+   0.8,
+   0
+  ],
+  "tags": [
+   "soy",
+   "gluten"
+  ]
+ },
+ {
+  "id": "ice-cream-regular",
+  "name": "Ice cream, regular",
+  "unit": "cup",
+  "gramsPerUnit": 132,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "treats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 167575
+  },
+  "prototype": [
+   274,
+   4.6,
+   32,
+   14.6
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "ice-cream-premium",
+  "name": "Ice cream, premium",
+  "unit": "cup",
+  "gramsPerUnit": 214,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "treats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 167573
+  },
+  "prototype": [
+   500,
+   8,
+   44,
+   32
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "frozen-yogurt",
+  "name": "Frozen yogurt",
+  "unit": "cup",
+  "gramsPerUnit": 144,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "treats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168815
+  },
+  "prototype": [
+   220,
+   6,
+   38,
+   6
+  ],
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "sorbet",
+  "name": "Sorbet",
+  "unit": "cup",
+  "gramsPerUnit": 200,
+  "defaultAmount": 0.5,
+  "step": 0.25,
+  "category": "treats",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2709314
+  },
+  "prototype": null
+ },
+ {
+  "id": "dark-chocolate-70",
+  "name": "Dark chocolate, 70%",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 1,
+  "step": 1,
+  "category": "treats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 170273
+  },
+  "prototype": [
+   170,
+   2.2,
+   13,
+   12
+  ]
+ },
+ {
+  "id": "chocolate-chip-cookie",
+  "name": "Chocolate chip cookie",
+  "unit": "medium",
+  "gramsPerUnit": 16,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "treats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 172716
+  },
+  "prototype": [
+   78,
+   1,
+   9.3,
+   4.5
+  ],
+  "tags": [
+   "gluten",
+   "dairy",
+   "egg"
+  ]
+ },
+ {
+  "id": "potato-chips",
+  "name": "Potato chips",
+  "unit": "oz",
+  "gramsPerUnit": 28.35,
+  "defaultAmount": 1,
+  "step": 1,
+  "category": "treats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169677
+  },
+  "prototype": [
+   152,
+   2,
+   15,
+   10
+  ]
+ },
+ {
+  "id": "popcorn-air-popped",
+  "name": "Popcorn, air-popped",
+  "unit": "cup",
+  "gramsPerUnit": 8,
+  "defaultAmount": 3,
+  "step": 0.25,
+  "category": "treats",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 167959
+  },
+  "prototype": [
+   31,
+   1,
+   6.2,
+   0.4
+  ]
+ },
+ {
+  "id": "wine-red",
+  "name": "Wine, red",
+  "unit": "glass (5 oz)",
+  "gramsPerUnit": 147,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "drinks",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 173190
+  },
+  "prototype": [
+   125,
+   0.1,
+   3.8,
+   0
+  ]
+ },
+ {
+  "id": "wine-white",
+  "name": "Wine, white",
+  "unit": "glass (5 oz)",
+  "gramsPerUnit": 147,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "drinks",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 174837
+  },
+  "prototype": [
+   121,
+   0.1,
+   3.8,
+   0
+  ]
+ },
+ {
+  "id": "beer-regular",
+  "name": "Beer, regular",
+  "unit": "can (12 oz)",
+  "gramsPerUnit": 356,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "drinks",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168746
+  },
+  "prototype": [
+   153,
+   1.6,
+   12.6,
+   0
+  ],
+  "tags": [
+   "gluten"
+  ]
+ },
+ {
+  "id": "beer-light",
+  "name": "Beer, light",
+  "unit": "can (12 oz)",
+  "gramsPerUnit": 356,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "drinks",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 168749
+  },
+  "prototype": [
+   103,
+   0.9,
+   5.8,
+   0
+  ],
+  "tags": [
+   "gluten"
+  ]
+ },
+ {
+  "id": "spirits-vodka-tequila-whiskey",
+  "name": "Spirits (vodka, tequila, whiskey)",
+  "unit": "shot (1.5 oz)",
+  "gramsPerUnit": 42,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "drinks",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 174815
+  },
+  "prototype": [
+   97,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "id": "orange-juice",
+  "name": "Orange juice",
+  "unit": "cup",
+  "gramsPerUnit": 249,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "drinks",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 169100
+  },
+  "prototype": [
+   112,
+   1.7,
+   26,
+   0.5
+  ]
+ },
+ {
+  "id": "soda-regular",
+  "name": "Soda, regular",
+  "unit": "can (12 oz)",
+  "gramsPerUnit": 370,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "drinks",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 174852
+  },
+  "prototype": [
+   140,
+   0,
+   39,
+   0
+  ]
+ },
+ {
+  "id": "coffee-black",
+  "name": "Coffee, black",
+  "unit": "cup",
+  "gramsPerUnit": 237,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "drinks",
+  "fdc": {
+   "dataset": "sr_legacy",
+   "id": 171890
+  },
+  "prototype": null
+ },
+ {
+  "id": "hard-seltzer",
+  "name": "Hard seltzer",
+  "unit": "can (12 oz)",
+  "gramsPerUnit": 360,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "drinks",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2710622
+  },
+  "prototype": [
+   100,
+   0,
+   2,
+   0
+  ]
+ },
+ {
+  "id": "pizza-cheese",
+  "name": "Pizza, cheese",
+  "unit": "slice (large pizza)",
+  "gramsPerUnit": 119,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2708616
+  },
+  "prototype": [
+   285,
+   12,
+   36,
+   10
+  ],
+  "tags": [
+   "gluten",
+   "dairy"
+  ]
+ },
+ {
+  "id": "pizza-pepperoni",
+  "name": "Pizza, pepperoni",
+  "unit": "slice (large pizza)",
+  "gramsPerUnit": 124,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2708640
+  },
+  "prototype": [
+   313,
+   13,
+   35,
+   13
+  ],
+  "tags": [
+   "gluten",
+   "dairy",
+   "pork",
+   "meat"
+  ]
+ },
+ {
+  "id": "sushi-california-roll",
+  "name": "Sushi, California roll",
+  "unit": "roll (8 pc)",
+  "gramsPerUnit": 240,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "fdc": {
+   "dataset": "fndds",
+   "id": 2708961
+  },
+  "prototype": [
+   255,
+   9,
+   38,
+   7
+  ],
+  "tags": [
+   "fish"
+  ]
+ },
+ {
+  "id": "chipotle-chicken-bowl-rice-beans-salsa-cheese",
+  "name": "Chipotle chicken bowl (rice, beans, salsa, cheese)",
+  "unit": "bowl",
+  "kcal": 655,
+  "protein": 50,
+  "carbs": 67,
+  "fat": 21,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": false,
+  "source": "Chipotle published values: chicken 180/32/0/7, white rice 210/4/40/4, black beans 130/8/22/1.5, fresh tomato salsa 25/0/4/0, cheese 110/6/1/8.5 (chipotle.com, checked Nov 2026)",
+  "tags": [
+   "poultry",
+   "dairy"
+  ]
+ },
+ {
+  "id": "cheeseburger-fast-food-quarter-pounder-style",
+  "name": "Cheeseburger, fast food (Quarter Pounder-style)",
+  "unit": "burger",
+  "kcal": 520,
+  "protein": 30,
+  "carbs": 42,
+  "fat": 26,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": false,
+  "source": "McDonald’s US published values for Quarter Pounder with Cheese (mcdonalds.com, checked Nov 2026)",
+  "tags": [
+   "meat",
+   "gluten",
+   "dairy"
+  ]
+ },
+ {
+  "id": "french-fries-medium",
+  "name": "French fries, medium",
+  "unit": "order",
+  "kcal": 320,
+  "protein": 4,
+  "carbs": 43,
+  "fat": 15,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": false,
+  "source": "McDonald’s US published values for medium fries (mcdonalds.com, checked Nov 2026)"
+ },
+ {
+  "id": "chicken-nuggets",
+  "name": "Chicken nuggets",
+  "unit": "piece",
+  "kcal": 42,
+  "protein": 2.3,
+  "carbs": 2.5,
+  "fat": 2.5,
+  "defaultAmount": 6,
+  "step": 1,
+  "category": "restaurant",
+  "isRestaurantEstimate": false,
+  "source": "McDonald’s US published values: 6-piece McNuggets 250 kcal, 14 g protein, 15 g carbs, 15 g fat, divided by 6 (mcdonalds.com, checked Nov 2026)",
+  "tags": [
+   "poultry",
+   "gluten"
+  ]
+ },
+ {
+  "id": "latte-2-milk",
+  "name": "Latte, 2% milk",
+  "unit": "tall (12 oz)",
+  "kcal": 150,
+  "protein": 10,
+  "carbs": 15,
+  "fat": 6,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "drinks",
+  "isRestaurantEstimate": false,
+  "source": "Starbucks published values for a Tall Caffè Latte with 2% milk (starbucks.com, checked Nov 2026)",
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "margarita",
+  "name": "Margarita",
+  "unit": "drink (8 oz)",
+  "kcal": 300,
+  "protein": 0,
+  "carbs": 36,
+  "fat": 0,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": []
+ },
+ {
+  "id": "boba-milk-tea",
+  "name": "Boba milk tea",
+  "unit": "cup (16 oz)",
+  "kcal": 350,
+  "protein": 2,
+  "carbs": 70,
+  "fat": 8,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "dairy"
+  ]
+ },
+ {
+  "id": "fruit-smoothie",
+  "name": "Fruit smoothie",
+  "unit": "cup (16 oz)",
+  "kcal": 300,
+  "protein": 4,
+  "carbs": 70,
+  "fat": 1,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": []
+ },
+ {
+  "id": "beef-chow-fun",
+  "name": "Beef chow fun",
+  "unit": "cup",
+  "kcal": 300,
+  "protein": 13,
+  "carbs": 35,
+  "fat": 12,
+  "defaultAmount": 2,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "meat",
+   "gluten",
+   "soy"
+  ]
+ },
+ {
+  "id": "chicken-fried-rice",
+  "name": "Chicken fried rice",
+  "unit": "cup",
+  "kcal": 300,
+  "protein": 11,
+  "carbs": 40,
+  "fat": 11,
+  "defaultAmount": 1.5,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "egg",
+   "soy"
+  ]
+ },
+ {
+  "id": "lo-mein-chicken",
+  "name": "Lo mein, chicken",
+  "unit": "cup",
+  "kcal": 310,
+  "protein": 12,
+  "carbs": 42,
+  "fat": 11,
+  "defaultAmount": 1.5,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "gluten",
+   "soy"
+  ]
+ },
+ {
+  "id": "beef-and-broccoli",
+  "name": "Beef and broccoli",
+  "unit": "cup",
+  "kcal": 250,
+  "protein": 18,
+  "carbs": 12,
+  "fat": 14,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "meat",
+   "soy"
+  ]
+ },
+ {
+  "id": "orange-chicken",
+  "name": "Orange chicken",
+  "unit": "cup",
+  "kcal": 450,
+  "protein": 22,
+  "carbs": 48,
+  "fat": 19,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "gluten"
+  ]
+ },
+ {
+  "id": "kung-pao-chicken",
+  "name": "Kung pao chicken",
+  "unit": "cup",
+  "kcal": 290,
+  "protein": 16,
+  "carbs": 14,
+  "fat": 19,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "nuts",
+   "soy"
+  ]
+ },
+ {
+  "id": "dumplings-pork",
+  "name": "Dumplings, pork",
+  "unit": "piece",
+  "kcal": 50,
+  "protein": 2.5,
+  "carbs": 5,
+  "fat": 2.2,
+  "defaultAmount": 6,
+  "step": 1,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "pork",
+   "meat",
+   "gluten"
+  ]
+ },
+ {
+  "id": "pad-thai-chicken",
+  "name": "Pad thai, chicken",
+  "unit": "cup",
+  "kcal": 350,
+  "protein": 16,
+  "carbs": 45,
+  "fat": 13,
+  "defaultAmount": 2,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "egg",
+   "nuts"
+  ]
+ },
+ {
+  "id": "pho-beef",
+  "name": "Pho, beef",
+  "unit": "bowl",
+  "kcal": 500,
+  "protein": 30,
+  "carbs": 60,
+  "fat": 12,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "meat"
+  ]
+ },
+ {
+  "id": "ramen-tonkotsu",
+  "name": "Ramen, tonkotsu",
+  "unit": "bowl",
+  "kcal": 850,
+  "protein": 35,
+  "carbs": 85,
+  "fat": 40,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "pork",
+   "meat",
+   "gluten",
+   "egg"
+  ]
+ },
+ {
+  "id": "bibimbap",
+  "name": "Bibimbap",
+  "unit": "bowl",
+  "kcal": 600,
+  "protein": 25,
+  "carbs": 85,
+  "fat": 18,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "meat",
+   "egg"
+  ]
+ },
+ {
+  "id": "poke-bowl-salmon",
+  "name": "Poke bowl, salmon",
+  "unit": "bowl",
+  "kcal": 700,
+  "protein": 35,
+  "carbs": 85,
+  "fat": 22,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "fish",
+   "soy"
+  ]
+ },
+ {
+  "id": "sushi-spicy-tuna-roll",
+  "name": "Sushi, spicy tuna roll",
+  "unit": "roll (6 pc)",
+  "kcal": 290,
+  "protein": 24,
+  "carbs": 26,
+  "fat": 11,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "fish"
+  ]
+ },
+ {
+  "id": "sushi-nigiri",
+  "name": "Sushi, nigiri",
+  "unit": "piece",
+  "kcal": 55,
+  "protein": 3,
+  "carbs": 8,
+  "fat": 1,
+  "defaultAmount": 4,
+  "step": 1,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "fish"
+  ]
+ },
+ {
+  "id": "chicken-tikka-masala",
+  "name": "Chicken tikka masala",
+  "unit": "cup",
+  "kcal": 400,
+  "protein": 28,
+  "carbs": 14,
+  "fat": 26,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "dairy"
+  ]
+ },
+ {
+  "id": "butter-chicken",
+  "name": "Butter chicken",
+  "unit": "cup",
+  "kcal": 440,
+  "protein": 28,
+  "carbs": 12,
+  "fat": 31,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "dairy"
+  ]
+ },
+ {
+  "id": "naan",
+  "name": "Naan",
+  "unit": "piece",
+  "kcal": 260,
+  "protein": 9,
+  "carbs": 45,
+  "fat": 5,
+  "defaultAmount": 1,
+  "step": 1,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "gluten",
+   "dairy"
+  ]
+ },
+ {
+  "id": "burrito-chicken",
+  "name": "Burrito, chicken",
+  "unit": "burrito",
+  "kcal": 950,
+  "protein": 50,
+  "carbs": 110,
+  "fat": 33,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "gluten",
+   "dairy"
+  ]
+ },
+ {
+  "id": "street-taco-carnitas",
+  "name": "Street taco, carnitas",
+  "unit": "taco",
+  "kcal": 180,
+  "protein": 10,
+  "carbs": 14,
+  "fat": 9,
+  "defaultAmount": 3,
+  "step": 1,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "pork",
+   "meat"
+  ]
+ },
+ {
+  "id": "fried-chicken-breast",
+  "name": "Fried chicken breast",
+  "unit": "piece",
+  "kcal": 390,
+  "protein": 39,
+  "carbs": 11,
+  "fat": 21,
+  "defaultAmount": 1,
+  "step": 1,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "gluten"
+  ]
+ },
+ {
+  "id": "chicken-shawarma-wrap",
+  "name": "Chicken shawarma wrap",
+  "unit": "wrap",
+  "kcal": 600,
+  "protein": 40,
+  "carbs": 50,
+  "fat": 25,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "gluten"
+  ]
+ },
+ {
+  "id": "chicken-caesar-salad",
+  "name": "Chicken Caesar salad",
+  "unit": "salad",
+  "kcal": 600,
+  "protein": 40,
+  "carbs": 20,
+  "fat": 40,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "dairy",
+   "egg",
+   "fish",
+   "gluten"
+  ]
+ },
+ {
+  "id": "turkey-sandwich-deli",
+  "name": "Turkey sandwich, deli",
+  "unit": "sandwich",
+  "kcal": 450,
+  "protein": 30,
+  "carbs": 45,
+  "fat": 15,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "poultry",
+   "gluten"
+  ]
+ },
+ {
+  "id": "mac-and-cheese",
+  "name": "Mac and cheese",
+  "unit": "cup",
+  "kcal": 400,
+  "protein": 15,
+  "carbs": 45,
+  "fat": 18,
+  "defaultAmount": 1,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "dairy",
+   "gluten"
+  ]
+ },
+ {
+  "id": "spaghetti-with-meat-sauce",
+  "name": "Spaghetti with meat sauce",
+  "unit": "cup",
+  "kcal": 330,
+  "protein": 17,
+  "carbs": 40,
+  "fat": 11,
+  "defaultAmount": 1.5,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "meat",
+   "gluten"
+  ]
+ },
+ {
+  "id": "fettuccine-alfredo",
+  "name": "Fettuccine Alfredo",
+  "unit": "cup",
+  "kcal": 450,
+  "protein": 15,
+  "carbs": 40,
+  "fat": 26,
+  "defaultAmount": 1.5,
+  "step": 0.25,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "dairy",
+   "gluten"
+  ]
+ },
+ {
+  "id": "avocado-toast",
+  "name": "Avocado toast",
+  "unit": "slice",
+  "kcal": 250,
+  "protein": 6,
+  "carbs": 25,
+  "fat": 15,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "gluten"
+  ]
+ },
+ {
+  "id": "breakfast-burrito",
+  "name": "Breakfast burrito",
+  "unit": "burrito",
+  "kcal": 600,
+  "protein": 30,
+  "carbs": 45,
+  "fat": 33,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "egg",
+   "pork",
+   "meat",
+   "gluten",
+   "dairy"
+  ]
+ },
+ {
+  "id": "pancake-with-syrup-no-butter",
+  "name": "Pancake (with syrup, no butter)",
+  "unit": "pancake",
+  "kcal": 150,
+  "protein": 4,
+  "carbs": 22,
+  "fat": 5,
+  "defaultAmount": 3,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "gluten",
+   "dairy",
+   "egg"
+  ]
+ },
+ {
+  "id": "acai-bowl",
+  "name": "Acai bowl",
+  "unit": "bowl",
+  "kcal": 500,
+  "protein": 7,
+  "carbs": 85,
+  "fat": 16,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "honey"
+  ]
+ },
+ {
+  "id": "croissant",
+  "name": "Croissant",
+  "unit": "medium",
+  "kcal": 230,
+  "protein": 5,
+  "carbs": 26,
+  "fat": 12,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "gluten",
+   "dairy"
+  ]
+ },
+ {
+  "id": "bakery-muffin",
+  "name": "Bakery muffin",
+  "unit": "muffin",
+  "kcal": 400,
+  "protein": 6,
+  "carbs": 55,
+  "fat": 18,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "gluten",
+   "dairy",
+   "egg"
+  ]
+ },
+ {
+  "id": "donut-glazed",
+  "name": "Donut, glazed",
+  "unit": "donut",
+  "kcal": 240,
+  "protein": 3,
+  "carbs": 30,
+  "fat": 12,
+  "defaultAmount": 1,
+  "step": 0.5,
+  "category": "restaurant",
+  "isRestaurantEstimate": true,
+  "source": "Restaurant estimate, varies by restaurant and portion. Not verified against a published source.",
+  "tags": [
+   "gluten",
+   "dairy",
+   "egg"
+  ]
+ }
+]

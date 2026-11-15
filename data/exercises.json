@@ -1,0 +1,1361 @@
+[
+ {
+  "id": "goblet-squat",
+  "name": "Goblet squat",
+  "pattern": "squat",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "quads",
+   "glutes"
+  ],
+  "focusTags": [
+   "legs",
+   "glutes"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Hold one dumbbell at your chest, elbows tucked",
+   "Sit down between your heels, chest tall",
+   "Drive through the whole foot to stand"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "db-sumo-squat",
+  "name": "Dumbbell sumo squat",
+  "pattern": "squat",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "quads",
+   "glutes",
+   "adductors"
+  ],
+  "focusTags": [
+   "legs",
+   "glutes"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Wide stance, toes turned out",
+   "Let the dumbbell hang straight down",
+   "Knees track over toes as you sit down"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "back-squat",
+  "name": "Barbell back squat",
+  "pattern": "squat",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "quads",
+   "glutes"
+  ],
+  "focusTags": [
+   "legs",
+   "glutes"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Bar on your upper back, brace your middle",
+   "Sit down and slightly back, knees over toes",
+   "Stand up hard, keep your chest up"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "leg-press",
+  "name": "Leg press",
+  "pattern": "squat",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "quads",
+   "glutes"
+  ],
+  "focusTags": [
+   "legs",
+   "glutes"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Feet hip-width in the middle of the platform",
+   "Lower until hips start to tuck, then stop",
+   "Press through your heels, don’t lock the knees hard"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "bw-squat",
+  "name": "Tempo bodyweight squat",
+  "pattern": "squat",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "quads",
+   "glutes"
+  ],
+  "focusTags": [
+   "legs",
+   "glutes"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Take 3 seconds to lower",
+   "Arms forward for balance, chest tall",
+   "Stand up quickly through the whole foot"
+  ],
+  "loaded": false,
+  "media": null
+ },
+ {
+  "id": "db-rdl",
+  "name": "Dumbbell Romanian deadlift",
+  "pattern": "hinge",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "hamstrings",
+   "glutes"
+  ],
+  "focusTags": [
+   "glutes",
+   "legs"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Soft knees, push your hips back",
+   "Dumbbells slide down your thighs, back flat",
+   "Squeeze your glutes to stand tall"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "db-sl-rdl",
+  "name": "Single-leg Romanian deadlift",
+  "pattern": "hinge",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "hamstrings",
+   "glutes"
+  ],
+  "focusTags": [
+   "glutes",
+   "legs"
+  ],
+  "isMain": false,
+  "unit": "per-side",
+  "cues": [
+   "Dumbbell in the hand opposite the standing leg",
+   "Hinge until your body is close to level",
+   "Keep your hips square to the floor"
+  ],
+  "loaded": true,
+  "sideLabel": "leg",
+  "media": null
+ },
+ {
+  "id": "bb-rdl",
+  "name": "Barbell Romanian deadlift",
+  "pattern": "hinge",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "hamstrings",
+   "glutes"
+  ],
+  "focusTags": [
+   "glutes",
+   "legs"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Bar close to your legs the whole time",
+   "Hips back until you feel your hamstrings",
+   "Stand tall without leaning back"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "back-extension",
+  "name": "Back extension",
+  "pattern": "hinge",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "glutes",
+   "hamstrings",
+   "lower back"
+  ],
+  "focusTags": [
+   "glutes"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Pad just below your hip bones",
+   "Round down slowly, then lift with your glutes",
+   "Stop when your body is in a straight line"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "bw-sl-hinge",
+  "name": "Single-leg hip hinge",
+  "pattern": "hinge",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "hamstrings",
+   "glutes"
+  ],
+  "focusTags": [
+   "glutes",
+   "legs"
+  ],
+  "isMain": true,
+  "unit": "per-side",
+  "cues": [
+   "Fingertips on a wall for balance if needed",
+   "Reach your back leg long as you hinge",
+   "Drive the standing hip forward to stand"
+  ],
+  "loaded": false,
+  "sideLabel": "leg",
+  "media": null
+ },
+ {
+  "id": "bulgarian-split-squat",
+  "name": "Bulgarian split squat",
+  "pattern": "lunge",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "quads",
+   "glutes"
+  ],
+  "focusTags": [
+   "legs",
+   "glutes"
+  ],
+  "isMain": false,
+  "unit": "per-side",
+  "cues": [
+   "Back foot on a couch, front foot well forward",
+   "Drop your back knee straight down",
+   "Push through the front heel"
+  ],
+  "loaded": true,
+  "sideLabel": "leg",
+  "note": "Back foot on a couch",
+  "media": null
+ },
+ {
+  "id": "reverse-lunge",
+  "name": "Reverse lunge",
+  "pattern": "lunge",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "quads",
+   "glutes"
+  ],
+  "focusTags": [
+   "legs",
+   "glutes"
+  ],
+  "isMain": true,
+  "unit": "per-side",
+  "cues": [
+   "Step back long, both knees bend to 90°",
+   "Torso tall, dumbbells by your sides",
+   "Push through the front foot to return"
+  ],
+  "loaded": true,
+  "sideLabel": "leg",
+  "media": null
+ },
+ {
+  "id": "gym-split-squat",
+  "name": "Dumbbell Bulgarian split squat",
+  "pattern": "lunge",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "quads",
+   "glutes"
+  ],
+  "focusTags": [
+   "legs",
+   "glutes"
+  ],
+  "isMain": false,
+  "unit": "per-side",
+  "cues": [
+   "Back foot on a bench",
+   "Lower straight down, front knee over toes",
+   "Stand up through the front heel"
+  ],
+  "loaded": true,
+  "sideLabel": "leg",
+  "media": null
+ },
+ {
+  "id": "walking-lunge",
+  "name": "Dumbbell walking lunge",
+  "pattern": "lunge",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "quads",
+   "glutes"
+  ],
+  "focusTags": [
+   "legs",
+   "glutes"
+  ],
+  "isMain": true,
+  "unit": "per-side",
+  "cues": [
+   "Long steps, back knee nearly touches",
+   "Stay tall, dumbbells at your sides",
+   "Push off the front foot into the next step"
+  ],
+  "loaded": true,
+  "sideLabel": "leg",
+  "media": null
+ },
+ {
+  "id": "bw-split-squat",
+  "name": "Split squat",
+  "pattern": "lunge",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "quads",
+   "glutes"
+  ],
+  "focusTags": [
+   "legs",
+   "glutes"
+  ],
+  "isMain": false,
+  "unit": "per-side",
+  "cues": [
+   "Staggered stance, feet hip-width",
+   "Lower your back knee toward the floor",
+   "Keep most of your weight on the front foot"
+  ],
+  "loaded": false,
+  "sideLabel": "leg",
+  "media": null
+ },
+ {
+  "id": "bw-reverse-lunge",
+  "name": "Bodyweight reverse lunge",
+  "pattern": "lunge",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "quads",
+   "glutes"
+  ],
+  "focusTags": [
+   "legs",
+   "glutes"
+  ],
+  "isMain": true,
+  "unit": "per-side",
+  "cues": [
+   "Step back and lower with control",
+   "Chest tall, hands on hips",
+   "Drive back up through the front heel"
+  ],
+  "loaded": false,
+  "sideLabel": "leg",
+  "media": null
+ },
+ {
+  "id": "hip-thrust",
+  "name": "Hip thrust",
+  "pattern": "bridge",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "glutes"
+  ],
+  "focusTags": [
+   "glutes"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Upper back on a couch, dumbbell on your hips",
+   "Chin tucked, ribs down",
+   "Squeeze at the top for a second"
+  ],
+  "loaded": true,
+  "note": "Shoulders on a couch",
+  "media": null
+ },
+ {
+  "id": "bb-hip-thrust",
+  "name": "Barbell hip thrust",
+  "pattern": "bridge",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "glutes"
+  ],
+  "focusTags": [
+   "glutes"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Upper back on a bench, pad on the bar",
+   "Feet flat, shins vertical at the top",
+   "Lock out with your glutes, not your back"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "bw-sl-bridge",
+  "name": "Single-leg glute bridge",
+  "pattern": "bridge",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "glutes"
+  ],
+  "focusTags": [
+   "glutes"
+  ],
+  "isMain": true,
+  "unit": "per-side",
+  "cues": [
+   "Lie on your back, one foot planted",
+   "Press through the heel to lift your hips",
+   "Keep your hips level"
+  ],
+  "loaded": false,
+  "sideLabel": "leg",
+  "media": null
+ },
+ {
+  "id": "floor-press",
+  "name": "Floor press",
+  "pattern": "hpush",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "chest",
+   "triceps"
+  ],
+  "focusTags": [
+   "chest"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Lie on the floor, dumbbells over your chest",
+   "Lower until your upper arms touch the floor",
+   "Press up and slightly together"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "db-floor-fly",
+  "name": "Dumbbell floor fly",
+  "pattern": "hpush",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "chest"
+  ],
+  "focusTags": [
+   "chest"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Slight bend in the elbows the whole time",
+   "Open your arms until they touch the floor",
+   "Hug a big tree to bring them back up"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "db-bench",
+  "name": "Dumbbell bench press",
+  "pattern": "hpush",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "chest",
+   "triceps"
+  ],
+  "focusTags": [
+   "chest"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Shoulder blades pulled back into the bench",
+   "Lower to the sides of your chest",
+   "Press up without bouncing"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "incline-press",
+  "name": "Incline dumbbell press",
+  "pattern": "hpush",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "upper chest",
+   "shoulders"
+  ],
+  "focusTags": [
+   "chest",
+   "shoulders"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Bench at a low incline",
+   "Lower slowly to upper chest",
+   "Press up and in"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "cable-fly",
+  "name": "Cable fly",
+  "pattern": "hpush",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "chest"
+  ],
+  "focusTags": [
+   "chest"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Step forward, slight forward lean",
+   "Soft elbows, sweep hands together",
+   "Control the stretch on the way back"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "pushup",
+  "name": "Push-ups",
+  "pattern": "hpush",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "chest",
+   "triceps",
+   "core"
+  ],
+  "focusTags": [
+   "chest"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Hands under shoulders, body in one line",
+   "Lower your chest between your hands",
+   "Push the floor away"
+  ],
+  "loaded": false,
+  "rirOnly": true,
+  "note": "Hands on a counter if needed",
+  "media": null
+ },
+ {
+  "id": "bw-incline-pushup",
+  "name": "Incline push-up",
+  "pattern": "hpush",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "chest",
+   "triceps"
+  ],
+  "focusTags": [
+   "chest"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Hands on a sturdy counter or table",
+   "Body straight from head to heels",
+   "Touch your chest to the edge, press back"
+  ],
+  "loaded": false,
+  "rirOnly": true,
+  "media": null
+ },
+ {
+  "id": "ohp",
+  "name": "Overhead press",
+  "pattern": "vpush",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "shoulders",
+   "triceps"
+  ],
+  "focusTags": [
+   "shoulders"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Dumbbells at shoulder height, palms in or forward",
+   "Squeeze glutes so you don’t lean back",
+   "Press straight up, biceps by your ears"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "shoulder-press",
+  "name": "Seated dumbbell shoulder press",
+  "pattern": "vpush",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "shoulders",
+   "triceps"
+  ],
+  "focusTags": [
+   "shoulders"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Bench upright, back supported",
+   "Lower to about chin height",
+   "Press up without arching your back"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "pike-pushup",
+  "name": "Pike push-up",
+  "pattern": "vpush",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "shoulders",
+   "triceps"
+  ],
+  "focusTags": [
+   "shoulders"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Hips high, body in an upside-down V",
+   "Lower the top of your head toward the floor",
+   "Press back up through your hands"
+  ],
+  "loaded": false,
+  "rirOnly": true,
+  "media": null
+ },
+ {
+  "id": "one-arm-row",
+  "name": "One-arm row",
+  "pattern": "hpull",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "upper back",
+   "lats",
+   "biceps"
+  ],
+  "focusTags": [
+   "upper_back"
+  ],
+  "isMain": true,
+  "unit": "per-side",
+  "cues": [
+   "Hand and knee on a couch, back flat",
+   "Pull the dumbbell to your hip pocket",
+   "Lower all the way down slowly"
+  ],
+  "loaded": true,
+  "sideLabel": "side",
+  "media": null
+ },
+ {
+  "id": "cable-row",
+  "name": "Seated cable row",
+  "pattern": "hpull",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "upper back",
+   "lats"
+  ],
+  "focusTags": [
+   "upper_back"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Sit tall, slight bend in the knees",
+   "Pull the handle to your lower ribs",
+   "Let your shoulders reach forward on the way back"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "table-row",
+  "name": "Inverted table row",
+  "pattern": "hpull",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "upper back",
+   "lats",
+   "biceps"
+  ],
+  "focusTags": [
+   "upper_back"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Lie under a sturdy table, grip the edge",
+   "Body straight, pull your chest up",
+   "Lower with control"
+  ],
+  "loaded": false,
+  "rirOnly": true,
+  "note": "Bend your knees to make it easier",
+  "media": null
+ },
+ {
+  "id": "db-pullover",
+  "name": "Dumbbell pullover",
+  "pattern": "vpull",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "lats",
+   "chest"
+  ],
+  "focusTags": [
+   "upper_back"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Lie on the floor, one dumbbell held over your chest",
+   "Lower it behind your head with soft elbows",
+   "Pull it back over your chest with your lats"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "lat-pulldown",
+  "name": "Lat pulldown",
+  "pattern": "vpull",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "lats",
+   "upper back"
+  ],
+  "focusTags": [
+   "upper_back"
+  ],
+  "isMain": true,
+  "unit": "reps",
+  "cues": [
+   "Grip a little wider than shoulders",
+   "Pull the bar to your upper chest",
+   "Elbows drive down toward your pockets"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "floor-pulldown",
+  "name": "Prone floor pulldown",
+  "pattern": "vpull",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "lats",
+   "upper back"
+  ],
+  "focusTags": [
+   "upper_back"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Lie face down, arms overhead",
+   "Pull elbows down to your sides, squeezing",
+   "Reach long again slowly"
+  ],
+  "loaded": false,
+  "media": null
+ },
+ {
+  "id": "lateral-raise",
+  "name": "Lateral raise",
+  "pattern": "lateral_raise",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "side delts"
+  ],
+  "focusTags": [
+   "shoulders"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Light dumbbells, slight bend in the elbows",
+   "Raise out to the sides to shoulder height",
+   "Lower slowly, no swinging"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "cable-lateral-raise",
+  "name": "Cable lateral raise",
+  "pattern": "lateral_raise",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "side delts"
+  ],
+  "focusTags": [
+   "shoulders"
+  ],
+  "isMain": false,
+  "unit": "per-side",
+  "cues": [
+   "Cable at the lowest setting, across your body",
+   "Lead with the elbow, stop at shoulder height",
+   "Control it down"
+  ],
+  "loaded": true,
+  "sideLabel": "side",
+  "media": null
+ },
+ {
+  "id": "y-raise",
+  "name": "Prone Y raise",
+  "pattern": "lateral_raise",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "shoulders",
+   "upper back"
+  ],
+  "focusTags": [
+   "shoulders",
+   "upper_back"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Lie face down, arms in a Y, thumbs up",
+   "Lift your arms a few inches off the floor",
+   "Pause, then lower slowly"
+  ],
+  "loaded": false,
+  "media": null
+ },
+ {
+  "id": "rear-delt-fly",
+  "name": "Rear-delt fly",
+  "pattern": "rear_delt",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "rear delts",
+   "upper back"
+  ],
+  "focusTags": [
+   "shoulders",
+   "upper_back"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Hinge forward, back flat, light dumbbells",
+   "Sweep your arms out wide",
+   "Squeeze between your shoulder blades"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "face-pull",
+  "name": "Face pull",
+  "pattern": "rear_delt",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "rear delts",
+   "upper back"
+  ],
+  "focusTags": [
+   "shoulders",
+   "upper_back"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Rope at eye height",
+   "Pull toward your forehead, elbows high",
+   "Finish with hands by your ears"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "t-raise",
+  "name": "Prone T raise",
+  "pattern": "rear_delt",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "rear delts",
+   "upper back"
+  ],
+  "focusTags": [
+   "shoulders",
+   "upper_back"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Lie face down, arms out in a T",
+   "Lift your arms, squeeze your shoulder blades",
+   "Lower slowly"
+  ],
+  "loaded": false,
+  "media": null
+ },
+ {
+  "id": "db-curl",
+  "name": "Dumbbell curl",
+  "pattern": "biceps",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "biceps"
+  ],
+  "focusTags": [
+   "arms"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Elbows pinned by your sides",
+   "Curl up, palms facing up",
+   "Lower all the way, slowly"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "cable-curl",
+  "name": "Cable curl",
+  "pattern": "biceps",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "biceps"
+  ],
+  "focusTags": [
+   "arms"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Stand tall, elbows still",
+   "Curl the bar to your shoulders",
+   "Control the way down"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "towel-curl",
+  "name": "Towel curl",
+  "pattern": "biceps",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "biceps"
+  ],
+  "focusTags": [
+   "arms"
+  ],
+  "isMain": false,
+  "unit": "per-side",
+  "cues": [
+   "Loop a towel under one foot, hold both ends",
+   "Curl up while your foot pushes down",
+   "Make each rep hard for the full range"
+  ],
+  "loaded": false,
+  "sideLabel": "arm",
+  "media": null
+ },
+ {
+  "id": "overhead-triceps-extension",
+  "name": "Overhead triceps extension",
+  "pattern": "triceps",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "triceps"
+  ],
+  "focusTags": [
+   "arms"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "One dumbbell held overhead with both hands",
+   "Lower it behind your head, elbows forward",
+   "Straighten your arms fully"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "triceps-pushdown",
+  "name": "Triceps pushdown",
+  "pattern": "triceps",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "triceps"
+  ],
+  "focusTags": [
+   "arms"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Elbows pinned by your sides",
+   "Push the bar down until arms are straight",
+   "Let it rise to just above 90°"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "bench-dip",
+  "name": "Bench dip",
+  "pattern": "triceps",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "triceps"
+  ],
+  "focusTags": [
+   "arms"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Hands on a sturdy chair behind you",
+   "Bend your elbows straight back",
+   "Press up to straight arms"
+  ],
+  "loaded": false,
+  "rirOnly": true,
+  "media": null
+ },
+ {
+  "id": "dead-bug",
+  "name": "Dead bug",
+  "pattern": "core_ext",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "core"
+  ],
+  "focusTags": [
+   "core"
+  ],
+  "isMain": false,
+  "unit": "per-side",
+  "cues": [
+   "Lie on your back, arms up, knees over hips",
+   "Lower the opposite arm and leg slowly",
+   "Keep your low back pressed to the floor"
+  ],
+  "loaded": false,
+  "sideLabel": "side",
+  "fixedReps": "8",
+  "media": null
+ },
+ {
+  "id": "plank",
+  "name": "Plank",
+  "pattern": "core_ext",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "core"
+  ],
+  "focusTags": [
+   "core"
+  ],
+  "isMain": false,
+  "unit": "seconds",
+  "cues": [
+   "Forearms under shoulders",
+   "Squeeze glutes, ribs down",
+   "Breathe slowly"
+  ],
+  "loaded": false,
+  "fixedReps": "30",
+  "media": null
+ },
+ {
+  "id": "ab-rollout",
+  "name": "Kneeling ab rollout",
+  "pattern": "core_ext",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "core"
+  ],
+  "focusTags": [
+   "core"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Kneel with the wheel under your shoulders",
+   "Roll out only as far as your back stays flat",
+   "Pull back with your abs"
+  ],
+  "loaded": true,
+  "fixedReps": "8",
+  "media": null
+ },
+ {
+  "id": "db-deadbug",
+  "name": "Dumbbell dead bug",
+  "pattern": "core_ext",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "core"
+  ],
+  "focusTags": [
+   "core"
+  ],
+  "isMain": false,
+  "unit": "per-side",
+  "cues": [
+   "Hold one light dumbbell over your chest",
+   "Lower opposite leg and the weight back slowly",
+   "Low back stays on the floor"
+  ],
+  "loaded": true,
+  "sideLabel": "side",
+  "fixedReps": "8",
+  "media": null
+ },
+ {
+  "id": "side-plank",
+  "name": "Side plank",
+  "pattern": "core_rot",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "obliques",
+   "core"
+  ],
+  "focusTags": [
+   "core"
+  ],
+  "isMain": false,
+  "unit": "seconds",
+  "cues": [
+   "Elbow under your shoulder",
+   "Hips high, body in one line",
+   "Breathe and hold"
+  ],
+  "loaded": false,
+  "sideLabel": "side",
+  "fixedReps": "30",
+  "media": null
+ },
+ {
+  "id": "bird-dog",
+  "name": "Bird dog",
+  "pattern": "core_rot",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "core",
+   "glutes"
+  ],
+  "focusTags": [
+   "core"
+  ],
+  "isMain": false,
+  "unit": "per-side",
+  "cues": [
+   "Hands under shoulders, knees under hips",
+   "Reach the opposite arm and leg long",
+   "Pause without rocking your hips"
+  ],
+  "loaded": false,
+  "sideLabel": "side",
+  "fixedReps": "8",
+  "media": null
+ },
+ {
+  "id": "suitcase-carry",
+  "name": "Suitcase carry",
+  "pattern": "core_rot",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "obliques",
+   "grip"
+  ],
+  "focusTags": [
+   "core"
+  ],
+  "isMain": false,
+  "unit": "seconds",
+  "cues": [
+   "One heavy dumbbell in one hand",
+   "Walk tall without leaning",
+   "Switch hands halfway"
+  ],
+  "loaded": true,
+  "sideLabel": "side",
+  "fixedReps": "30",
+  "media": null
+ },
+ {
+  "id": "pallof-press",
+  "name": "Pallof press",
+  "pattern": "core_rot",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "core",
+   "obliques"
+  ],
+  "focusTags": [
+   "core"
+  ],
+  "isMain": false,
+  "unit": "per-side",
+  "cues": [
+   "Stand side-on to the cable",
+   "Press straight out from your chest",
+   "Don’t let it twist you"
+  ],
+  "loaded": true,
+  "sideLabel": "side",
+  "fixedReps": "10",
+  "media": null
+ },
+ {
+  "id": "db-calf-raise",
+  "name": "Dumbbell calf raise",
+  "pattern": "calf",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "calves"
+  ],
+  "focusTags": [
+   "legs"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Balls of your feet on a step",
+   "Lower your heels slowly",
+   "Rise up as high as you can"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "machine-calf-raise",
+  "name": "Standing calf raise",
+  "pattern": "calf",
+  "equipment": "gym",
+  "primaryMuscles": [
+   "calves"
+  ],
+  "focusTags": [
+   "legs"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Shoulders under the pads",
+   "Full stretch at the bottom",
+   "Pause at the top"
+  ],
+  "loaded": true,
+  "media": null
+ },
+ {
+  "id": "sl-calf-raise",
+  "name": "Single-leg calf raise",
+  "pattern": "calf",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "calves"
+  ],
+  "focusTags": [
+   "legs"
+  ],
+  "isMain": false,
+  "unit": "per-side",
+  "cues": [
+   "Hold a wall for balance",
+   "Lower your heel below the step",
+   "Rise as high as you can"
+  ],
+  "loaded": false,
+  "sideLabel": "leg",
+  "media": null
+ },
+ {
+  "id": "frog-pump",
+  "name": "Frog pump",
+  "pattern": "bridge",
+  "equipment": "bodyweight",
+  "primaryMuscles": [
+   "glutes"
+  ],
+  "focusTags": [
+   "glutes"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Soles of your feet together, knees out",
+   "Drive your hips up",
+   "Squeeze hard at the top"
+  ],
+  "loaded": false,
+  "media": null
+ },
+ {
+  "id": "db-glute-bridge",
+  "name": "Dumbbell glute bridge",
+  "pattern": "bridge",
+  "equipment": "home_db",
+  "primaryMuscles": [
+   "glutes"
+  ],
+  "focusTags": [
+   "glutes"
+  ],
+  "isMain": false,
+  "unit": "reps",
+  "cues": [
+   "Lie on your back, dumbbell on your hips",
+   "Press through your heels",
+   "Squeeze at the top for a second"
+  ],
+  "loaded": true,
+  "media": null
+ }
+]

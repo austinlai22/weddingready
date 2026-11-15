@@ -1,0 +1,900 @@
+[
+ {
+  "id": "yogurt-bowl",
+  "slot": "b",
+  "name": "Greek yogurt bowl",
+  "items": [
+   {
+    "food": "greek-yogurt-nonfat-plain",
+    "amount": 1,
+    "label": "{a} nonfat plain Greek yogurt"
+   },
+   {
+    "food": "berries-mixed",
+    "amount": 1,
+    "label": "{a} berries"
+   },
+   {
+    "food": "granola",
+    "amount": 0.25,
+    "label": "{a} granola"
+   },
+   {
+    "food": "walnuts-chopped",
+    "amount": 1,
+    "label": "{a} chopped walnuts"
+   }
+  ]
+ },
+ {
+  "id": "eggs-toast",
+  "slot": "b",
+  "name": "Eggs & toast",
+  "items": [
+   {
+    "food": "egg-large",
+    "amount": 3,
+    "label": "{a} large eggs"
+   },
+   {
+    "food": "butter",
+    "amount": 1,
+    "label": "cooked in {a} butter"
+   },
+   {
+    "food": "bread-whole-grain",
+    "amount": 1,
+    "label": "{a} whole-grain toast"
+   },
+   {
+    "food": "orange",
+    "amount": 1,
+    "label": "{a} orange"
+   }
+  ]
+ },
+ {
+  "id": "cottage-fruit",
+  "slot": "b",
+  "name": "Cottage cheese & fruit",
+  "items": [
+   {
+    "food": "cottage-cheese-2",
+    "amount": 1,
+    "label": "{a} 2% cottage cheese"
+   },
+   {
+    "food": "pineapple",
+    "amount": 1,
+    "label": "{a} pineapple or berries"
+   },
+   {
+    "food": "granola",
+    "amount": 0.125,
+    "label": "{a} granola"
+   },
+   {
+    "food": "walnuts-chopped",
+    "amount": 1,
+    "label": "{a} walnuts"
+   }
+  ]
+ },
+ {
+  "id": "protein-oats",
+  "slot": "b",
+  "name": "Protein oats",
+  "items": [
+   {
+    "food": "oats-dry",
+    "amount": 0.5,
+    "label": "{a} oats, cooked in"
+   },
+   {
+    "food": "milk-skim",
+    "amount": 1,
+    "label": "{a} skim milk"
+   },
+   {
+    "food": "protein-powder-whey-check-label",
+    "amount": 0.5,
+    "label": "{a} whey stirred in"
+   },
+   {
+    "food": "banana",
+    "amount": 0.5,
+    "label": "{a} banana"
+   }
+  ],
+  "swap": "Numbers vary by protein powder: check the label."
+ },
+ {
+  "id": "tofu-scramble",
+  "slot": "b",
+  "name": "Tofu scramble",
+  "items": [
+   {
+    "food": "tofu-firm",
+    "amount": 6,
+    "label": "{a} firm tofu, crumbled"
+   },
+   {
+    "food": "spinach-raw",
+    "amount": 1,
+    "label": "{a} spinach"
+   },
+   {
+    "food": "olive-oil",
+    "amount": 1,
+    "label": "{a} olive oil"
+   },
+   {
+    "food": "bread-whole-grain",
+    "amount": 1,
+    "label": "{a} whole-grain toast"
+   },
+   {
+    "food": "salsa",
+    "amount": 2,
+    "label": "{a} salsa"
+   }
+  ]
+ },
+ {
+  "id": "vegan-oats",
+  "slot": "b",
+  "name": "Soy-milk oats & berries",
+  "items": [
+   {
+    "food": "oats-dry",
+    "amount": 0.5,
+    "label": "{a} oats"
+   },
+   {
+    "food": "soy-milk-unsweetened",
+    "amount": 1,
+    "label": "{a} unsweetened soy milk"
+   },
+   {
+    "food": "protein-powder-soy-check-label",
+    "amount": 0.5,
+    "label": "{a} soy protein"
+   },
+   {
+    "food": "berries-mixed",
+    "amount": 1,
+    "label": "{a} berries"
+   },
+   {
+    "food": "chia-seeds",
+    "amount": 1,
+    "label": "{a} chia seeds"
+   }
+  ]
+ },
+ {
+  "id": "berry-smoothie",
+  "slot": "b",
+  "name": "Berry protein smoothie",
+  "items": [
+   {
+    "food": "soy-milk-unsweetened",
+    "amount": 1,
+    "label": "{a} unsweetened soy milk"
+   },
+   {
+    "food": "protein-powder-soy-check-label",
+    "amount": 1,
+    "label": "{a} soy protein"
+   },
+   {
+    "food": "berries-mixed",
+    "amount": 1,
+    "label": "{a} frozen berries"
+   },
+   {
+    "food": "banana",
+    "amount": 0.5,
+    "label": "{a} banana"
+   },
+   {
+    "food": "peanut-butter",
+    "amount": 1,
+    "label": "{a} peanut butter"
+   }
+  ]
+ },
+ {
+  "id": "veggie-scramble",
+  "slot": "b",
+  "name": "Egg & veggie scramble",
+  "items": [
+   {
+    "food": "egg-large",
+    "amount": 2,
+    "label": "{a} large eggs"
+   },
+   {
+    "food": "egg-whites",
+    "amount": 3,
+    "label": "{a} egg whites"
+   },
+   {
+    "food": "spinach-raw",
+    "amount": 1,
+    "label": "{a} spinach"
+   },
+   {
+    "food": "olive-oil",
+    "amount": 1,
+    "label": "{a} olive oil"
+   },
+   {
+    "food": "sweet-potato-baked",
+    "amount": 1,
+    "label": "{a} sweet potato"
+   }
+  ]
+ },
+ {
+  "id": "chicken-bowl",
+  "slot": "main",
+  "name": "Chicken grain bowl",
+  "items": [
+   {
+    "food": "chicken-breast-cooked",
+    "amount": 4,
+    "label": "{a} cooked chicken breast"
+   },
+   {
+    "food": "quinoa-cooked",
+    "amount": 0.75,
+    "label": "{a} cooked quinoa"
+   },
+   {
+    "food": "broccoli-cooked",
+    "amount": 1,
+    "label": "{a} roasted broccoli"
+   },
+   {
+    "food": "zucchini-cooked",
+    "amount": 1,
+    "label": "{a} roasted zucchini"
+   },
+   {
+    "food": "olive-oil",
+    "amount": 2,
+    "label": "{a} olive oil"
+   }
+  ],
+  "swap": "Swap: firm tofu for the chicken (protein is lower, so check the label)."
+ },
+ {
+  "id": "salmon-plate",
+  "slot": "main",
+  "name": "Salmon plate",
+  "items": [
+   {
+    "food": "salmon-cooked",
+    "amount": 4,
+    "label": "{a} cooked salmon"
+   },
+   {
+    "food": "potato-baked",
+    "amount": 1,
+    "label": "{a} potato, roasted"
+   },
+   {
+    "food": "olive-oil",
+    "amount": 1,
+    "label": "with {a} olive oil"
+   },
+   {
+    "food": "salad-greens",
+    "amount": 2,
+    "label": "{a} greens"
+   },
+   {
+    "food": "vinaigrette-dressing",
+    "amount": 1,
+    "label": "{a} vinaigrette"
+   }
+  ]
+ },
+ {
+  "id": "turkey-tacos",
+  "slot": "main",
+  "name": "Turkey tacos",
+  "items": [
+   {
+    "food": "corn-tortilla",
+    "amount": 3,
+    "label": "{a} corn tortillas"
+   },
+   {
+    "food": "ground-turkey-93-lean-cooked",
+    "amount": 4,
+    "label": "{a} cooked 93% lean ground turkey"
+   },
+   {
+    "food": "cabbage-or-slaw-mix",
+    "amount": 1,
+    "label": "{a} slaw with lime"
+   },
+   {
+    "food": "avocado",
+    "amount": 0.25,
+    "label": "{a} avocado"
+   },
+   {
+    "food": "salsa",
+    "amount": 2,
+    "label": "{a} salsa"
+   }
+  ],
+  "swap": "Swap: \u00be cup black beans + 2 tbsp Greek yogurt (less protein: add a bigger snack)."
+ },
+ {
+  "id": "steak-sweet-potato",
+  "slot": "main",
+  "name": "Steak & sweet potato",
+  "items": [
+   {
+    "food": "steak-sirloin-cooked",
+    "amount": 4,
+    "label": "{a} cooked sirloin"
+   },
+   {
+    "food": "sweet-potato-baked",
+    "amount": 1,
+    "label": "{a} baked sweet potato"
+   },
+   {
+    "food": "green-beans-cooked",
+    "amount": 1,
+    "label": "{a} green beans"
+   },
+   {
+    "food": "olive-oil",
+    "amount": 1,
+    "label": "{a} olive oil"
+   }
+  ]
+ },
+ {
+  "id": "shrimp-stir-fry",
+  "slot": "main",
+  "name": "Shrimp stir-fry",
+  "items": [
+   {
+    "food": "shrimp-cooked",
+    "amount": 5,
+    "label": "{a} cooked shrimp"
+   },
+   {
+    "food": "white-rice-cooked",
+    "amount": 0.75,
+    "label": "{a} cooked rice"
+   },
+   {
+    "food": "broccoli-cooked",
+    "amount": 1,
+    "label": "{a} broccoli"
+   },
+   {
+    "food": "carrots",
+    "amount": 0.5,
+    "label": "{a} carrots"
+   },
+   {
+    "food": "soy-sauce",
+    "amount": 1,
+    "label": "{a} soy sauce"
+   },
+   {
+    "food": "olive-oil",
+    "amount": 2,
+    "label": "{a} oil"
+   }
+  ],
+  "swap": "Gluten-free? Use tamari instead of soy sauce."
+ },
+ {
+  "id": "lentil-bowl",
+  "slot": "main",
+  "name": "Lentil & edamame bowl",
+  "items": [
+   {
+    "food": "lentils-cooked",
+    "amount": 1,
+    "label": "{a} cooked lentils"
+   },
+   {
+    "food": "edamame-shelled",
+    "amount": 0.5,
+    "label": "{a} edamame"
+   },
+   {
+    "food": "brown-rice-cooked",
+    "amount": 0.5,
+    "label": "{a} brown rice"
+   },
+   {
+    "food": "cauliflower-cooked",
+    "amount": 1,
+    "label": "{a} roasted cauliflower"
+   },
+   {
+    "food": "hummus",
+    "amount": 2,
+    "label": "{a} hummus"
+   },
+   {
+    "food": "olive-oil",
+    "amount": 1,
+    "label": "{a} olive oil"
+   }
+  ]
+ },
+ {
+  "id": "tofu-stir-fry",
+  "slot": "main",
+  "name": "Tofu stir-fry",
+  "items": [
+   {
+    "food": "tofu-firm",
+    "amount": 6,
+    "label": "{a} firm tofu"
+   },
+   {
+    "food": "white-rice-cooked",
+    "amount": 0.75,
+    "label": "{a} cooked rice"
+   },
+   {
+    "food": "broccoli-cooked",
+    "amount": 1,
+    "label": "{a} broccoli"
+   },
+   {
+    "food": "soy-sauce",
+    "amount": 1,
+    "label": "{a} soy sauce"
+   },
+   {
+    "food": "olive-oil",
+    "amount": 2,
+    "label": "{a} oil"
+   }
+  ],
+  "swap": "Gluten-free? Use tamari instead of soy sauce."
+ },
+ {
+  "id": "chickpea-salad",
+  "slot": "main",
+  "name": "Greek chickpea salad",
+  "items": [
+   {
+    "food": "chickpeas-cooked",
+    "amount": 0.5,
+    "label": "{a} chickpeas"
+   },
+   {
+    "food": "egg-large",
+    "amount": 2,
+    "label": "{a} hard-boiled eggs"
+   },
+   {
+    "food": "feta-cheese",
+    "amount": 1,
+    "label": "{a} feta"
+   },
+   {
+    "food": "cucumber",
+    "amount": 1,
+    "label": "{a} cucumber"
+   },
+   {
+    "food": "tomatoes",
+    "amount": 1,
+    "label": "{a} tomatoes"
+   },
+   {
+    "food": "quinoa-cooked",
+    "amount": 0.5,
+    "label": "{a} quinoa"
+   },
+   {
+    "food": "olive-oil",
+    "amount": 2,
+    "label": "{a} olive oil"
+   }
+  ]
+ },
+ {
+  "id": "cod-rice",
+  "slot": "main",
+  "name": "Cod & rice plate",
+  "items": [
+   {
+    "food": "white-fish-cod-cooked",
+    "amount": 5,
+    "label": "{a} cooked cod"
+   },
+   {
+    "food": "brown-rice-cooked",
+    "amount": 0.75,
+    "label": "{a} brown rice"
+   },
+   {
+    "food": "asparagus-cooked",
+    "amount": 1,
+    "label": "{a} asparagus"
+   },
+   {
+    "food": "butter",
+    "amount": 1,
+    "label": "{a} butter"
+   }
+  ]
+ },
+ {
+  "id": "tempeh-bowl",
+  "slot": "main",
+  "name": "Tempeh power bowl",
+  "items": [
+   {
+    "food": "tempeh",
+    "amount": 4,
+    "label": "{a} tempeh"
+   },
+   {
+    "food": "quinoa-cooked",
+    "amount": 0.75,
+    "label": "{a} quinoa"
+   },
+   {
+    "food": "spinach-raw",
+    "amount": 2,
+    "label": "{a} spinach"
+   },
+   {
+    "food": "avocado",
+    "amount": 0.25,
+    "label": "{a} avocado"
+   },
+   {
+    "food": "salsa",
+    "amount": 2,
+    "label": "{a} salsa"
+   }
+  ]
+ },
+ {
+  "id": "turkey-bolognese",
+  "slot": "main",
+  "name": "Turkey bolognese",
+  "items": [
+   {
+    "food": "pasta-cooked",
+    "amount": 1,
+    "label": "{a} cooked pasta"
+   },
+   {
+    "food": "ground-turkey-93-lean-cooked",
+    "amount": 4,
+    "label": "{a} cooked ground turkey"
+   },
+   {
+    "food": "tomatoes",
+    "amount": 1,
+    "label": "{a} tomato sauce"
+   },
+   {
+    "food": "parmesan-grated",
+    "amount": 1,
+    "label": "{a} parmesan"
+   },
+   {
+    "food": "salad-greens",
+    "amount": 2,
+    "label": "{a} side greens"
+   }
+  ]
+ },
+ {
+  "id": "bean-bowl",
+  "slot": "main",
+  "name": "Black bean burrito bowl",
+  "items": [
+   {
+    "food": "black-beans-cooked",
+    "amount": 0.75,
+    "label": "{a} black beans"
+   },
+   {
+    "food": "white-rice-cooked",
+    "amount": 0.5,
+    "label": "{a} rice"
+   },
+   {
+    "food": "cheddar-cheese",
+    "amount": 1,
+    "label": "{a} cheddar"
+   },
+   {
+    "food": "greek-yogurt-nonfat-plain",
+    "amount": 0.25,
+    "label": "{a} Greek yogurt (as sour cream)"
+   },
+   {
+    "food": "salsa",
+    "amount": 2,
+    "label": "{a} salsa"
+   },
+   {
+    "food": "salad-greens",
+    "amount": 1,
+    "label": "{a} lettuce"
+   }
+  ]
+ },
+ {
+  "id": "yogurt-cup",
+  "slot": "s",
+  "name": "Greek yogurt cup",
+  "items": [
+   {
+    "food": "greek-yogurt-nonfat-plain",
+    "amount": 0.6,
+    "label": "1 single-serve cup (5.3 oz) nonfat Greek yogurt"
+   }
+  ],
+  "fixed": true
+ },
+ {
+  "id": "cottage-cheese",
+  "slot": "s",
+  "name": "Cottage cheese",
+  "items": [
+   {
+    "food": "cottage-cheese-2",
+    "amount": 0.5,
+    "label": "{a} 2% cottage cheese"
+   }
+  ],
+  "fixed": true
+ },
+ {
+  "id": "whey-shake",
+  "slot": "s",
+  "name": "Protein shake",
+  "items": [
+   {
+    "food": "protein-powder-whey-check-label",
+    "amount": 1,
+    "label": "{a} whey in water"
+   }
+  ],
+  "fixed": true,
+  "swap": "Numbers vary by brand: check the label."
+ },
+ {
+  "id": "turkey-rollups",
+  "slot": "s",
+  "name": "Turkey roll-ups",
+  "items": [
+   {
+    "food": "deli-turkey",
+    "amount": 3,
+    "label": "{a} sliced deli turkey"
+   }
+  ],
+  "fixed": true,
+  "swap": "Or 1 cup shelled edamame."
+ },
+ {
+  "id": "edamame",
+  "slot": "s",
+  "name": "Edamame",
+  "items": [
+   {
+    "food": "edamame-shelled",
+    "amount": 1,
+    "label": "{a} shelled edamame"
+   }
+  ],
+  "fixed": true
+ },
+ {
+  "id": "soy-shake",
+  "slot": "s",
+  "name": "Soy protein shake",
+  "items": [
+   {
+    "food": "protein-powder-soy-check-label",
+    "amount": 1,
+    "label": "{a} soy protein in water"
+   }
+  ],
+  "fixed": true,
+  "swap": "Numbers vary by brand: check the label."
+ },
+ {
+  "id": "boiled-eggs",
+  "slot": "s",
+  "name": "Hard-boiled eggs",
+  "items": [
+   {
+    "food": "egg-large",
+    "amount": 2,
+    "label": "{a} hard-boiled eggs"
+   }
+  ],
+  "fixed": true
+ },
+ {
+  "id": "soy-yogurt-almonds",
+  "slot": "s",
+  "name": "Soy yogurt & almonds",
+  "items": [
+   {
+    "food": "soy-yogurt",
+    "amount": 0.75,
+    "label": "{a} soy yogurt"
+   },
+   {
+    "food": "almonds",
+    "amount": 0.25,
+    "label": "{a} almonds"
+   }
+  ],
+  "fixed": true
+ },
+ {
+  "id": "tuna-rice-cakes",
+  "slot": "s",
+  "name": "Tuna & rice cakes",
+  "items": [
+   {
+    "food": "tuna-canned-in-water",
+    "amount": 3,
+    "label": "{a} tuna in water"
+   },
+   {
+    "food": "rice-cake",
+    "amount": 2,
+    "label": "{a} rice cakes"
+   }
+  ],
+  "fixed": true
+ },
+ {
+  "id": "tofu-bites",
+  "slot": "s",
+  "name": "Baked tofu bites",
+  "items": [
+   {
+    "food": "tofu-firm",
+    "amount": 4,
+    "label": "{a} firm tofu, baked"
+   },
+   {
+    "food": "salsa",
+    "amount": 2,
+    "label": "{a} salsa to dip"
+   }
+  ],
+  "fixed": true
+ },
+ {
+  "id": "tempeh-bites",
+  "slot": "s",
+  "name": "Tempeh bites",
+  "items": [
+   {
+    "food": "tempeh",
+    "amount": 3,
+    "label": "{a} tempeh, pan-seared"
+   }
+  ],
+  "fixed": true
+ },
+ {
+  "id": "fruit",
+  "slot": "x",
+  "name": "Fruit",
+  "items": [
+   {
+    "food": "grapes",
+    "amount": 1,
+    "label": "{a} grapes or cherries"
+   }
+  ]
+ },
+ {
+  "id": "yogurt-cherries",
+  "slot": "x",
+  "name": "Yogurt & cherries",
+  "items": [
+   {
+    "food": "greek-yogurt-nonfat-plain",
+    "amount": 0.5,
+    "label": "{a} nonfat Greek yogurt"
+   },
+   {
+    "food": "cherries",
+    "amount": 0.5,
+    "label": "{a} cherries"
+   }
+  ]
+ },
+ {
+  "id": "chocolate-berries",
+  "slot": "x",
+  "name": "Dark chocolate & berries",
+  "items": [
+   {
+    "food": "dark-chocolate-70",
+    "amount": 0.5,
+    "label": "{a} dark chocolate"
+   },
+   {
+    "food": "strawberries",
+    "amount": 1,
+    "label": "{a} strawberries"
+   }
+  ]
+ },
+ {
+  "id": "sorbet-raspberries",
+  "slot": "x",
+  "name": "Sorbet & raspberries",
+  "items": [
+   {
+    "food": "sorbet",
+    "amount": 0.5,
+    "label": "{a} sorbet"
+   },
+   {
+    "food": "raspberries",
+    "amount": 0.5,
+    "label": "{a} raspberries"
+   }
+  ]
+ },
+ {
+  "id": "apple-pb",
+  "slot": "x",
+  "name": "Apple & peanut butter",
+  "items": [
+   {
+    "food": "apple",
+    "amount": 1,
+    "label": "{a} apple"
+   },
+   {
+    "food": "peanut-butter",
+    "amount": 1,
+    "label": "{a} peanut butter"
+   }
+  ]
+ },
+ {
+  "id": "popcorn",
+  "slot": "x",
+  "name": "Parmesan popcorn",
+  "items": [
+   {
+    "food": "popcorn-air-popped",
+    "amount": 3,
+    "label": "{a} air-popped popcorn"
+   },
+   {
+    "food": "parmesan-grated",
+    "amount": 1,
+    "label": "{a} parmesan"
+   }
+  ]
+ }
+]
