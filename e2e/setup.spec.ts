@@ -39,7 +39,7 @@ test('complete setup in 5 screens and see the plan', async ({ page }) => {
   const con = watchConsole(page);
   await page.clock.install({ time: SATURDAY });
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1, name: 'Feel strong on your wedding day.' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'A plan for every day between now and your wedding.' })).toBeVisible();
   await page.getByRole('link', { name: 'Start my plan' }).first().click();
   await expect(page).toHaveURL(/\/setup$/);
   await expect(page.getByText('Step 1 of 6')).toBeVisible();

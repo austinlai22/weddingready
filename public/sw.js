@@ -7,7 +7,7 @@ const VERSION = 'v1';
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const MEDIA = `media-${VERSION}`;
-const SHELL = ['/', '/train', '/eat', '/plan', '/settings', '/setup', '/privacy', '/terms', '/offline', '/manifest.webmanifest', '/icons/192.png', '/icons/512.png'];
+const SHELL = ['/', '/how-it-works', '/train', '/eat', '/plan', '/settings', '/setup', '/privacy', '/terms', '/offline', '/manifest.webmanifest', '/icons/192.png', '/icons/512.png'];
 
 async function precache() {
   const pages = await caches.open(PAGES);

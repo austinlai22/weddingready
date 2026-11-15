@@ -3,7 +3,7 @@ import { Fraunces, Inter } from 'next/font/google';
 import { ServiceWorker } from '@/components/ServiceWorker';
 import './globals.css';
 
-const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces', axes: ['opsz'], display: 'swap' });
+const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces', axes: ['opsz'], style: ['normal', 'italic'], display: 'swap' });
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export const metadata: Metadata = {
