@@ -52,11 +52,9 @@ export default function Agents() {
         {/* The recording stays in view on the right while the sections scroll past. */}
         <figure className="m-0 lg:sticky lg:top-8 lg:order-last lg:self-start">
           <div className="overflow-hidden rounded-xl bg-surface shadow-[0_30px_60px_-24px_rgba(42,31,35,0.45)] ring-1 ring-line-2">
-            <DemoVideo src="/media/landing/agent.mp4" poster="/media/landing/agent.jpg" label="Screen recording: Claude building a WeddingReady plan and the first workout" aspect="aspect-[830/684]" />
+            <DemoVideo src="/media/landing/agent.mp4" poster="/media/landing/agent.jpg" label="Screen recording: Claude building a WeddingReady plan and the first workout" aspect="aspect-[1080/790]" />
           </div>
-          <figcaption className="mt-3 text-[14px] text-muted">
-            A real conversation in Claude: it calls <code className="font-mono">build_plan</code>, then <code className="font-mono">get_workout</code>.
-          </figcaption>
+          <figcaption className="mt-3 text-[14px] text-muted">A real conversation in Claude using the WeddingReady connector, sped up while it calls the tools.</figcaption>
         </figure>
 
         <div className="space-y-5">

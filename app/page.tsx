@@ -67,7 +67,7 @@ const FEATURES: Feature[] = [
       { icon: 'dumbbell', text: 'Gives any day’s workout, with form cues' },
       { icon: 'meal', text: 'Sets calorie and protein targets, with the same safety rules' },
     ],
-    wide: { aspect: 'aspect-[830/684]', caption: 'A real conversation in Claude using the WeddingReady connector.' },
+    wide: { aspect: 'aspect-[1080/790]', caption: 'A real conversation in Claude using the WeddingReady connector, sped up while it calls the tools.' },
     link: { href: '/agents', label: 'How to connect it' },
   },
 ];
