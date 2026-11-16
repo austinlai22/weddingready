@@ -8,16 +8,18 @@ import { costUSD } from './limits';
 
 // SPEC §10. Claude (the spec's model, claude-sonnet-5-5, overridable with
 // AI_MODEL) answers when its account is usable. Google's Gemini free tier
-// (GEMINI_MODEL, default gemini-3.6-flash) answers when there's no Anthropic key
+// (GEMINI_MODEL, default gemini-3.5-flash-lite) answers when there's no Anthropic key
 // or the Anthropic account can't be used (no credits, key rejected). Free
 // Gemini models get overloaded at busy times, so a busy model hands over to the
 // next free one. Every answer is held to the same Zod schemas and checks.
 
 export const AI_MODEL = process.env.AI_MODEL || 'claude-sonnet-5-5';
-// gemini-3.8-flash is newer but often overloaded on the free tier, so the
-// default is the previous Flash model, with Flash-Lite as the backup.
-export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
-const GEMINI_FALLBACKS = ['gemini-3.5-flash-lite'];
+// On the free tier the full Flash models are often overloaded (in Nov 2026
+// testing they timed out or returned 503 most of the time), while the Lite
+// models answered in 1-5 s. These are short structured lookups, so Lite goes
+// first, the older Lite second, and full Flash only as a last resort.
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+const GEMINI_FALLBACKS = ['gemini-3.1-flash-lite', 'gemini-3.6-flash'];
 export const GEMINI_MODELS = [GEMINI_MODEL, ...GEMINI_FALLBACKS.filter((m) => m !== GEMINI_MODEL)];
 
 export class AiUnavailable extends Error {}
@@ -117,7 +119,7 @@ function jsonSchemaFor(schema: z.ZodType): unknown {
 /** Google's "model overloaded" and server errors: worth trying another free model. */
 function geminiBusy(e: unknown): boolean {
   if (e instanceof GeminiApiError) return e.status === 503 || e.status === 500 || e.status === 504;
-  // Our 25 s timeout surfaces as an abort/timeout error.
+  // Our 12 s timeout surfaces as an abort/timeout error.
   return e instanceof Error && /abort|timed? ?out/i.test(`${e.name} ${e.message}`);
 }
 
@@ -142,8 +144,9 @@ const thinkingRejected = new Set<string>();
 
 async function callGeminiModel<S extends z.ZodType>(model: string, schema: S, system: string, user: string): Promise<CallResult<z.infer<S>>> {
   // No SDK retries (its default backs off for minutes on an overloaded model);
-  // callGemini moves to the next free model instead. 25 s cap per call.
-  gemini ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { timeout: 25_000, retryOptions: { attempts: 1 } } });
+  // callGemini moves to the next free model instead. 12 s cap per call, so a
+  // stuck model can't hold a request for long.
+  gemini ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { timeout: 12_000, retryOptions: { attempts: 1 } } });
   const responseJsonSchema = jsonSchemaFor(schema);
   for (let attempt = 0; attempt < 2; attempt++) {
     const thinkingConfig = thinkingRejected.has(model) ? undefined : { thinkingLevel: THINKING[model] ?? ThinkingLevel.MINIMAL };
