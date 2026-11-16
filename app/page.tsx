@@ -6,6 +6,7 @@ import { OpenAppLink } from '@/components/landing/OpenAppLink';
 import { PlanTimeline } from '@/components/landing/PlanTimeline';
 import { BTN, PRIMARY, SiteFooter, SiteHeader } from '@/components/landing/SiteChrome';
 import { DAY_NAMES, dayIndex, fmtLong } from '@/lib/engine/dates';
+import { FOODS } from '@/lib/engine/meals';
 import { exampleDay, exampleDaysToGo, exampleMinutes, examplePlan, exampleTargets, exampleWorkout } from '@/lib/example';
 
 export const metadata: Metadata = {
@@ -16,13 +17,33 @@ export const metadata: Metadata = {
 };
 
 const FEATURES: Feature[] = [
-  { id: 'train', title: 'Today’s workout', body: 'Each exercise shows its sets and reps. Tap a set when it’s done and the rest timer starts. Your weights carry over to next time.' },
-  { id: 'eat', title: 'Meals', body: 'Pick one of the day’s suggested meals, or look up what you actually ate. Food values come from the USDA’s database.' },
-  { id: 'ai', title: 'Logging takeout', body: 'Type what you had and roughly how much. You get an estimate with its assumptions, and you can change any number before saving.' },
-  { id: 'plan', title: 'Your week', body: 'Drag sessions to other days, or type the change you want. It tells you when a change leaves too little time to recover.' },
+  {
+    id: 'train',
+    title: 'Today’s workout',
+    body: 'Each exercise shows its sets and reps. Tap a set when it’s done and the rest timer starts. Your weights carry over to next time.',
+    points: ['Sets and reps change as you move through the phases', 'A rest timer counts down between sets', 'Versions for home dumbbells, a gym or no equipment'],
+  },
+  {
+    id: 'eat',
+    title: 'Meals',
+    body: 'Pick one of the day’s suggested meals, or look up what you actually ate. Food values come from the USDA’s database.',
+    points: ['A few suggestions for each meal, matched to how you eat', `Search ${FOODS.length} foods, or save your own`, 'One or two dessert nights every week'],
+  },
+  {
+    id: 'ai',
+    title: 'Logging takeout',
+    body: 'Type what you had and roughly how much. You get an estimate with its assumptions, and you can change any number before saving.',
+    points: ['Says what it assumed about the portion', 'Flags estimates whose numbers don’t add up', 'Or skip it and enter the numbers yourself'],
+  },
+  {
+    id: 'plan',
+    title: 'Your week',
+    body: 'Strength days are placed around the runs, classes and sports you already do. When life gets in the way, move things.',
+    points: ['Drag a session to another day, or type the change', 'Warns when a change leaves too little time to recover', 'Undo, or go back to the suggested week'],
+  },
 ];
 
-const QUESTIONS: { q: string; a: ReactNode }[] = [
+const FAQS: { q: string; a: ReactNode }[] = [
   { q: 'What does it cost?', a: 'Nothing. There’s nothing to buy and no ads.' },
   { q: 'Do I need an account?', a: 'No. Your plan and logs are saved in your browser on your device. You can export a backup in Settings and import it somewhere else.' },
   {
@@ -111,8 +132,8 @@ export default function Home() {
             <h2 id="inside" className="max-w-2xl font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
               What it looks like day to day
             </h2>
-            <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-ink-2">Screen recordings of the app with an example plan.</p>
-            <div className="mt-12">
+            <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-ink-2">Screen recordings of the app, using an example plan.</p>
+            <div className="mt-14 lg:mt-20">
               <FeatureTour features={FEATURES} />
             </div>
           </div>
@@ -143,13 +164,13 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="questions" aria-labelledby="questions-heading" className="scroll-mt-6 border-t border-line">
+        <section id="faqs" aria-labelledby="faqs-heading" className="scroll-mt-6 border-t border-line">
           <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-5 py-20 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-16 lg:py-24">
-            <h2 id="questions-heading" className="font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
-              Questions
+            <h2 id="faqs-heading" className="font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
+              FAQs
             </h2>
             <div className="faq border-b border-line">
-              {QUESTIONS.map(({ q, a }) => (
+              {FAQS.map(({ q, a }) => (
                 <details key={q} className="border-t border-line">
                   <summary className="flex min-h-14 cursor-pointer items-center justify-between gap-6 py-5 text-[17px] font-semibold text-ink">
                     {q}

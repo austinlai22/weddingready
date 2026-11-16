@@ -1,6 +1,3 @@
-'use client';
-
-import { useEffect, useRef, useState } from 'react';
 import { DemoVideo } from './DemoVideo';
 import { PhoneFrame } from './PhoneFrame';
 
@@ -8,72 +5,49 @@ export interface Feature {
   id: string;
   title: string;
   body: string;
+  points: string[];
 }
 
+// Paper colours behind each phone, in order.
+const PANELS = ['bg-rose-tint', 'bg-gold/35', 'bg-line-2/70', 'bg-chip'];
+
 /**
- * One demo at a time. On wide screens the phone stays put and the clip
- * follows whichever feature is in the middle of the screen as you scroll; on
- * any screen, tapping a feature shows it.
+ * The features as alternating rows: words on one side, the screen recording
+ * on the other, swapping sides each row. Only the recording most on screen
+ * plays (see DemoVideo).
  */
 export function FeatureTour({ features }: { features: Feature[] }) {
-  const [active, setActive] = useState(features[0].id);
-  const items = useRef<(HTMLLIElement | null)[]>([]);
-
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') return;
-    const wide = window.matchMedia('(min-width: 1024px)');
-    let io: IntersectionObserver | null = null;
-    const attach = () => {
-      io?.disconnect();
-      if (!wide.matches) return;
-      io = new IntersectionObserver(
-        (entries) => {
-          for (const e of entries) if (e.isIntersecting) setActive((e.target as HTMLElement).dataset.id!);
-        },
-        { rootMargin: '-45% 0px -45% 0px' },
-      );
-      items.current.forEach((el) => el && io!.observe(el));
-    };
-    attach();
-    wide.addEventListener('change', attach);
-    return () => {
-      io?.disconnect();
-      wide.removeEventListener('change', attach);
-    };
-  }, []);
-
-  const current = features.find((f) => f.id === active) ?? features[0];
   return (
-    <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-20">
-      <div className="order-2 lg:order-1">
-        <ol className="m-0 list-none p-0">
-          {features.map((f, i) => {
-            const on = f.id === active;
-            return (
-              <li key={f.id} ref={(el) => void (items.current[i] = el)} data-id={f.id} className="lg:flex lg:min-h-[52vh] lg:items-center">
-                <button
-                  type="button"
-                  onClick={() => setActive(f.id)}
-                  aria-pressed={on}
-                  className={`block w-full border-l-2 py-4 pl-5 pr-2 text-left transition-colors motion-reduce:transition-none ${on ? 'border-rose' : 'border-line hover:border-line-2'}`}
-                >
-                  <span className="block font-display text-sm italic text-muted">{String(i + 1).padStart(2, '0')}</span>
-                  <span className={`mt-1 block font-display text-2xl font-semibold sm:text-3xl ${on ? 'text-ink' : 'text-ink-2'}`}>{f.title}</span>
-                  <span className={`mt-2 block max-w-md text-[16px] leading-relaxed ${on ? 'text-ink-2' : 'text-muted'}`}>{f.body}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </div>
-      <div className="order-1 lg:order-2">
-        <div className="lg:sticky lg:top-[calc(50vh-290px)]">
-          <PhoneFrame className="mx-auto w-[240px] lg:w-[280px]">
-            <DemoVideo key={current.id} src={`/media/landing/${current.id}.mp4`} poster={`/media/landing/${current.id}.jpg`} label={`Screen recording: ${current.title}`} />
-          </PhoneFrame>
-          <p className="mt-4 text-center text-sm text-muted lg:hidden">{current.title}</p>
-        </div>
-      </div>
-    </div>
+    <ol className="m-0 list-none space-y-20 p-0 lg:space-y-28">
+      {features.map((f, i) => {
+        const flip = i % 2 === 1;
+        return (
+          <li key={f.id} data-feature={f.id} className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-20">
+            <div className={flip ? 'lg:order-2' : ''}>
+              <p className="font-display text-sm italic text-muted">{String(i + 1).padStart(2, '0')}</p>
+              <h3 className="mt-1 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">{f.title}</h3>
+              <p className="mt-4 max-w-md text-[17px] leading-relaxed text-ink-2">{f.body}</p>
+              <ul className="m-0 mt-6 max-w-md list-none border-b border-line p-0">
+                {f.points.map((p) => (
+                  <li key={p} className="flex gap-3 border-t border-line py-3 text-[15px] text-ink-2">
+                    <span aria-hidden="true" className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-rose" />
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className={`relative flex justify-center py-8 sm:py-10 ${flip ? 'lg:order-1' : ''}`}>
+              <div
+                aria-hidden="true"
+                className={`absolute inset-y-0 left-1/2 w-full max-w-[420px] -translate-x-1/2 ${flip ? '-rotate-[1.5deg]' : 'rotate-[1.5deg]'} ${PANELS[i % PANELS.length]}`}
+              />
+              <PhoneFrame className="relative w-[236px] sm:w-[260px]">
+                <DemoVideo src={`/media/landing/${f.id}.mp4`} poster={`/media/landing/${f.id}.jpg`} label={`Screen recording: ${f.title}`} />
+              </PhoneFrame>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }

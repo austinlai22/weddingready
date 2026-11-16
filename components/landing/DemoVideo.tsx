@@ -2,9 +2,30 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+// Every demo on the page reports how much of it is on screen; only the most
+// visible one plays, so there's never more than one moving at a time.
+const visible = new Map<HTMLVideoElement, number>();
+
+function playMostVisible() {
+  let best: HTMLVideoElement | null = null;
+  let bestRatio = 0.5;
+  for (const [v, r] of visible) {
+    if (r >= bestRatio) {
+      best = v;
+      bestRatio = r;
+    }
+  }
+  for (const v of visible.keys()) {
+    if (v === best) {
+      if (v.preload === 'none') v.preload = 'auto';
+      if (v.paused) void v.play().catch(() => undefined);
+    } else if (!v.paused) v.pause();
+  }
+}
+
 /**
- * A short looping screen recording. Loads only when near the screen and plays
- * only while visible. With reduced motion it waits for a tap instead.
+ * A short looping screen recording. Loads only when it's the one on screen.
+ * With reduced motion it waits for a tap instead.
  */
 export function DemoVideo({ src, poster, label }: { src: string; poster: string; label: string }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -17,17 +38,20 @@ export function DemoVideo({ src, poster, label }: { src: string; poster: string;
     const rm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     setReduced(rm);
     if (rm || typeof IntersectionObserver === 'undefined') return;
+    visible.set(video, 0);
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          if (video.preload === 'none') video.preload = 'auto';
-          void video.play().catch(() => undefined);
-        } else video.pause();
+        visible.set(video, entry.isIntersecting ? entry.intersectionRatio : 0);
+        playMostVisible();
       },
-      { threshold: 0.35 },
+      { threshold: [0, 0.25, 0.5, 0.6, 0.7, 0.8, 0.9, 1] },
     );
     io.observe(video);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      visible.delete(video);
+      video.pause();
+    };
   }, []);
 
   return (

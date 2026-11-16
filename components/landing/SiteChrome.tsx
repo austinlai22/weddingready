@@ -16,7 +16,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-6">
           <nav aria-label="Site" className="hidden gap-6 text-[15px] sm:flex">
             <Link href="/how-it-works" className="text-ink-2 no-underline hover:text-rose">How the plan works</Link>
-            <Link href="/#questions" className="text-ink-2 no-underline hover:text-rose">Questions</Link>
+            <Link href="/#faqs" className="text-ink-2 no-underline hover:text-rose">FAQs</Link>
           </nav>
           <OpenAppLink className={`${PRIMARY} min-h-11 px-5 text-sm`} />
         </div>
