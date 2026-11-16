@@ -43,6 +43,8 @@ There are no streaks and no before-and-after photos. Deficits are capped at 0.75
 
 **AI assistants can use it.** WeddingReady is also a remote MCP server at `https://weddingready.vercel.app/api/mcp`, so Claude (as a custom connector) or any MCP client can build a plan, get a day's workout, place strength days, set calorie and protein targets, and look up foods. The tools call the same engine as the app, apply the same safety rules, are read-only and stateless, and store nothing about the caller beyond an anonymous per-tool count. See [/agents](https://weddingready.vercel.app/agents).
 
+![Claude using the WeddingReady connector to build a plan and the first workout](docs/screenshots/agent-demo.gif)
+
 **It works offline and installs like an app.** A hand-written service worker caches the app shell and data. The manifest includes maskable icons for Android and an Apple touch icon.
 
 **Quality bar.** 101 unit tests (engine, nutrition, guardrails, storage, AI handling and limits) and 44 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.

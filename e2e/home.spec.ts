@@ -10,14 +10,15 @@ test('home page explains the app and starts setup', async ({ page }) => {
   }
   // One row per feature, each with its own recording; only the one on screen plays.
   const videos = page.locator('video');
-  await expect(videos).toHaveCount(4);
+  await expect(videos).toHaveCount(5);
   const playing = () => videos.evaluateAll((els) => (els as HTMLVideoElement[]).filter((v) => !v.paused).map((v) => v.getAttribute('src')));
   await page.locator('[data-feature="ai"] video').scrollIntoViewIfNeeded();
   await expect.poll(playing).toEqual(['/media/landing/ai.mp4']);
   await page.locator('[data-feature="train"] video').scrollIntoViewIfNeeded();
   await expect.poll(playing).toEqual(['/media/landing/train.mp4']);
   await page.getByText('Can I use it from Claude or another AI assistant?').click();
-  await expect(page.getByRole('link', { name: 'How to connect it' })).toHaveAttribute('href', '/agents');
+  const connect = await page.getByRole('link', { name: 'How to connect it' }).evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+  expect(new Set(connect)).toEqual(new Set(['/agents']));
   await page.getByText('Do I need an account?').click();
   await expect(page.getByText(/saved in your browser on your device/)).toBeVisible();
   const hrefs = await page.getByRole('link', { name: 'Start my plan' }).evaluateAll((els) => els.map((e) => e.getAttribute('href')));
@@ -75,6 +76,6 @@ test('“For AI assistants” gives the connector address and the tools', async 
   await page.getByRole('link', { name: 'For AI assistants' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'For AI assistants' })).toBeVisible();
   await expect(page.getByText('https://weddingready.vercel.app/api/mcp').first()).toBeVisible();
-  for (const tool of ['build_plan', 'get_workout', 'plan_week', 'nutrition_targets', 'search_foods']) await expect(page.getByText(tool, { exact: true })).toBeVisible();
+  for (const tool of ['build_plan', 'get_workout', 'plan_week', 'nutrition_targets', 'search_foods']) await expect(page.getByRole('listitem').getByText(tool, { exact: true })).toBeVisible();
   con.expectClean();
 });

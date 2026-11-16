@@ -1,4 +1,5 @@
 import { LineIcon, type IconName } from '@/components/ui/LineIcon';
+import Link from 'next/link';
 import { DemoVideo } from './DemoVideo';
 import { PhoneFrame } from './PhoneFrame';
 
@@ -7,10 +8,13 @@ export interface Feature {
   title: string;
   body: string;
   points: { icon: IconName; text: string }[];
+  /** A desktop recording (shown in a window frame) instead of a phone one. */
+  wide?: { aspect: string; caption: string };
+  link?: { href: string; label: string };
 }
 
 // Paper colours behind each phone, in order.
-const PANELS = ['bg-rose-tint', 'bg-gold/35', 'bg-line-2/70', 'bg-chip'];
+const PANELS = ['bg-rose-tint', 'bg-gold/35', 'bg-line-2/70', 'bg-chip', 'bg-rose-tint'];
 
 /**
  * The features as alternating rows: words on one side, the screen recording
@@ -36,15 +40,36 @@ export function FeatureTour({ features }: { features: Feature[] }) {
                   </li>
                 ))}
               </ul>
+              {f.link && (
+                <p className="mt-6">
+                  <Link href={f.link.href} className="text-[15px] font-semibold">
+                    {f.link.label}
+                  </Link>
+                </p>
+              )}
             </div>
             <div className={`relative flex justify-center py-8 sm:py-10 ${flip ? 'lg:order-1' : ''}`}>
               <div
                 aria-hidden="true"
-                className={`absolute inset-y-0 left-1/2 w-full max-w-[420px] -translate-x-1/2 ${flip ? '-rotate-[1.5deg]' : 'rotate-[1.5deg]'} ${PANELS[i % PANELS.length]}`}
+                className={`absolute inset-y-0 left-1/2 w-full ${f.wide ? 'max-w-[600px]' : 'max-w-[420px]'} -translate-x-1/2 ${flip ? '-rotate-[1.5deg]' : 'rotate-[1.5deg]'} ${PANELS[i % PANELS.length]}`}
               />
-              <PhoneFrame className="relative w-[236px] sm:w-[260px]">
-                <DemoVideo src={`/media/landing/${f.id}.mp4`} poster={`/media/landing/${f.id}.jpg`} label={`Screen recording: ${f.title}`} />
-              </PhoneFrame>
+              {f.wide ? (
+                <figure className="relative m-0 w-full max-w-[520px]">
+                  <div className="overflow-hidden rounded-xl bg-surface shadow-[0_30px_60px_-24px_rgba(42,31,35,0.45)] ring-1 ring-line-2">
+                    <div aria-hidden="true" className="flex gap-1.5 border-b border-line px-3 py-2.5">
+                      <span className="h-2.5 w-2.5 rounded-full bg-line-2" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-line-2" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-line-2" />
+                    </div>
+                    <DemoVideo src={`/media/landing/${f.id}.mp4`} poster={`/media/landing/${f.id}.jpg`} label={`Screen recording: ${f.title}`} aspect={f.wide.aspect} />
+                  </div>
+                  <figcaption className="mt-3 text-center text-[13px] text-muted">{f.wide.caption}</figcaption>
+                </figure>
+              ) : (
+                <PhoneFrame className="relative w-[236px] sm:w-[260px]">
+                  <DemoVideo src={`/media/landing/${f.id}.mp4`} poster={`/media/landing/${f.id}.jpg`} label={`Screen recording: ${f.title}`} />
+                </PhoneFrame>
+              )}
             </div>
           </li>
         );

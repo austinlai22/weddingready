@@ -58,6 +58,18 @@ const FEATURES: Feature[] = [
       { icon: 'undo', text: 'Undo, or go back to the suggested week' },
     ],
   },
+  {
+    id: 'agent',
+    title: 'Ask your AI assistant',
+    body: 'Connect WeddingReady to Claude and plan in a chat. It answers with the same plan and rules as the app, and stores nothing.',
+    points: [
+      { icon: 'phases', text: 'Builds your plan from your dates and your week' },
+      { icon: 'dumbbell', text: 'Gives any day’s workout, with form cues' },
+      { icon: 'meal', text: 'Sets calorie and protein targets, with the same safety rules' },
+    ],
+    wide: { aspect: 'aspect-[830/684]', caption: 'A real conversation in Claude using the WeddingReady connector.' },
+    link: { href: '/agents', label: 'How to connect it' },
+  },
 ];
 
 const FAQS: { q: string; a: ReactNode }[] = [

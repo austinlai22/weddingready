@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { CopyButton } from '@/components/landing/CopyButton';
+import { DemoVideo } from '@/components/landing/DemoVideo';
 import { BTN, SiteFooter, SiteHeader } from '@/components/landing/SiteChrome';
 import { LineIcon, type IconName } from '@/components/ui/LineIcon';
 
@@ -46,6 +47,15 @@ export default function Agents() {
         <p className="mt-6 text-lg leading-relaxed text-ink-2">
           Add WeddingReady to Claude, or any assistant that supports MCP connectors, and it can plan training and food with the same rules as this app.
         </p>
+
+        <figure className="m-0 mt-10">
+          <div className="overflow-hidden rounded-xl bg-surface shadow-[0_30px_60px_-24px_rgba(42,31,35,0.45)] ring-1 ring-line-2">
+            <DemoVideo src="/media/landing/agent.mp4" poster="/media/landing/agent.jpg" label="Screen recording: Claude building a WeddingReady plan and the first workout" aspect="aspect-[830/684]" />
+          </div>
+          <figcaption className="mt-3 text-[14px] text-muted">
+            A real conversation in Claude: it calls <code className="font-mono">build_plan</code>, then <code className="font-mono">get_workout</code>.
+          </figcaption>
+        </figure>
 
         <div className="mt-12 space-y-5">
           <Block title="Connector address">

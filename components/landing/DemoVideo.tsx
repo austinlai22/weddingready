@@ -27,7 +27,7 @@ function playMostVisible() {
  * A short looping screen recording. Loads only when it's the one on screen.
  * With reduced motion it waits for a tap instead.
  */
-export function DemoVideo({ src, poster, label }: { src: string; poster: string; label: string }) {
+export function DemoVideo({ src, poster, label, aspect = 'aspect-[390/844]' }: { src: string; poster: string; label: string; aspect?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [reduced, setReduced] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -67,7 +67,7 @@ export function DemoVideo({ src, poster, label }: { src: string; poster: string;
     <div className="relative">
       <video
         ref={ref}
-        className="block aspect-[390/844] w-full bg-cover bg-top"
+        className={`block w-full bg-cover bg-top ${aspect}`}
         // The poster stays behind the video while the first frame loads.
         style={{ backgroundImage: `url(${poster})` }}
         src={src}
