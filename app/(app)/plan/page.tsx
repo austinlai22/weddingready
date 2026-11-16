@@ -18,13 +18,15 @@ export default function PlanPage() {
   const week = weekOf(t.startMonday, today < plan.profile.startDate ? plan.profile.startDate : today);
   const targets = targetsFor(plan, today < plan.profile.startDate ? plan.profile.startDate : today);
   const p = plan.profile;
+  // Weeks left including this one; the whole plan before it starts.
+  const weeksLeft = Math.max(1, t.totalWeeks - week + 1);
   return (
     <>
       <section className="hero" aria-labelledby="plan-title">
         <p className="kicker">Your plan</p>
-        <h1 id="plan-title" style={{ fontSize: 40 }}>{t.totalWeeks} weeks to {fmtShort(t.weddingDate)}</h1>
+        <h1 id="plan-title" style={{ fontSize: 40 }}>{weeksLeft} {weeksLeft === 1 ? 'week' : 'weeks'} to {fmtShort(t.weddingDate)}</h1>
         <p className="pep">
-          {fmtLong(t.weddingDate)} · {Math.max(0, daysBetween(today, t.weddingDate))} days to go
+          {fmtLong(t.weddingDate)} · {Math.max(0, daysBetween(today, t.weddingDate))} days to go · week {Math.min(week, t.totalWeeks)} of {t.totalWeeks}
           {p.fittingDate ? ` · fitting ${fmtShort(p.fittingDate)}` : ''}
         </p>
         <div className="chips">
