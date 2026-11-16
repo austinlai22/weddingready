@@ -36,6 +36,7 @@ export function SiteFooter() {
         <p className="max-w-sm leading-relaxed">A free portfolio project. General guidance, not medical advice. If an exercise hurts, stop.</p>
         <nav aria-label="More" className="flex flex-wrap gap-5">
           <Link href="/how-it-works">How the plan works</Link>
+          <Link href="/agents">For AI assistants</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
         </nav>

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { DocPage } from '@/components/DocPage';
 
 export const metadata: Metadata = { title: 'Privacy' };
@@ -14,6 +15,7 @@ export default function PrivacyPage() {
         <li><strong>AI meal estimates</strong>: when you use “Describe it”, the food, amount and details you type are sent to our server and on to an AI service to estimate the nutrition: Anthropic’s Claude API, or Google’s Gemini API free tier. Nothing else about you is included.</li>
         <li><strong>AI schedule edits</strong>: when you use “Ask AI”, your request and your weekly schedule (session names and days) are sent the same way.</li>
         <li><strong>About Google’s free tier</strong>: Google may use what’s sent through its free Gemini tier to improve its products. Only the text you type into those two features is sent, so don’t include anything personal there.</li>
+        <li><strong>AI assistants</strong>: if you use WeddingReady through an assistant such as Claude (see <Link href="/agents">For AI assistants</Link>), the details the assistant sends, such as your dates, schedule or weight, are used to answer that one request and aren’t stored. Only an anonymous count of how often each tool is used is kept.</li>
         <li><strong>Usage stats</strong>: anonymous events such as “a set was logged” or “setup finished”, tied to a random ID made on this device. They never include names, dates, weights, health answers or food text. You can turn them off in Settings.</li>
         <li><strong>Rate limits</strong>: to prevent abuse, our server counts AI requests per day using one-way hashes of your random device ID and your network address. The counts expire after a day.</li>
       </ul>

@@ -41,9 +41,11 @@ There are no streaks and no before-and-after photos. Deficits are capped at 0.75
 
 **The AI costs nothing to run.** Requests try Claude first. If there's no key or no credits, they fall back across Google's free Gemini models: the fast "Lite" models first, a full Flash model last. Each attempt gets 12 seconds, and a model that's busy is skipped for two minutes. Every reply is held to the same Zod schemas, typed text is passed to the model as delimited data rather than instructions, and a meal estimate whose calories don't match its protein, carbs and fat is marked low confidence. Rate limits use hashed device IDs and IPs in Upstash Redis, with a daily spend cap.
 
+**AI assistants can use it.** WeddingReady is also a remote MCP server at `https://weddingready.vercel.app/api/mcp`, so Claude (as a custom connector) or any MCP client can build a plan, get a day's workout, place strength days, set calorie and protein targets, and look up foods. The tools call the same engine as the app, apply the same safety rules, are read-only and stateless, and store nothing about the caller beyond an anonymous per-tool count. See [/agents](https://weddingready.vercel.app/agents).
+
 **It works offline and installs like an app.** A hand-written service worker caches the app shell and data. The manifest includes maskable icons for Android and an Apple touch icon.
 
-**Quality bar.** 91 unit tests (engine, nutrition, guardrails, storage, AI handling and limits) and 42 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
+**Quality bar.** 101 unit tests (engine, nutrition, guardrails, storage, AI handling and limits) and 44 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
 
 ## Built with
 
@@ -108,13 +110,14 @@ lib/engine/      The plan engine: pure functions, no clock reads, fully unit-tes
   plan.ts          Profile → Plan → a day's sessions and targets
 lib/state/       Zod schema for saved data, versioned migrations, the Zustand store
 lib/server/      AI calls (Claude and Gemini, structured output), rate limits, spend cap, Redis store
+  mcp/             The MCP server for AI assistants: five read-only tools over the engine
 lib/example.ts   The example plan shown on the marketing pages, built by the real engine
 lib/demo.ts      "Try the example plan": a plan ten weeks in, relative to today
 app/page.tsx     Home page, with demo clips recorded from the real app
 app/how-it-works The rules, with diagrams drawn from the engine's own output
 app/(app)/       Train, Eat, Plan, Settings
 app/setup/       Five-screen setup
-app/api/         estimate-meal, edit-schedule
+app/api/         estimate-meal, edit-schedule, mcp
 public/sw.js     Service worker
 data/            Exercises, foods (generated), meal templates
 ```

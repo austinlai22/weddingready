@@ -66,3 +66,13 @@ test('“Try the example plan” opens the app without setup, then hands over to
   expect(await page.evaluate(() => localStorage.getItem('weddingready-demo'))).toBeNull();
   con.expectClean();
 });
+
+test('“For AI assistants” gives the connector address and the tools', async ({ page }) => {
+  const con = watchConsole(page);
+  await page.goto('/');
+  await page.getByRole('link', { name: 'For AI assistants' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'For AI assistants' })).toBeVisible();
+  await expect(page.getByText('https://weddingready.vercel.app/api/mcp').first()).toBeVisible();
+  for (const tool of ['build_plan', 'get_workout', 'plan_week', 'nutrition_targets', 'search_foods']) await expect(page.getByText(tool, { exact: true })).toBeVisible();
+  con.expectClean();
+});
