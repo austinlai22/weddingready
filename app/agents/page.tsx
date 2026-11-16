@@ -42,13 +42,15 @@ export default function Agents() {
   return (
     <div className="bg-ground text-ink">
       <SiteHeader />
-      <main className="mx-auto max-w-3xl px-5 pb-20 pt-14 sm:px-8 lg:pt-20">
+      <main className="mx-auto max-w-6xl px-5 pb-20 pt-14 sm:px-8 lg:pt-20">
         <h1 className="font-display text-5xl font-semibold leading-[1.05] tracking-tight text-ink sm:text-6xl">For AI assistants</h1>
-        <p className="mt-6 text-lg leading-relaxed text-ink-2">
+        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-2">
           Add WeddingReady to Claude, or any assistant that supports MCP connectors, and it can plan training and food with the same rules as this app.
         </p>
 
-        <figure className="m-0 mt-10">
+        <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,480px)] lg:gap-14">
+        {/* The recording stays in view on the right while the sections scroll past. */}
+        <figure className="m-0 lg:sticky lg:top-8 lg:order-last lg:self-start">
           <div className="overflow-hidden rounded-xl bg-surface shadow-[0_30px_60px_-24px_rgba(42,31,35,0.45)] ring-1 ring-line-2">
             <DemoVideo src="/media/landing/agent.mp4" poster="/media/landing/agent.jpg" label="Screen recording: Claude building a WeddingReady plan and the first workout" aspect="aspect-[830/684]" />
           </div>
@@ -57,7 +59,7 @@ export default function Agents() {
           </figcaption>
         </figure>
 
-        <div className="mt-12 space-y-5">
+        <div className="space-y-5">
           <Block title="Connector address">
             <div className="flex flex-wrap items-center gap-3">
               <code className="break-all rounded-xl bg-ground px-3 py-2 font-mono text-[14px] text-ink ring-1 ring-line">{URL}</code>
@@ -108,6 +110,7 @@ export default function Agents() {
               </li>
             </ul>
           </Block>
+        </div>
         </div>
       </main>
       <SiteFooter />
