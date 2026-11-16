@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { MONDAY, seed, stored, watchConsole } from './helpers';
 
@@ -49,25 +50,99 @@ test('warns when full-body days land back to back, including Sunday into Monday'
   await expect(page.getByText('Heads up.')).toHaveCount(0);
 });
 
-test('AI schedule edit: preview, then apply', async ({ page }) => {
+test('the coach proposes, previews, and applies only on Apply', async ({ page }) => {
   await page.clock.install({ time: MONDAY });
   await seed(page);
-  await page.route('**/api/edit-schedule', async (route) => {
+  await page.route('**/api/coach', async (route) => {
     const body = route.request().postDataJSON();
-    expect(body.instruction).toBe('Move strength A to Tuesday and add yoga on Sunday');
-    expect(body.currentWeek.days).toHaveLength(7);
-    await route.fulfill({ json: { ops: [{ op: 'move', sessionId: 'str-1', toDay: 'tue' }, { op: 'add', activity: 'yoga', day: 'sun' }], summary: 'Strength A moves to Tuesday and yoga is added on Sunday.' } });
+    // What the coach sees: a plan code and the week, never body measurements or health answers.
+    expect(body.message).toBe('Move strength A to Tuesday and add yoga on Sunday');
+    expect(body.plan).toMatch(/^wr1\./);
+    expect(JSON.stringify(body)).not.toMatch(/weightKg|heightCm|edHistory|"age"/);
+    await route.fulfill({
+      json: {
+        reply: 'I suggest moving Strength A to Tuesday and adding yoga on Sunday.',
+        proposals: [{ kind: 'schedule', scope: 'from_now_on', ops: [{ op: 'move', sessionId: 'str-1', toDay: 'tue' }, { op: 'add', activity: 'yoga', day: 'sun' }], summary: 'Strength A moves to Tuesday; yoga on Sunday.' }],
+      },
+    });
   });
   await page.goto('/plan');
-  await page.getByLabel('What should change?').fill('Move strength A to Tuesday and add yoga on Sunday');
-  await page.getByRole('button', { name: 'Preview changes' }).click();
-  await expect(page.getByText('Strength A moves to Tuesday and yoga is added on Sunday.')).toBeVisible();
+  await page.getByLabel('Message to your coach').fill('Move strength A to Tuesday and add yoga on Sunday');
+  await page.getByRole('button', { name: 'Ask', exact: true }).click();
+  await expect(page.getByText('I suggest moving Strength A to Tuesday')).toBeVisible();
+  await expect(page.getByText('Strength A moves to Tuesday; yoga on Sunday.')).toBeVisible();
   let s = await stored(page);
   expect(s.scheduleOverrides).toBeNull();
-  await page.getByRole('button', { name: 'Apply' }).click();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(page.getByLabel('Sunday', { exact: true }).getByRole('button', { name: /^Yoga\./ })).toBeVisible();
   s = await stored(page);
   expect(s.scheduleOverrides?.days[1].some((x) => x.id === 'str-1')).toBe(true);
+});
+
+test('a “this week only” change from the coach keeps past days and ends on Sunday', async ({ page }) => {
+  // Wednesday of week 1: Strength A was done on Monday; Thursday's Strength B moves to Saturday, this week only.
+  await page.clock.install({ time: new Date('2026-11-18T09:00:00') });
+  await seed(page, undefined, {
+    logs: { sets: {}, weights: {}, sessionsDone: { '2026-11-16': ['str-1'] }, warmups: {}, meals: {}, extras: {} },
+  });
+  await page.route('**/api/coach', (route) =>
+    route.fulfill({ json: { reply: 'I suggest Saturday instead, this week only.', proposals: [{ kind: 'schedule', scope: 'this_week', ops: [{ op: 'move', sessionId: 'str-2', toDay: 'sat' }], summary: 'Thursday to Saturday.' }] } }),
+  );
+  await page.goto('/plan');
+  await page.getByRole('button', { name: 'I can’t train tomorrow. Fit it in later this week?' }).click();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
+  const s = await stored(page);
+  expect(s.scheduleOverrides).toBeNull();
+  expect(s.scheduleHistory?.map((h) => h.until)).toEqual(['2026-11-18', '2026-11-23']);
+
+  await page.getByRole('link', { name: 'Train', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Monday, Strength A, done/ })).toBeVisible();
+  await page.getByRole('button', { name: /^Saturday/ }).click();
+  await expect(page.getByRole('region', { name: 'Strength B' })).toBeVisible();
+});
+
+test('coach swaps and equipment changes show in Settings and can be undone', async ({ page }) => {
+  await page.clock.install({ time: MONDAY });
+  await seed(page);
+  await page.route('**/api/coach', (route) =>
+    route.fulfill({
+      json: {
+        reply: 'I suggest a gentler swap, and gym versions for your trip.',
+        proposals: [
+          { kind: 'swap', from: 'reverse-lunge', to: 'db-glute-bridge', fromName: 'Reverse lunge', toName: 'Dumbbell glute bridge', reason: 'Sore knee.' },
+          { kind: 'equipment', from: '2026-11-23', to: '2026-11-29', equipment: 'gym', reason: 'Hotel gym.' },
+        ],
+      },
+    }),
+  );
+  await page.goto('/plan');
+  await page.getByLabel('Message to your coach').fill('My knee hurts, and I’m at a hotel next week');
+  await page.getByRole('button', { name: 'Ask', exact: true }).click();
+  await expect(page.getByText('Reverse lunge → Dumbbell glute bridge')).toBeVisible();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
+  let s = await stored(page);
+  expect(s.profile?.exerciseSwaps).toEqual({ 'reverse-lunge': 'db-glute-bridge' });
+  expect(s.profile?.equipmentOverrides).toEqual([{ from: '2026-11-23', to: '2026-11-29', equipment: 'gym' }]);
+
+  await page.goto('/settings');
+  await expect(page.getByRole('heading', { name: 'Changes from your coach' })).toBeVisible();
+  await page.getByRole('button', { name: 'Undo swap' }).click();
+  s = await stored(page);
+  expect(s.profile?.exerciseSwaps).toEqual({});
+});
+
+test('take your plan along: a calendar file and a plan code', async ({ page }) => {
+  await page.clock.install({ time: MONDAY });
+  await seed(page);
+  await page.goto('/plan');
+  await page.getByLabel('How far ahead').selectOption('4');
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download calendar file' }).click()]);
+  expect(download.suggestedFilename()).toBe('weddingready-training.ics');
+  const ics = readFileSync(await download.path(), 'utf8');
+  expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(8);
+  expect(ics).toContain('SUMMARY:Strength A: Legs & push');
+  await expect(page.getByText(/8 sessions, Nov 16 to Dec 10/)).toBeVisible();
+  await expect(page.getByText(/^wr1\./)).toBeVisible();
 });
 
 test('the current tab stays readable under the pointer', async ({ page }) => {
@@ -76,28 +151,4 @@ test('the current tab stays readable under the pointer', async ({ page }) => {
   const tab = page.getByRole('link', { name: 'Plan', exact: true });
   await tab.hover();
   await expect(tab).toHaveCSS('color', 'rgb(251, 246, 243)');
-});
-
-test('a change made mid-week leaves the days already past alone', async ({ page }) => {
-  // Wednesday of week 1: Strength A was done on Monday, then it's moved to Saturday.
-  await page.clock.install({ time: new Date('2026-11-18T09:00:00') });
-  await seed(page, undefined, {
-    logs: { sets: {}, weights: {}, sessionsDone: { '2026-11-16': ['str-1'] }, warmups: {}, meals: {}, extras: {} },
-  });
-  await page.route('**/api/edit-schedule', (route) =>
-    route.fulfill({ json: { ops: [{ op: 'move', sessionId: 'str-1', toDay: 'sat' }], summary: 'Strength A moves to Saturday.' } }),
-  );
-  await page.goto('/plan');
-  await page.getByLabel('What should change?').fill('Move strength A to Saturday');
-  await page.getByRole('button', { name: 'Preview changes' }).click();
-  await page.getByRole('button', { name: 'Apply' }).click();
-  const s = await stored(page);
-  expect(s.scheduleOverrides?.effectiveFrom).toBe('2026-11-18');
-  expect(s.scheduleHistory?.[0]?.until).toBe('2026-11-18');
-
-  await page.getByRole('link', { name: 'Train', exact: true }).click();
-  // Monday keeps its finished workout; Saturday gets Strength A from now on.
-  await expect(page.getByRole('button', { name: /Monday, Strength A, done/ })).toBeVisible();
-  await page.getByRole('button', { name: /^Saturday/ }).click();
-  await expect(page.getByRole('region', { name: 'Strength A' })).toBeVisible();
 });

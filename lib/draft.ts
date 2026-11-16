@@ -1,6 +1,7 @@
 import { addDays, isISODate, nextMonday } from './engine/dates';
 import { defaultNutritionMode, isAdult, loseFatBlockedReason, MIN_AGE } from './engine/guardrails';
 import { bmi } from './engine/nutrition';
+import type { PlanHandoff } from './handoff';
 import type { Activity, ActivityType, Diet, Equipment, Experience, FocusArea, Goal, Job, NutritionMode, Outfit, Profile, Sex, Units } from './types';
 
 // Onboarding/settings form state. Inputs stay strings until validated, so a
@@ -120,6 +121,25 @@ export function switchUnits(d: Draft, units: Units): Draft {
   }
   if (Number.isFinite(kg) && kg > 0) next.weight = String(units === 'metric' ? Math.round(kg * 10) / 10 : Math.round(kg * 2.20462));
   return next;
+}
+
+/** A new setup draft from a plan code: the training details are filled in; body and health questions stay for the person. */
+export function draftFromHandoff(h: PlanHandoff, units: Units = defaultUnits()): Draft {
+  return {
+    ...emptyDraft(units),
+    weddingDate: h.weddingDate,
+    fittingDate: h.fittingDate ?? '',
+    fittingUnknown: !h.fittingDate,
+    outfit: h.outfit,
+    goals: h.goals,
+    focusAreas: h.focusAreas,
+    focusTouched: true,
+    strengthDays: h.strengthDays,
+    equipment: h.equipment,
+    experience: h.experience,
+    sessionMinutes: h.sessionMinutes,
+    activities: h.activities,
+  };
 }
 
 export function draftFromProfile(p: Profile): Draft {

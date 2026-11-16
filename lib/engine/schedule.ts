@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ACTIVITY_TYPES, DAY_IDS, type ActivityType, type Equipment, type FocusArea, type Profile, type ScheduleHistoryEntry, type SessionRef, type WeekTemplate } from '../types';
-import { addDays, DAY_NAMES } from './dates';
+import { addDays, DAY_NAMES, mondayOf } from './dates';
 import { defaultWeekTemplate, shapeOf, weekIssues } from './split';
 
 export function cloneTemplate(t: WeekTemplate): WeekTemplate {
@@ -45,11 +45,29 @@ export function templateForWeek(p: Profile, schedule: Schedule | WeekTemplate | 
  * day share one entry. Keeps the newest entries only.
  */
 export function freezeBefore(p: Profile, schedule: Schedule, from: string, max = 30): ScheduleHistoryEntry[] {
-  const { history } = schedule;
-  if (from <= p.startDate || history[history.length - 1]?.until === from) return history;
   const before = templateForDate(p, schedule, addDays(from, -1));
-  const entry = { until: from, template: { days: cloneTemplate(before).days } };
-  return [...history, entry].slice(-max);
+  // An entry reaching past `from` (a "this week only" change) now stops at `from`;
+  // anything after it is replaced by the new change.
+  const kept: ScheduleHistoryEntry[] = [];
+  for (const h of schedule.history) {
+    if (h.until <= from) kept.push(h);
+    else {
+      kept.push({ ...h, until: from });
+      break;
+    }
+  }
+  if (from <= p.startDate || kept[kept.length - 1]?.until === from) return kept.slice(-max);
+  return [...kept, { until: from, template: { days: cloneTemplate(before).days } }].slice(-max);
+}
+
+/**
+ * A change for the rest of this week only: `next` applies from `from` until
+ * Sunday, then the usual layout comes back.
+ */
+export function thisWeekOnly(p: Profile, schedule: Schedule, next: WeekTemplate, from: string, max = 30): Schedule {
+  const nextMonday = addDays(mondayOf(from), 7);
+  const history = freezeBefore(p, schedule, from, max - 1);
+  return { overrides: schedule.overrides, history: [...history, { until: nextMonday, template: { days: cloneTemplate(next).days } }] };
 }
 
 export interface ScheduleWarning {

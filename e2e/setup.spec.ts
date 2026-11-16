@@ -1,4 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
+import { PROTOTYPE_USER } from '../lib/engine/fixtures';
+import { encodePlan, handoffFromProfile } from '../lib/handoff';
 import { SATURDAY, stored, watchConsole } from './helpers';
 
 async function basicsAndBody(page: Page) {
@@ -108,4 +110,16 @@ test('blocks under-18s with a friendly message', async ({ page }) => {
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByRole('heading', { name: 'This plan is for adults' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next' })).toHaveCount(0);
+});
+
+test('a plan link from an AI assistant fills in setup', async ({ page }) => {
+  await page.clock.install({ time: SATURDAY });
+  const code = encodePlan(handoffFromProfile({ ...PROTOTYPE_USER, strengthDays: 3, fittingDate: '2027-09-04' }));
+  await page.goto(`/setup#plan=${code}`);
+  await expect(page.getByText('Your plan from your assistant is filled in.')).toBeVisible();
+  await expect(page.getByText('Step 2 of 6')).toBeVisible();
+  // The code is gone from the address bar once read.
+  expect(page.url()).not.toContain('#plan=');
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(page.getByLabel('Wedding date')).toHaveValue(PROTOTYPE_USER.weddingDate);
 });

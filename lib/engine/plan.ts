@@ -6,7 +6,7 @@ import { menuForDate, type DayMenu } from './meals';
 import { expectedLoss, targets, type Expectation, type Targets } from './nutrition';
 import { buildTimeline, phaseForWeek, weekOf, type Phase, type PhaseName, type Timeline } from './phases';
 import { templateForDate, type Schedule } from './schedule';
-import { buildWorkout, WARMUP, weightTip, workoutMeta, type Prescribed, type WorkoutMeta } from './workouts';
+import { buildWorkout, equipmentOn, WARMUP, weightTip, workoutMeta, type Prescribed, type WorkoutMeta } from './workouts';
 
 export interface Plan {
   profile: Profile;
@@ -95,16 +95,17 @@ export interface DayPlan {
   how: string;
 }
 
-function strengthView(plan: Plan, ref: SessionRef & { kind: 'strength' }, phase: PhaseName, recovery: boolean, taper: boolean): StrengthSession {
+function strengthView(plan: Plan, ref: SessionRef & { kind: 'strength' }, phase: PhaseName, recovery: boolean, taper: boolean, date: string): StrengthSession {
   const p = plan.profile;
-  const exercises = buildWorkout(ref.workout, p.equipment, p.sessionMinutes, {
+  const equipment = equipmentOn(p, date);
+  const exercises = buildWorkout(ref.workout, equipment, p.sessionMinutes, {
     phase,
     goals: p.goals,
     experience: p.experience,
     focusAreas: p.focusAreas,
     recovery,
     taper,
-  });
+  }, p.exerciseSwaps);
   const restMin = Math.min(...exercises.map((e) => e.restMin));
   const restMax = Math.max(...exercises.map((e) => e.restMax));
   return {
@@ -114,7 +115,7 @@ function strengthView(plan: Plan, ref: SessionRef & { kind: 'strength' }, phase:
     exercises,
     restMin,
     restMax,
-    warmup: WARMUP[p.equipment],
+    warmup: WARMUP[equipment],
     weightTip: weightTip(phase, p.units),
   };
 }
@@ -138,7 +139,7 @@ export function dayPlan(plan: Plan, schedule: Schedule | WeekTemplate | null, da
   const refs = status === 'wedding' || status === 'after' ? [] : template.days[(daysBetween(t.startMonday, date) % 7 + 7) % 7];
   const sessions: SessionView[] = refs.map((ref) =>
     ref.kind === 'strength'
-      ? strengthView(plan, ref, phase.name, recovery, taper)
+      ? strengthView(plan, ref, phase.name, recovery, taper, date)
       : {
           kind: 'activity',
           ref,

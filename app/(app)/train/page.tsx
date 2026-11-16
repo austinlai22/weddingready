@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useRef } from 'react';
 import { Closer } from '@/components/AppShell';
 import { ExerciseCard } from '@/components/train/ExerciseCard';
@@ -157,6 +158,15 @@ export default function TrainPage() {
         {dayDone && <DoneCard plan={plan} day={day} weekDone={week.done} weekTotal={week.total} daysLeft={daysLeft} />}
 
         {day.walk && day.mainSessions.length > 0 && <WalkCheck date={date} walk={day.walk} locked={future} />}
+
+        {day.status !== 'after' && (
+          <Link href="/plan#coach" className="check-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span className="t">Something came up?</span>
+              <span className="s">Missed a day, sore knee, travelling? Ask your coach to adjust the plan.</span>
+            </span>
+          </Link>
+        )}
 
         <PhaseSection plan={plan} currentWeek={day.week} />
         <Closer line={day.status === 'wedding' ? 'Enjoy every minute.' : closer} />

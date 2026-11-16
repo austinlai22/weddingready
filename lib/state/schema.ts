@@ -46,6 +46,11 @@ export const ProfileSchema = z
     safety: z.object({ pregnantOrPostpartum: z.boolean(), edHistory: z.boolean(), medicalCondition: z.boolean() }),
     startDate: ISODate,
     goalReachedAt: ISODate.optional(),
+    exerciseSwaps: z.record(z.string().max(64), z.string().max(64)).optional(),
+    equipmentOverrides: z
+      .array(z.object({ from: ISODate, to: ISODate, equipment: z.enum(['home_db', 'gym', 'bodyweight']) }).refine((o) => o.from <= o.to, 'An equipment change must end after it starts'))
+      .max(20)
+      .optional(),
   })
   .refine((p) => !(p.goals.includes('lose_fat') && p.goals.includes('maintain')), 'Lose fat and Maintain cannot both be goals')
   .refine((p) => !p.fittingDate || p.fittingDate < p.weddingDate, 'The fitting must be before the wedding')

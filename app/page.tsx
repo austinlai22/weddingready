@@ -53,7 +53,7 @@ const FEATURES: Feature[] = [
     title: 'Your week',
     body: 'Strength days are placed around the runs, classes and sports you already do. When life gets in the way, move things.',
     points: [
-      { icon: 'move', text: 'Drag a session to another day, or type the change' },
+      { icon: 'move', text: 'Drag a session, or ask the coach: “I can’t train tomorrow”' },
       { icon: 'rest', text: 'Warns when a change leaves too little time to recover' },
       { icon: 'undo', text: 'Undo, or go back to the suggested week' },
     ],
@@ -63,9 +63,9 @@ const FEATURES: Feature[] = [
     title: 'Ask your AI assistant',
     body: 'Connect WeddingReady to Claude and plan in a chat. It answers with the same plan and rules as the app, and stores nothing.',
     points: [
-      { icon: 'phases', text: 'Builds your plan from your dates and your week' },
+      { icon: 'phases', text: 'Builds your plan, then opens it in the app in one tap' },
       { icon: 'dumbbell', text: 'Gives any day’s workout, with form cues' },
-      { icon: 'meal', text: 'Sets calorie and protein targets, with the same safety rules' },
+      { icon: 'calendar', text: 'Adds your workouts to your calendar' },
     ],
     wide: { aspect: 'aspect-[1080/790]', caption: 'A real conversation in Claude using the WeddingReady connector, sped up while it calls the tools.' },
     link: { href: '/agents', label: 'How to connect it' },

@@ -2,7 +2,7 @@
 
 > A free web app that plans workouts and meals for every day between now and a wedding. It works backwards from the wedding date (and the outfit fitting, if known) to build a phased strength plan placed around the activities a person already does, plus calorie and protein targets with safety rules.
 
-WeddingReady is also an MCP server for AI assistants, at https://weddingready.vercel.app/api/mcp (streamable HTTP, no sign-in, read-only). Tools: build_plan, get_workout, plan_week, nutrition_targets, search_foods.
+WeddingReady is also an MCP server for AI assistants, at https://weddingready.vercel.app/api/mcp (streamable HTTP, no sign-in, read-only). Tools: build_plan, get_workout, calendar_events, plan_week, nutrition_targets, search_foods. Plans move between chat and the app with a plan code ("wr1.…"): build_plan returns one plus a link that opens the app with the plan filled in.
 
 - [For AI assistants](https://weddingready.vercel.app/agents): how to connect, what each tool does, privacy and limits
 - [How the plan works](https://weddingready.vercel.app/how-it-works): phases, weekly scheduling rules, food, safety, sources

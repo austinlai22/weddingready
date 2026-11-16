@@ -4,7 +4,8 @@ import { buildPlan, dayPlan } from '../../engine/plan';
 import { targets } from '../../engine/nutrition';
 import { createMemoryStore } from '../store';
 import { createMcpEndpoint } from './server';
-import { buildWeddingPlan, getWorkout, nutritionTargets, planWeek, searchFoodList, ToolInputError } from './tools';
+import { buildWeddingPlan, calendarForPlan, getWorkout, icsForPlan, nutritionTargets, planWeek, searchFoodList, ToolInputError } from './tools';
+import { codeFromHash, decodePlan } from '../../handoff';
 
 const TODAY = '2026-11-14'; // the Saturday before the fixture plan's Monday start
 // The fixture person, as an assistant would describe them.
@@ -83,6 +84,31 @@ describe('agent tools match the web app', () => {
     expect(r.foods.some((f) => f.fits_diet === false)).toBe(true);
   });
 
+  it('hands the plan to the app and back with a plan code', () => {
+    const built = buildWeddingPlan(fixture, TODAY);
+    expect(built.plan_code).toMatch(/^wr1\./);
+    expect(codeFromHash(new URL(built.open_in_app).hash)).toBe(built.plan_code);
+    expect(decodePlan(built.plan_code)?.weddingDate).toBe(fixture.wedding_date);
+    // The code alone stands in for the details; explicit fields still win.
+    const again = buildWeddingPlan({ plan_code: built.plan_code }, TODAY);
+    expect(again.phases).toEqual(built.phases);
+    expect(buildWeddingPlan({ plan_code: built.plan_code, start_date: fixture.start_date, strength_days: 4 }, TODAY).weekly_schedule.week.mon[0]).toMatch(/^Upper body/);
+    expect(() => buildWeddingPlan({ plan_code: 'wr1.broken' }, TODAY)).toThrow(/plan code/);
+  });
+
+  it('gives calendar events and a calendar file for the same sessions', () => {
+    const cal = calendarForPlan({ ...fixture, from: '2026-11-16', weeks: 1, time: '18:30' }, TODAY);
+    expect(cal.events.map((e) => [e.date, e.start, e.title])).toEqual([
+      ['2026-11-16', '18:30', 'Strength A: Legs & push'],
+      ['2026-11-19', '18:30', 'Strength B: Glutes & pull'],
+    ]);
+    const url = new URL(cal.ics_url);
+    expect(url.pathname).toBe('/api/ics');
+    const ics = icsForPlan({ plan_code: url.searchParams.get('plan')!, from: '2026-11-16', weeks: 1, time: '18:30' }, TODAY);
+    expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
+    expect(() => calendarForPlan({ ...fixture, time: '7am' }, TODAY)).toThrow(/HH:MM/);
+  });
+
   it('rejects dates the app would reject', () => {
     expect(() => buildWeddingPlan({ ...fixture, wedding_date: '2026-11-01' }, TODAY)).toThrow(/after today/);
     expect(() => buildWeddingPlan({ ...fixture, wedding_date: '2030-01-01' }, TODAY)).toThrow(/two years/);
@@ -111,7 +137,7 @@ describe('the /api/mcp endpoint', () => {
     return { status: response.status, body: json ? JSON.parse(json) : null };
   }
 
-  it('initializes, lists five read-only tools, and answers a call', async () => {
+  it('initializes, lists six read-only tools, and answers a call', async () => {
     const store = createMemoryStore();
     const endpoint = createMcpEndpoint({ store, today: () => TODAY });
     const init = await call(endpoint, {
@@ -126,7 +152,7 @@ describe('the /api/mcp endpoint', () => {
 
     const list = await call(endpoint, { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} });
     const tools = list.body.result.tools as { name: string; annotations: { readOnlyHint: boolean } }[];
-    expect(tools.map((t) => t.name).sort()).toEqual(['build_plan', 'get_workout', 'nutrition_targets', 'plan_week', 'search_foods']);
+    expect(tools.map((t) => t.name).sort()).toEqual(['build_plan', 'calendar_events', 'get_workout', 'nutrition_targets', 'plan_week', 'search_foods']);
     for (const t of tools) expect(t.annotations.readOnlyHint, t.name).toBe(true);
 
     const result = await call(endpoint, { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'build_plan', arguments: fixture } });

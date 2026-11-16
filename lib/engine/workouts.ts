@@ -307,9 +307,39 @@ export function buildWorkout(
   equipment: Equipment,
   sessionLength: number,
   ctx: RxContext,
+  swaps: Record<string, string> = {},
 ): Prescribed[] {
-  const list = workoutSlots(key, equipment, ctx.focusAreas).map((s) => prescribe(exerciseById(s.id), s.main, ctx));
+  const list = workoutSlots(key, equipment, ctx.focusAreas).map((s) => {
+    const to = swaps[s.id];
+    const ex = to && BY_ID.has(to) ? exerciseById(to) : exerciseById(s.id);
+    return prescribe(ex, s.main, ctx);
+  });
   return trimToFit(list, sessionLength);
+}
+
+// Patterns that can stand in for each other when a joint needs a break.
+const KINDER: Partial<Record<Pattern, Pattern[]>> = {
+  squat: ['bridge', 'hinge'],
+  lunge: ['bridge', 'hinge'],
+  hinge: ['bridge'],
+  vpush: ['hpush', 'lateral_raise'],
+  hpush: ['vpush'],
+  vpull: ['hpull'],
+  hpull: ['vpull'],
+  core_ext: ['core_rot'],
+};
+
+/** Exercises that can replace `id` with this equipment: the same movement first, then gentler related ones. */
+export function alternativesFor(id: string, equipment: Equipment): { exercise: Exercise; same: boolean }[] {
+  const ex = exerciseById(id);
+  const allowed = ALLOWED_EQUIPMENT[equipment];
+  const pool = (patterns: Pattern[]) => EXERCISES.filter((e) => e.id !== id && patterns.includes(e.pattern) && allowed.includes(e.equipment));
+  return [...pool([ex.pattern]).map((e) => ({ exercise: e, same: true })), ...pool(KINDER[ex.pattern] ?? []).map((e) => ({ exercise: e, same: false }))];
+}
+
+/** Equipment for a given date: a temporary change if one covers it, else the usual. */
+export function equipmentOn(p: { equipment: Equipment; equipmentOverrides?: { from: string; to: string; equipment: Equipment }[] }, date: string): Equipment {
+  return p.equipmentOverrides?.find((o) => o.from <= date && date <= o.to)?.equipment ?? p.equipment;
 }
 
 export const WARMUP: Record<Equipment, string> = {

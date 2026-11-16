@@ -71,6 +71,16 @@ export interface Profile {
   safety: Safety;
   startDate: string;
   goalReachedAt?: string;
+  /** Exercises replaced by others (e.g. for a sore knee), by exercise id. */
+  exerciseSwaps?: Record<string, string>;
+  /** Different equipment for a stretch of dates (e.g. a hotel gym while travelling). */
+  equipmentOverrides?: EquipmentOverride[];
+}
+
+export interface EquipmentOverride {
+  from: string;
+  to: string;
+  equipment: Equipment;
 }
 
 /** A/B/C full body · U/L upper/lower · P/R/G push, pull, legs · F the old 5-day Focus day (kept so saved plans still load). */

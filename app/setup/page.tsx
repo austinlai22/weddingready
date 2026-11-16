@@ -19,7 +19,8 @@ import {
 } from '@/components/setup/Fields';
 import { ExpectationLine } from '@/components/setup/ExpectationLine';
 import { track } from '@/lib/analytics';
-import { defaultStart, emptyDraft, profileFromDraft, SETUP_SCREENS, STEP_COUNT, validateScreen, type Draft } from '@/lib/draft';
+import { defaultStart, draftFromHandoff, emptyDraft, profileFromDraft, SETUP_SCREENS, STEP_COUNT, validateScreen, type Draft } from '@/lib/draft';
+import { codeFromHash, decodePlan, type PlanHandoff } from '@/lib/handoff';
 import { WeekAdvice } from '@/components/plan/WeekAdvice';
 import { applyMoves, suggestWeekFix } from '@/lib/engine/suggest';
 import { validateTemplate } from '@/lib/engine/schedule';
@@ -35,16 +36,42 @@ function Setup() {
   const router = useRouter();
   const existing = useApp((s) => s.profile);
   const saveProfile = useApp((s) => s.saveProfile);
-  const [step, setStep] = useState(1);
-  const [d, setD] = useState<Draft>(() => emptyDraft());
-  const [err, setErr] = useState<string | null>(null);
   const today = todayISO();
+  // A plan handed over from an AI assistant in the link ("#plan=…"). Setup only renders in the browser.
+  const [linked] = useState<PlanHandoff | null>(() => {
+    const code = codeFromHash(window.location.hash);
+    const h = code ? decodePlan(code) : null;
+    return h && h.weddingDate > today ? h : null;
+  });
+  const prefill = !!linked && !existing;
+  const [step, setStep] = useState(prefill ? 2 : 1);
+  const [d, setD] = useState<Draft>(() => (prefill ? draftFromHandoff(linked) : emptyDraft()));
+  const [err, setErr] = useState<string | null>(null);
+  const [handoff, setHandoff] = useState<PlanHandoff | null>(linked && existing ? linked : null);
+  const [fromAssistant, setFromAssistant] = useState(prefill);
   const set: SetDraft = (patch) => setD((cur) => (typeof patch === 'function' ? patch(cur) : { ...cur, ...patch }));
+  const deleteEverything = useApp((s) => s.deleteEverything);
+
+  const startFrom = (h: PlanHandoff) => {
+    setD(draftFromHandoff(h));
+    setStep(2);
+    setFromAssistant(true);
+    setHandoff(null);
+    track('setup_started', { from: 'assistant' });
+  };
 
   useEffect(() => {
+    if (linked) {
+      // The plan code has been read; keep it out of the address bar and history.
+      history.replaceState(null, '', '/setup');
+      if (!existing) track('setup_started', { from: 'assistant' });
+      return;
+    }
     if (existing) router.replace('/train');
     else track('setup_started');
-  }, [existing, router]);
+    // Runs once: the link is read when setup opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -105,7 +132,35 @@ function Setup() {
           <p style={{ fontSize: 17, lineHeight: 1.5, color: '#4A3D42' }}>{screen.intro}</p>
         </header>
 
-        {under18 ? (
+        {handoff && (
+          <div className="card-lg" role="alert">
+            <h2 className="h3">You already have a plan on this device</h2>
+            <p className="note-line">Replace it with the plan from your assistant? Your current plan and logs will be deleted from this device.</p>
+            <div className="row" style={{ gap: 8 }}>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  const h = handoff;
+                  deleteEverything();
+                  startFrom(h);
+                }}
+              >
+                Replace my plan
+              </button>
+              <button type="button" className="btn-ghost" onClick={() => router.replace('/train')}>
+                Keep my plan
+              </button>
+            </div>
+          </div>
+        )}
+        {fromAssistant && step === 2 && !handoff && (
+          <div className="banner" role="status">
+            <strong>Your plan from your assistant is filled in.</strong> Add a few details about you for your protein and energy estimates; you can check the rest on the next screens.
+          </div>
+        )}
+
+        {handoff ? null : under18 ? (
           <div className="card-lg" role="alert">
             <h2 className="h3">This plan is for adults</h2>
             <p className="note-line">WeddingReady is built for people {MIN_AGE} and over. If you’re younger, a coach or doctor can help you plan training that’s right for you.</p>

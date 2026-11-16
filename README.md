@@ -16,7 +16,7 @@ Tell it your wedding date (and your outfit fitting, if you know it). It works ba
 
 ## What's interesting about it
 
-**The plan is calculated, not generated.** A pure TypeScript engine (`lib/engine/`) turns a profile into a plan: phases, recovery weeks, the taper, every set and rep, calorie and protein ranges, and a rotating menu. It never reads the clock ("today" is passed in), so the same inputs always give the same plan and every rule is unit-tested. AI only handles two fuzzy inputs: estimating a meal you describe, and turning "move my run to Wednesday" into edits. Even then the app checks the answer and shows a before/after preview before anything changes.
+**The plan is calculated, not generated.** A pure TypeScript engine (`lib/engine/`) turns a profile into a plan: phases, recovery weeks, the taper, every set and rep, calorie and protein ranges, and a rotating menu. It never reads the clock ("today" is passed in), so the same inputs always give the same plan and every rule is unit-tested. AI handles the fuzzy parts, estimating a meal you describe and the coach below, and the engine checks everything it proposes.
 
 **It schedules like a coach.** Strength days are placed by scoring every possible week against training rules:
 - Two or three days are full body, never back to back, with an easy day between.
@@ -39,15 +39,19 @@ There are no streaks and no before-and-after photos. Deficits are capped at 0.75
 
 **Your data never leaves your device.** There are no accounts. The plan and logs live in the browser, validated by Zod on every load, with versioned migrations and export/import. I chose this over sign-in to keep health data off a server entirely.
 
+**A coach that acts, with guardrails.** On the Plan tab, the coach is a small agent: tell it "I can't train tomorrow", "my knee hurts doing lunges", "I'm in a hotel next week" or "I'm at Chipotle", and it looks at the plan with tools (the week, a day's workout, exercise alternatives, today's food), then proposes changes: move sessions for this week only or from now on, swap an exercise in every workout, use other equipment for some dates, or log a meal. Every proposal is checked by the engine (recovery rules, valid alternatives, calories that match the macros, no past days) and the result goes back to the model so it can fix problems before answering. If the model describes a change without proposing it, the loop points that out once. The app shows a before/after preview, and nothing changes until you tap Apply; "this week only" changes end on Sunday, and past days never change. The coach never sees weight, height, age or health answers, never changes calorie targets, and shows no food numbers to anyone who chose none.
+
+**Plans move between chat and the app.** A plan code (`wr1.…`, the training details only, base64url JSON validated with Zod) carries a plan both ways without accounts: the MCP tool returns a link that opens setup with the plan filled in (the code rides after the `#`, so it never reaches the server), and the app's "Copy for Claude" hands the plan to an assistant. Workouts export to any calendar as an `.ics` file made on the device, and the `calendar_events` tool gives assistants dated events to add with their own calendar connector.
+
 **The AI costs nothing to run.** Requests try Claude first. If there's no key or no credits, they fall back across Google's free Gemini models: the fast "Lite" models first, a full Flash model last. Each attempt gets 12 seconds, and a model that's busy is skipped for two minutes. Every reply is held to the same Zod schemas, typed text is passed to the model as delimited data rather than instructions, and a meal estimate whose calories don't match its protein, carbs and fat is marked low confidence. Rate limits use hashed device IDs and IPs in Upstash Redis, with a daily spend cap.
 
-**AI assistants can use it.** WeddingReady is also a remote MCP server at `https://weddingready.vercel.app/api/mcp`, so Claude (as a custom connector) or any MCP client can build a plan, get a day's workout, place strength days, set calorie and protein targets, and look up foods. The tools call the same engine as the app, apply the same safety rules, are read-only and stateless, and store nothing about the caller beyond an anonymous per-tool count. See [/agents](https://weddingready.vercel.app/agents).
+**AI assistants can use it.** WeddingReady is also a remote MCP server at `https://weddingready.vercel.app/api/mcp`, so Claude (as a custom connector) or any MCP client can build a plan, get a day's workout, add sessions to a calendar, place strength days, set calorie and protein targets, and look up foods. The tools call the same engine as the app, apply the same safety rules, are read-only and stateless, and store nothing about the caller beyond an anonymous per-tool count. See [/agents](https://weddingready.vercel.app/agents).
 
 ![Claude using the WeddingReady connector to build a plan and the first workout](docs/screenshots/agent-demo.gif)
 
 **It works offline and installs like an app.** A hand-written service worker caches the app shell and data. The manifest includes maskable icons for Android and an Apple touch icon.
 
-**Quality bar.** 101 unit tests (engine, nutrition, guardrails, storage, AI handling and limits) and 44 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
+**Quality bar.** 115 unit tests (engine, nutrition, guardrails, storage, the coach's tools and loop, AI handling and limits) and 50 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
 
 ## Built with
 
@@ -82,7 +86,8 @@ All optional. See `.env.example`.
 | Variable | Used for |
 |---|---|
 | `GEMINI_API_KEY` | Free AI through Google's Gemini free tier (key from aistudio.google.com/apikey). Google may use free-tier requests to improve its products; the privacy page says so. |
-| `GEMINI_MODEL` | Overrides the first Gemini model. Default `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite`, then `gemini-3.6-flash`. |
+| `GEMINI_MODEL` | Overrides the first Gemini model for meal estimates. Default `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite`, then `gemini-3.6-flash`. |
+| `COACH_MODEL` | Overrides the coach's first model. Default `gemini-3.1-flash-lite` (fastest at tool use in testing), with the same fallbacks. The coach only uses the free Gemini tier, so it costs nothing even when an Anthropic key is set. |
 | `ANTHROPIC_API_KEY` / `AI_MODEL` | Claude, tried first when the account has credits. Default model `claude-sonnet-5-5`. Leave the key unset otherwise, so requests don't try Claude first and fail. |
 | `AI_DAILY_BUDGET_USD` | Daily AI spend cap across all users. Default `2`. Gemini's free tier counts as $0. |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_*`) | Rate limits and the spend cap shared across serverless instances. Needed in production. |
@@ -112,14 +117,17 @@ lib/engine/      The plan engine: pure functions, no clock reads, fully unit-tes
   plan.ts          Profile → Plan → a day's sessions and targets
 lib/state/       Zod schema for saved data, versioned migrations, the Zustand store
 lib/server/      AI calls (Claude and Gemini, structured output), rate limits, spend cap, Redis store
-  mcp/             The MCP server for AI assistants: five read-only tools over the engine
+  mcp/             The MCP server for AI assistants: six read-only tools over the engine
+  coach.ts         The in-app coach: a Gemini tool-calling loop that returns checked proposals
+lib/handoff.ts   Plan codes: a plan's training details in a link or a paste
+lib/calendar.ts  Sessions as calendar events and .ics files
 lib/example.ts   The example plan shown on the marketing pages, built by the real engine
 lib/demo.ts      "Try the example plan": a plan ten weeks in, relative to today
 app/page.tsx     Home page, with demo clips recorded from the real app
 app/how-it-works The rules, with diagrams drawn from the engine's own output
 app/(app)/       Train, Eat, Plan, Settings
 app/setup/       Five-screen setup
-app/api/         estimate-meal, edit-schedule, mcp
+app/api/         estimate-meal, coach, mcp, ics
 public/sw.js     Service worker
 data/            Exercises, foods (generated), meal templates
 ```

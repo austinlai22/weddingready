@@ -4,7 +4,7 @@ import { todayISO } from '../../engine/dates';
 import { ACTIVITY_TYPES, DAY_IDS, FOCUS_AREAS } from '../../types';
 import { clientAddress, count, withinLimits } from '../limits';
 import type { Store } from '../store';
-import { buildWeddingPlan, EQUIPMENT, getWorkout, nutritionTargets, planWeek, searchFoodList, SITE, ToolInputError } from './tools';
+import { buildWeddingPlan, calendarForPlan, EQUIPMENT, getWorkout, nutritionTargets, planWeek, searchFoodList, SITE, ToolInputError } from './tools';
 
 // /api/mcp: WeddingReady as a tool for AI assistants (a remote MCP server).
 // Read-only and stateless: every input arrives with the call and nothing about
@@ -31,7 +31,9 @@ async function run(deps: McpDeps, tool: string, work: () => unknown): Promise<To
 }
 
 const INSTRUCTIONS = `WeddingReady plans training and food for the time between now and a wedding, with the same rules as ${SITE}.
-- Ask for the wedding date first; the fitting date (for an outfit) helps if there is one.
+- Ask for the wedding date first; the fitting date (for an outfit) helps if there is one. If the person has a WeddingReady plan code ("wr1.…"), pass it as plan_code instead of asking again.
+- After build_plan, offer the open_in_app link so they can track the plan in the app, and keep using the returned plan_code.
+- To put sessions in their calendar, use calendar_events: create the events with a calendar connector if you have one, otherwise share its ics_url.
 - Pass dates as YYYY-MM-DD and, where a tool takes "today" or "date", use the person's local date.
 - Training tools don't need body measurements. nutrition_targets does; convert pounds and feet/inches to kg and cm.
 - Respect the safety answers: under 18 gets nothing; pregnancy or postpartum means no calorie deficit; a history of eating disorders means no calorie numbers or weight goals.
@@ -52,7 +54,8 @@ const activities = z
   .describe('Activities the person already does each week, which strength days are placed around.');
 
 const training = {
-  wedding_date: isoDate.describe('The wedding date.'),
+  plan_code: z.string().max(2000).optional().describe('A WeddingReady plan code ("wr1.…") from the app’s Plan tab or an earlier build_plan. Fills in everything below; anything you also pass overrides it.'),
+  wedding_date: isoDate.optional().describe('The wedding date. Required unless plan_code is given.'),
   start_date: isoDate.optional().describe('First day of the plan. Defaults to next Monday.'),
   fitting_date: isoDate.optional().describe('The final outfit fitting, if known. Maintain starts at least two weeks before it.'),
   goals: z.array(z.enum(['tone', 'strength', 'lose_fat', 'maintain'])).max(4).optional().describe('Default ["tone"]. lose_fat and maintain can’t be combined.'),
@@ -91,6 +94,24 @@ export function createWeddingReadyServer(deps: McpDeps): McpServer {
       annotations: readOnly,
     },
     (input) => run(deps, 'get_workout', () => getWorkout(input, today())),
+  );
+
+  server.registerTool(
+    'calendar_events',
+    {
+      title: 'Training sessions as calendar events',
+      description:
+        'The strength sessions (and optionally other activities) for the coming weeks as dated events with a start time, duration, title and the workout in the description, plus a link to a calendar file. Use it with a calendar connector to add workouts to the person’s calendar.',
+      inputSchema: z.object({
+        ...training,
+        from: isoDate.optional().describe('First day to include. Default today.'),
+        weeks: z.number().int().min(1).max(16).optional().describe('How many weeks. Default 4.'),
+        time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().describe('Start time, 24-hour HH:MM, local to the person. Default 07:00.'),
+        include_activities: z.boolean().optional().describe('Also include runs, classes and other activities (never walks). Default false.'),
+      }),
+      annotations: readOnly,
+    },
+    (input) => run(deps, 'calendar_events', () => calendarForPlan(input, today())),
   );
 
   server.registerTool(

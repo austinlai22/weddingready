@@ -22,6 +22,7 @@ import { track } from '@/lib/analytics';
 import { defaultStart, draftFromProfile, profileFromDraft, validateAll, type Draft } from '@/lib/draft';
 import { fmtMedium, todayISO } from '@/lib/engine/dates';
 import { phaseForDate, weekOf } from '@/lib/engine/phases';
+import { EXERCISES } from '@/lib/engine/workouts';
 import { buildPlan } from '@/lib/engine/plan';
 import { parseImport } from '@/lib/state/schema';
 import { currentData, exportData, useApp } from '@/lib/state/store';
@@ -156,6 +157,8 @@ export default function SettingsPage() {
           )}
         </section>
       )}
+
+      <CoachChanges />
 
       <MyFoods />
       <PrivacyAndData />
@@ -325,6 +328,49 @@ function PrivacyAndData() {
         </div>
       )}
       <p className="tiny muted">General guidance, not medical advice. <Link href="/terms">Terms</Link></p>
+    </section>
+  );
+}
+
+const EQUIPMENT_LABEL = { home_db: 'Home dumbbells', gym: 'Gym', bodyweight: 'No equipment' } as const;
+
+/** Exercise swaps and equipment changes (usually from the coach), each removable. */
+function CoachChanges() {
+  const profile = useApp((s) => s.profile)!;
+  const patchProfile = useApp((s) => s.patchProfile);
+  const swaps = Object.entries(profile.exerciseSwaps ?? {});
+  const overrides = profile.equipmentOverrides ?? [];
+  if (!swaps.length && !overrides.length) return null;
+  const name = (id: string) => EXERCISES.find((e) => e.id === id)?.name ?? id;
+  return (
+    <section className="card-lg" aria-labelledby="coach-changes">
+      <h2 id="coach-changes" className="h3">Changes from your coach</h2>
+      <ul className="stack-8" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {swaps.map(([from, to]) => (
+          <li key={from} className="row-between">
+            <span className="note-line">{name(from)} → {name(to)}</span>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => {
+                const next = { ...(profile.exerciseSwaps ?? {}) };
+                delete next[from];
+                patchProfile({ exerciseSwaps: next });
+              }}
+            >
+              Undo swap
+            </button>
+          </li>
+        ))}
+        {overrides.map((o, i) => (
+          <li key={`${o.from}-${i}`} className="row-between">
+            <span className="note-line">{EQUIPMENT_LABEL[o.equipment]}, {fmtMedium(o.from)} to {fmtMedium(o.to)}</span>
+            <button type="button" className="btn-ghost" onClick={() => patchProfile({ equipmentOverrides: overrides.filter((_, j) => j !== i) })}>
+              Remove
+            </button>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

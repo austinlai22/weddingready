@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 import type { AppState, FoodItem, MealEntry, Profile, SlotId, WeekTemplate } from '../types';
 import { addDays, todayISO } from '../engine/dates';
-import { freezeBefore, reconcileOverrides, templateForDate, type Schedule } from '../engine/schedule';
+import { freezeBefore, reconcileOverrides, templateForDate, thisWeekOnly, type Schedule } from '../engine/schedule';
 import { emptyState, migrateState, parseState, STATE_VERSION } from './schema';
 
 export const STORAGE_KEY = 'weddingready-v1';
@@ -25,6 +25,8 @@ interface Actions {
   deleteMyFood: (id: string) => void;
   /** A schedule change (drag, menu, AI or reset) that applies from `from` on; earlier days keep their layout. */
   editSchedule: (next: WeekTemplate | null, from: string) => void;
+  /** A change to the rest of this week only; the usual layout returns next Monday. */
+  editScheduleThisWeek: (next: WeekTemplate, from: string) => void;
   /** Puts back a schedule saved before an edit (Undo). */
   restoreSchedule: (s: Schedule) => void;
   setAnalyticsOptOut: (v: boolean) => void;
@@ -169,6 +171,12 @@ export const useApp = create<Store>()(
         if (!s.profile) return;
         const history = freezeBefore(s.profile, { overrides: s.scheduleOverrides, history: s.scheduleHistory ?? [] }, from);
         set({ scheduleHistory: history, scheduleOverrides: next ? { ...next, effectiveFrom: from } : null });
+      },
+      editScheduleThisWeek: (next, from) => {
+        const s = get();
+        if (!s.profile) return;
+        const sched = thisWeekOnly(s.profile, { overrides: s.scheduleOverrides, history: s.scheduleHistory ?? [] }, next, from);
+        set({ scheduleOverrides: sched.overrides, scheduleHistory: sched.history });
       },
       restoreSchedule: (sched) => set({ scheduleOverrides: sched.overrides, scheduleHistory: sched.history }),
       setAnalyticsOptOut: (v) => set({ settings: { ...get().settings, analyticsOptOut: v } }),

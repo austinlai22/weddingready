@@ -2,7 +2,9 @@
 
 import { Closer } from '@/components/AppShell';
 import { PhaseTimeline } from '@/components/plan/PhaseTimeline';
+import { Coach } from '@/components/coach/Coach';
 import { ScheduleEditor } from '@/components/plan/ScheduleEditor';
+import { TakeAlong } from '@/components/plan/TakeAlong';
 import { PhaseSection } from '@/components/train/PhaseSection';
 import { daysBetween, fmtLong, fmtShort } from '@/lib/engine/dates';
 import { weekOf } from '@/lib/engine/phases';
@@ -62,7 +64,9 @@ export default function PlanPage() {
       )}
 
       <PhaseSection plan={plan} currentWeek={week} heading="Phases" />
+      <Coach plan={plan} today={today} />
       <ScheduleEditor plan={plan} today={today} />
+      <TakeAlong plan={plan} today={today} />
       <Closer line="Consistent, not perfect." />
     </>
   );

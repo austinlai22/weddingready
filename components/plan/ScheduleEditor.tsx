@@ -17,17 +17,17 @@ import { useRef, useState } from 'react';
 import { track } from '@/lib/analytics';
 import { DAY_ABBR, DAY_NAMES, DAY_SHORT } from '@/lib/engine/dates';
 import type { Plan } from '@/lib/engine/plan';
-import { applyOps, cloneTemplate, duplicateSession, OpError, templateForDate, validateTemplate, type Schedule, type ScheduleOp } from '@/lib/engine/schedule';
+import { applyOps, duplicateSession, OpError, templateForDate, validateTemplate, type Schedule, type ScheduleOp } from '@/lib/engine/schedule';
 import { workoutMeta } from '@/lib/engine/workouts';
 import { useApp } from '@/lib/state/store';
 import { DAY_IDS, type SessionRef, type WeekTemplate } from '@/lib/types';
-import { useOnline, useSchedule } from '@/lib/ui';
+import { useSchedule } from '@/lib/ui';
 import { Grip } from '../ui/icons';
 import { WeekAdvice } from './WeekAdvice';
 import { applyMoves, suggestWeekFix } from '@/lib/engine/suggest';
 import { useUi } from '@/lib/ui';
 
-function chipLabel(s: SessionRef, strengthDays: number): string {
+export function chipLabel(s: SessionRef, strengthDays: number): string {
   return s.kind === 'strength' ? workoutMeta(s.workout, strengthDays).tag : s.label;
 }
 
@@ -245,7 +245,6 @@ export function ScheduleEditor({ plan, today }: { plan: Plan; today: string }) {
         </div>
       )}
 
-      <AskAi plan={plan} template={template} onApply={(t) => commit(t, 'ai')} />
     </section>
   );
 }
@@ -331,7 +330,7 @@ function SessionMenu({
   );
 }
 
-function WeekList({ t, strengthDays }: { t: WeekTemplate; strengthDays: number }) {
+export function WeekList({ t, strengthDays }: { t: WeekTemplate; strengthDays: number }) {
   return (
     <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 2 }}>
       {t.days.map((d, i) => (
@@ -342,116 +341,3 @@ function WeekList({ t, strengthDays }: { t: WeekTemplate; strengthDays: number }
     </ul>
   );
 }
-
-function AskAi({ plan, template, onApply }: { plan: Plan; template: WeekTemplate; onApply: (t: WeekTemplate) => void }) {
-  const deviceId = useApp((s) => s.deviceId);
-  const online = useOnline();
-  const [text, setText] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-  const [preview, setPreview] = useState<{ before: WeekTemplate; after: WeekTemplate; summary: string } | null>(null);
-  const p = plan.profile;
-
-  const ask = async () => {
-    if (!text.trim()) return;
-    setBusy(true);
-    setErr('');
-    try {
-      const res = await fetch('/api/edit-schedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          deviceId,
-          instruction: text.trim(),
-          currentWeek: { days: template.days },
-          constraints: { strengthDays: p.strengthDays, sessionTypes: [...new Set(p.activities.map((a) => a.type))] },
-        }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        track('ai_schedule', { status: String(body.code ?? res.status) });
-        setErr(body.error ?? 'Something went wrong. Try again, or drag the sessions yourself.');
-        return;
-      }
-      const { ops, summary } = body as { ops: ScheduleOp[]; summary: string };
-      if (!ops.length) {
-        track('ai_schedule', { status: 'no_ops' });
-        setErr(summary || 'No changes were needed.');
-        return;
-      }
-      const after = applyOps(cloneTemplate(template), ops, p);
-      track('ai_schedule', { status: 'ok' });
-      setPreview({ before: template, after, summary });
-    } catch (e) {
-      track('ai_schedule', { status: e instanceof OpError ? 'bad_ops' : 'network' });
-      setErr(e instanceof OpError ? 'That suggestion didn’t match your week. Try rewording it.' : 'Couldn’t reach the assistant. Check your connection.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const afterWarnings = preview ? validateTemplate(preview.after, p.equipment, p.focusAreas) : [];
-
-  return (
-    <div className="card-lg">
-      <h3 className="h3" style={{ fontSize: 20 }}>Ask AI to change it</h3>
-      {!online ? (
-        <p className="small muted">Needs a connection. You can still drag sessions yourself.</p>
-      ) : preview ? (
-        <>
-          <p className="small"><strong>{preview.summary}</strong></p>
-          <div className="tiles-2">
-            <div className="stack-8" style={{ background: '#FBF6F3', borderRadius: 14, padding: 12 }}>
-              <span className="label">Before</span>
-              <WeekList t={preview.before} strengthDays={p.strengthDays} />
-            </div>
-            <div className="stack-8" style={{ background: '#F6E4EA', borderRadius: 14, padding: 12 }}>
-              <span className="label">After</span>
-              <WeekList t={preview.after} strengthDays={p.strengthDays} />
-            </div>
-          </div>
-          {afterWarnings.map((w) => (
-            <p key={w.text} className="small"><strong>{w.severity === 'rule' ? 'Heads up.' : 'Tip.'}</strong> {w.text}</p>
-          ))}
-          <div className="row" style={{ gap: 8 }}>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => {
-                onApply(preview.after);
-                setPreview(null);
-                setText('');
-              }}
-            >
-              Apply
-            </button>
-            <button type="button" className="btn-ghost" onClick={() => setPreview(null)}>Discard</button>
-          </div>
-        </>
-      ) : (
-        <>
-          <label className="field">
-            <span>What should change?</span>
-            <textarea
-              className="input"
-              rows={2}
-              maxLength={300}
-              value={text}
-              placeholder="e.g. Move strength to Tue and Fri, and add yoga on Sunday"
-              onChange={(e) => setText(e.target.value)}
-              style={{ resize: 'vertical' }}
-            />
-          </label>
-          <div className="row" style={{ gap: 8 }}>
-            <button type="button" className="btn" onClick={ask} disabled={busy || !text.trim()}>
-              {busy ? 'Thinking…' : 'Preview changes'}
-            </button>
-            <span className="tiny muted">Nothing changes until you tap Apply.</span>
-          </div>
-        </>
-      )}
-      {err && <p role="alert" className="err">{err}</p>}
-    </div>
-  );
-}
-

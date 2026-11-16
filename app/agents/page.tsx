@@ -17,7 +17,8 @@ const CLAUDE_HELP = 'https://support.claude.com/en/articles/11175166';
 const TOOLS: { name: string; icon: IconName; does: string }[] = [
   { name: 'build_plan', icon: 'phases', does: 'Builds the phased plan from today to the wedding: phases and dates, recovery weeks, the taper, and the weekly schedule around existing activities.' },
   { name: 'get_workout', icon: 'dumbbell', does: 'Gives one day’s workout: each exercise with sets, reps, rest and how to do it.' },
-  { name: 'plan_week', icon: 'calendar', does: 'Picks strength days around runs, classes and sports, says which recovery rule a week breaks, and suggests the smallest fix.' },
+  { name: 'calendar_events', icon: 'calendar', does: 'Turns the coming weeks into dated events with a time and the workout in each, so an assistant with a calendar connector can add them, plus a calendar file link.' },
+  { name: 'plan_week', icon: 'move', does: 'Picks strength days around runs, classes and sports, says which recovery rule a week breaks, and suggests the smallest fix.' },
   { name: 'nutrition_targets', icon: 'meal', does: 'Gives daily calorie, protein, carb and fat targets for maintenance or gentle fat loss, with the safety rules applied.' },
   { name: 'search_foods', icon: 'search', does: 'Looks up calories and macros for foods, with USDA sources.' },
 ];
@@ -27,6 +28,7 @@ const EXAMPLES = [
   'What’s my WeddingReady workout today?',
   'I do spin on Wednesday and a class on Saturday. Which days should my four strength sessions go on?',
   'How much protein should I eat? I’m 30, 5′6″ and 150 lb, and I sit at a desk.',
+  'Add my next four weeks of workouts to my Google Calendar at 6:30pm.',
 ];
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
@@ -85,6 +87,14 @@ export default function Agents() {
                 </li>
               ))}
             </ul>
+          </Block>
+
+          <Block title="From chat to the app, and back">
+            <p>
+              After building a plan, the assistant gives a link that opens WeddingReady with the plan filled in, so tracking starts in one tap. It also gets a plan code
+              (“wr1.…”) it can reuse instead of asking again.
+            </p>
+            <p>Going the other way, the app’s Plan tab has “Copy for Claude”: paste it into a chat and the assistant picks up your plan, including any exercises you’ve swapped.</p>
           </Block>
 
           <Block title="Try asking">

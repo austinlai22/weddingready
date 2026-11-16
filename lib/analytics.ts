@@ -19,7 +19,10 @@ export type AnalyticsEvent =
   | 'schedule_edited'
   | 'ai_schedule'
   | 'pwa_installed'
-  | 'settings_changed';
+  | 'settings_changed'
+  | 'calendar_exported'
+  | 'plan_code_copied'
+  | 'coach';
 
 type Props = Record<string, string | number | boolean | string[]>;
 
