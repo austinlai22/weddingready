@@ -79,13 +79,32 @@ export function avoidTokens(avoid: string[]): string[] {
     .map((s) => (s.length > 4 && s.endsWith('s') ? s.slice(0, -1) : s));
 }
 
+// Avoid-list words that name a food group rather than a food: they exclude
+// every food carrying that tag ("nuts" also removes almonds and peanut butter).
+const AVOID_TAGS: [RegExp, string][] = [
+  [/nut|almond|cashew|pecan|pistachio|hazelnut|macadamia/, 'nuts'],
+  [/dairy|milk|lactose|cheese|whey|casein/, 'dairy'],
+  [/egg/, 'egg'],
+  [/soy|tofu|edamame/, 'soy'],
+  [/gluten|wheat|celiac|coeliac/, 'gluten'],
+  [/fish|seafood|shellfish|shrimp|prawn|crab|lobster/, 'fish'],
+  [/pork|bacon|^ham$/, 'pork'],
+  [/beef|red meat|^meat$/, 'meat'],
+  [/chicken|turkey|poultry/, 'poultry'],
+  [/honey/, 'honey'],
+];
+
+export function avoidTags(tokens: string[]): string[] {
+  return [...new Set(tokens.flatMap((t) => AVOID_TAGS.filter(([re]) => re.test(t)).map(([, tag]) => tag)))];
+}
+
 function foodTags(id: string): string[] {
   return (FOOD_BY_ID.get(id) as { tags?: string[] } | undefined)?.tags ?? [];
 }
 
 export function templateAllowed(t: MealTemplate, diet: Diet, avoid: string[]): boolean {
-  const excluded = DIET_EXCLUDES[diet] ?? [];
   const tokens = avoidTokens(avoid);
+  const excluded = [...(DIET_EXCLUDES[diet] ?? []), ...avoidTags(tokens)];
   for (const item of t.items) {
     if (foodTags(item.food).some((tag) => excluded.includes(tag))) return false;
     const name = (FOOD_BY_ID.get(item.food)?.name ?? '').toLowerCase();
@@ -203,7 +222,7 @@ export function isTreatEntry(e: MealEntry | null | undefined, treat?: string): b
   if (e.src === 'template') return e.templateId === 'treat';
   const words = avoidTokens(treat ? [treat] : []);
   const hay = `${e.typed ?? ''} ${e.name}`.toLowerCase();
-  return words.length > 0 && words.some((w) => hay.includes(w));
+  return words.length > 0 && words.every((w) => hay.includes(w));
 }
 
 /** Search the food list: My foods first, then the seeded DB. Empty query → recent My foods + popular picks. */

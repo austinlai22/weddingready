@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { AiBadOutput, AiRefused, AiUnavailable, aiConfigured } from './ai';
-import { budgetLeft, count, recordSpend } from './limits';
+import { budgetLeft, count, recordSpend, withinLimits } from './limits';
 import type { Store } from './store';
 
 export function fail(status: number, error: string, code: string) {
@@ -17,24 +17,51 @@ export async function readJson(request: Request, maxBytes = 8_000): Promise<unkn
   return JSON.parse(text);
 }
 
+/**
+ * Rate limits for an AI route. If the limit store can't be reached, AI is
+ * treated as off (the app falls back to manual entry) rather than crashing or
+ * running without limits.
+ */
+export async function checkLimits(
+  store: Store,
+  scope: string,
+  limits: Parameters<typeof withinLimits>[2],
+  limitedMessage: string,
+): Promise<Response | null> {
+  try {
+    if (await withinLimits(store, scope, limits)) return null;
+  } catch {
+    console.warn('AI: the rate-limit store is unreachable, so AI is off for this request.');
+    return fail(503, 'AI help isn’t available right now. You can still enter it yourself.', 'ai_unavailable');
+  }
+  await count(store, scope, 'limited');
+  return fail(429, limitedMessage, 'rate_limited');
+}
+
 /** Shared budget gate + error mapping for the AI routes. Only anonymous counts are recorded. */
 export async function runAi<T>(store: Store, name: string, work: () => Promise<{ data: T; usd: number }>, respond: (data: T) => Response) {
   if (!aiConfigured()) {
     await count(store, name, 'unavailable');
     return fail(503, 'AI help isn’t switched on right now. You can still enter it yourself.', 'ai_unavailable');
   }
-  if (!(await budgetLeft(store))) {
+  let underBudget: boolean;
+  try {
+    underBudget = await budgetLeft(store);
+  } catch {
+    return fail(503, 'AI help isn’t available right now. You can still enter it yourself.', 'ai_unavailable');
+  }
+  if (!underBudget) {
     await count(store, name, 'budget');
     return fail(503, 'AI help is taking a break for today. You can still enter it yourself.', 'budget');
   }
   try {
     const { data, usd } = await work();
-    await recordSpend(store, usd);
+    await recordSpend(store, usd).catch(() => undefined);
     await count(store, name, 'ok');
     return respond(data);
   } catch (e) {
     const usd = (e as { usd?: number }).usd;
-    if (usd) await recordSpend(store, usd);
+    if (usd) await recordSpend(store, usd).catch(() => undefined);
     if (e instanceof AiUnavailable) {
       const busy = /busy|quota/.test(e.message);
       await count(store, name, busy ? 'busy' : 'unavailable');

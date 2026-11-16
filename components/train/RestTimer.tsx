@@ -31,8 +31,12 @@ export function RestTimer() {
   const left = rest ? Math.max(0, Math.ceil((rest.endAt - now) / 1000)) : 0;
   const clock = ready ? 'Go' : `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   return (
-    <div className="rest-timer" role="status" aria-live="polite" aria-atomic="true">
-      <div className="row" style={{ alignItems: 'baseline', gap: 12 }}>
+    <div className="rest-timer">
+      {/* Screen readers hear when rest starts and ends, not every tick of the clock. */}
+      <span className="sr-only" role="status" aria-live="polite">
+        {ready ? 'Rest done. Ready for your next set.' : `Rest timer started: ${rest!.min} to ${rest!.max} seconds.`}
+      </span>
+      <div className="row" style={{ alignItems: 'baseline', gap: 12 }} aria-hidden="true">
         <span className={`clock${ready ? ' go' : ''}`}>{clock}</span>
         <span className="txt">
           {ready ? `Ready for your next set (rest up to ${ready.max} sec if you need it)` : `Rest · ${rest!.min}–${rest!.max} sec`}

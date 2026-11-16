@@ -1,8 +1,8 @@
 'use client';
 
-import { DAY_ABBR, DAY_NAMES } from '@/lib/engine/dates';
+import { addDays, DAY_ABBR, DAY_NAMES } from '@/lib/engine/dates';
 import { ED_HELPLINE, loseFatBlockedReason, MIN_BMI } from '@/lib/engine/guardrails';
-import { ACTIVITY_DEFAULT_LABEL, draftHeightCm, draftWeightKg, maxFittingDate, OUTFIT_FOCUS, switchUnits, type Draft } from '@/lib/draft';
+import { ACTIVITY_DEFAULT_LABEL, draftHeightCm, draftWeightKg, MAX_PLAN_DAYS, maxFittingDate, OUTFIT_FOCUS, switchUnits, type Draft } from '@/lib/draft';
 import { ACTIVITY_TYPES, FOCUS_AREAS, type ActivityType, type FocusArea, type Goal } from '@/lib/types';
 import { CheckBox } from '../ui/icons';
 
@@ -50,7 +50,7 @@ export function DateFields({ d, set, today }: F & { today: string }) {
     <div className="stack-12">
       <label className="field">
         <span>Wedding date</span>
-        <input className="input" type="date" value={d.weddingDate} min={today} onChange={(e) => set({ weddingDate: e.target.value })} required />
+        <input className="input" type="date" value={d.weddingDate} min={today} max={addDays(today, MAX_PLAN_DAYS)} onChange={(e) => set({ weddingDate: e.target.value })} required />
       </label>
       <label className="field">
         <span>Outfit fitting date (optional)</span>

@@ -56,3 +56,14 @@ describe('example plan ("Try the example plan")', () => {
     expect(Object.keys(s.logs.sessionsDone).length).toBeGreaterThan(3);
   });
 });
+
+describe('setup validation', () => {
+  it('keeps the wedding within two years and the fitting before it, in setup and in Settings', async () => {
+    const { emptyDraft, validateStep, validateAll } = await import('../draft');
+    const d = { ...emptyDraft('imperial'), weddingDate: '2029-01-01' };
+    expect(validateStep(2, d, '2026-11-16')).toMatch(/two years/);
+    expect(validateStep(2, { ...d, weddingDate: '2027-10-16' }, '2026-11-16')).toBeNull();
+    const settings = { ...d, weddingDate: '2027-10-16', fittingDate: '2027-11-01' };
+    expect(validateAll(settings, '2026-11-16', { allowPastWedding: true })).toMatch(/before the wedding/);
+  });
+});

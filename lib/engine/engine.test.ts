@@ -4,7 +4,7 @@ import { applyMoves, suggestWeekFix } from './suggest';
 import { addDays, dayIndex, mondayOf, nextMonday } from './dates';
 import { PROTOTYPE_USER } from './fixtures';
 import { allowedGoals, allowedNutritionMode, effectiveProfile, isAdult, loseFatBlockedReason, targetWeightAllowed } from './guardrails';
-import { menuForDate, portionTier, TEMPLATES, templateAllowed } from './meals';
+import { avoidTags, isTreatEntry, menuForDate, portionTier, TEMPLATES, templateAllowed } from './meals';
 import { activityFactor, bmr, expectedLoss, kcalFromMacros, targets } from './nutrition';
 import { allocatePhases, buildTimeline, weeksToWedding } from './phases';
 import { buildPlan, dayPlan, deficitOn, targetsFor } from './plan';
@@ -441,6 +441,20 @@ describe('meals', () => {
   });
 });
 
+describe('avoid list and treat nights', () => {
+  it('treats food-group words as allergens, not just name matches', () => {
+    expect(avoidTags(['nuts', 'shellfish', 'lactose', 'eggs'])).toEqual(expect.arrayContaining(['nuts', 'fish', 'dairy', 'egg']));
+    const withNuts = TEMPLATES.filter((t) => !templateAllowed(t, 'none', ['nuts']));
+    expect(withNuts.some((t) => /peanut|almond|walnut/i.test(JSON.stringify(t)))).toBe(true);
+    for (const t of TEMPLATES.filter((x) => templateAllowed(x, 'none', ['nuts']))) expect(JSON.stringify(t)).not.toMatch(/peanut|almond|walnut/i);
+  });
+  it('counts a treat night only when every word of the treat is there', () => {
+    const entry = (name: string) => ({ name, items: [], p: 0, c: 0, f: 0, k: 0, src: 'manual' as const });
+    expect(isTreatEntry(entry('Ice cream, 1 cup'), 'ice cream')).toBe(true);
+    expect(isTreatEntry(entry('Bagel with cream cheese'), 'ice cream')).toBe(false);
+  });
+});
+
 describe('schedule ops (SPEC §9–10.2)', () => {
   const plan = buildPlan(PROTOTYPE_USER);
   const tpl = defaultWeekTemplate(2, PROTOTYPE_USER.activities, 'home_db', PROTOTYPE_USER.focusAreas);
@@ -471,6 +485,16 @@ describe('schedule ops (SPEC §9–10.2)', () => {
     const noRun = { ...PROTOTYPE_USER, activities: PROTOTYPE_USER.activities.filter((a) => a.id !== 'run') };
     const r = reconcileOverrides(edited, noRun);
     expect(r.dropped).toBe(1);
+  });
+  it('moves an activity to its new days when they change in Settings, keeping other edits', () => {
+    const edited = applyOps(tpl, [{ op: 'move', sessionId: 'str-1', toDay: 'wed' }]);
+    const runDays = (t: ReturnType<typeof applyOps>) => t.days.flatMap((d, i) => (d.some((s) => s.kind === 'activity' && s.activityId === 'run') ? [i] : []));
+    expect(runDays(edited)).toEqual([1]);
+    const runThu = { ...PROTOTYPE_USER, activities: PROTOTYPE_USER.activities.map((a) => (a.id === 'run' ? { ...a, days: [3] } : a)) };
+    const r = reconcileOverrides(edited, runThu, PROTOTYPE_USER);
+    expect(r.dropped).toBe(0);
+    expect(runDays(r.template!)).toEqual([3]);
+    expect(r.template!.days[2].some((s) => s.id === 'str-1')).toBe(true);
   });
 });
 

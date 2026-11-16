@@ -154,12 +154,15 @@ export function duplicateSession(t: WeekTemplate, id: string, toDay: number): We
 /**
  * After a profile change, keeps the user's edits where they still make sense:
  * the strength sessions must match the new split exactly, and activities that
- * point at a deleted activity are dropped. Returns null when the strength
- * layout no longer fits (the caller falls back to the engine default).
+ * point at a deleted activity are dropped. An activity whose days changed in
+ * the profile (compared with `previous`) moves to its new days. Returns null
+ * when the strength layout no longer fits (the caller falls back to the engine
+ * default).
  */
 export function reconcileOverrides(
   overrides: WeekTemplate | null,
   profile: Profile,
+  previous?: Profile,
 ): { template: WeekTemplate | null; dropped: number } {
   if (!overrides) return { template: null, dropped: 0 };
   const fresh = engineTemplate(profile);
@@ -169,11 +172,17 @@ export function reconcileOverrides(
     return { template: null, dropped: overrides.days.flat().length };
   }
   const ids = new Set(profile.activities.map((a) => a.id));
+  const daysKey = (days: number[]) => [...new Set(days)].sort().join(',');
+  const before = new Map((previous?.activities ?? []).map((a) => [a.id, daysKey(a.days)]));
+  // The person changed these activities' days in Settings: the new days win over the old placement.
+  const redayed = new Set(profile.activities.filter((a) => before.has(a.id) && before.get(a.id) !== daysKey(a.days)).map((a) => a.id));
   let dropped = 0;
   const out = cloneTemplate(overrides);
   out.days = out.days.map((d) =>
     d.filter((s) => {
-      if (s.kind === 'activity' && s.activityId && !ids.has(s.activityId)) {
+      if (s.kind !== 'activity' || !s.activityId) return true;
+      if (redayed.has(s.activityId)) return false;
+      if (!ids.has(s.activityId)) {
         dropped++;
         return false;
       }

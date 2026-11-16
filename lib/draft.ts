@@ -187,11 +187,10 @@ export function validateStep(step: number, d: Draft, today: string): string | nu
     case 2: {
       if (!isISODate(d.weddingDate)) return 'Pick your wedding date.';
       if (d.weddingDate <= today) return 'The wedding date needs to be in the future.';
-      if (!d.fittingUnknown && d.fittingDate) {
-        if (!isISODate(d.fittingDate)) return 'That fitting date doesn’t look right.';
-        if (d.fittingDate >= d.weddingDate) return 'The fitting needs to be before the wedding.';
-        if (d.fittingDate < today) return 'The fitting date has already passed. Leave it blank if it’s done.';
-      }
+      if (d.weddingDate > addDays(today, MAX_PLAN_DAYS)) return 'Pick a date within the next two years. The plan is built for the final stretch before the day.';
+      const fitting = fittingProblem(d);
+      if (fitting) return fitting;
+      if (!d.fittingUnknown && d.fittingDate && d.fittingDate < today) return 'The fitting date has already passed. Leave it blank if it’s done.';
       return null;
     }
     case 3: {
@@ -235,10 +234,24 @@ export function validateStep(step: number, d: Draft, today: string): string | nu
   }
 }
 
+/** Plans run at most two years: longer would stretch the phases far past what they're designed for. */
+export const MAX_PLAN_DAYS = 730;
+
+/** Fitting checks that hold whatever today is. */
+function fittingProblem(d: Draft): string | null {
+  if (d.fittingUnknown || !d.fittingDate) return null;
+  if (!isISODate(d.fittingDate)) return 'That fitting date doesn’t look right.';
+  if (d.fittingDate >= d.weddingDate) return 'The fitting needs to be before the wedding.';
+  return null;
+}
+
 export function validateAll(d: Draft, today: string, opts: { allowPastWedding?: boolean } = {}): string | null {
   for (let s = 2; s <= 11; s++) {
+    // Settings with an unchanged wedding date: the dates may already have passed, but the fitting must still come first.
     if (s === 2 && opts.allowPastWedding) {
       if (!isISODate(d.weddingDate)) return 'Pick your wedding date.';
+      const fitting = fittingProblem(d);
+      if (fitting) return fitting;
       continue;
     }
     const e = validateStep(s, d, today);

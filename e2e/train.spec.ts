@@ -16,10 +16,11 @@ test('log every set with the rest timer, then finish the workout', async ({ page
   await page.getByLabel('Goblet squat weight in pounds').fill('25');
 
   await page.getByRole('button', { name: 'Goblet squat set 1', exact: true }).click();
-  const timer = page.getByRole('status').filter({ hasText: 'Rest' });
-  await expect(timer).toContainText('1:00');
+  await expect(page.getByRole('status').filter({ hasText: 'Rest timer started: 60 to 90 seconds.' })).toBeAttached();
+  await expect(page.locator('.rest-timer .clock')).toHaveText('1:00');
   await page.clock.runFor(61_000);
   await expect(page.getByText(/Ready for your next set \(rest up to 90 sec/)).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Rest done.' })).toBeAttached();
   await page.getByRole('button', { name: 'Close' }).click();
 
   // Undo a set by tapping it again

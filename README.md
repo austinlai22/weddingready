@@ -43,7 +43,7 @@ There are no streaks and no before-and-after photos. Deficits are capped at 0.75
 
 **It works offline and installs like an app.** A hand-written service worker caches the app shell and data. The manifest includes maskable icons for Android and an Apple touch icon.
 
-**Quality bar.** 81 unit tests (engine, nutrition, guardrails, storage, AI handling and limits) and 36 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
+**Quality bar.** 87 unit tests (engine, nutrition, guardrails, storage, AI handling and limits) and 36 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
 
 ## Built with
 

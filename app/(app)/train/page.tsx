@@ -278,7 +278,7 @@ function DoneCard({ plan, day, weekDone, weekTotal, daysLeft }: { plan: Plan; da
         <p className="title">Done. Nice work{name ? `, ${name}` : ''}.</p>
         <p className="sub">
           {weekTotal > 0 ? `${weekDone} of ${weekTotal} sessions this week. ` : ''}
-          {daysLeft} days to go.
+          {daysLeft} {daysLeft === 1 ? 'day' : 'days'} to go.
         </p>
       </div>
       <button type="button" onClick={() => doneTargets(day).forEach((id) => setSessionDone(day.date, id, false))}>

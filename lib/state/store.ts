@@ -96,7 +96,7 @@ export const useApp = create<Store>()(
       loadError: null,
 
       saveProfile: (p) => {
-        const { template, dropped } = reconcileOverrides(get().scheduleOverrides, p);
+        const { template, dropped } = reconcileOverrides(get().scheduleOverrides, p, get().profile);
         set({ profile: p, scheduleOverrides: template });
         return dropped;
       },
