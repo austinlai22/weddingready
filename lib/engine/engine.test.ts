@@ -10,7 +10,7 @@ import { allocatePhases, buildTimeline, weeksToWedding } from './phases';
 import { buildPlan, dayPlan, deficitOn, targetsFor } from './plan';
 import { applyOps, engineTemplate, freezeBefore, OpError, reconcileOverrides, templateForDate, validateTemplate } from './schedule';
 import { defaultWeekTemplate } from './split';
-import { buildWorkout, exerciseById, EXERCISES, prescribe, sessionMinutes, trimToFit } from './workouts';
+import { buildWorkout, exerciseById, EXERCISES, prescribe, sessionMinutes, trimToFit, workoutSlots } from './workouts';
 
 const weeks = (a: ReturnType<typeof allocatePhases>) => Object.fromEntries(a.map((p) => [p.name, p.weeks]));
 
@@ -270,6 +270,26 @@ describe('weekly placement (SPEC §6.3 + recovery rules)', () => {
     expect(t.days.flatMap((d) => d.flatMap((s) => (s.kind === 'strength' ? [s.workout] : [])))).toEqual(['U', 'L', 'U', 'L']);
     const three = applyOps(t, [{ op: 'move', sessionId: 'str-3', toDay: 'wed' }]);
     expect(validateTemplate(three, 'home_db', []).some((w) => /in a row/.test(w.text))).toBe(true);
+  });
+
+  it('works every main muscle group at least twice a week on 5 days, with every kind of equipment', () => {
+    const groups: Record<string, RegExp> = { chest: /chest/, back: /lats|upper back/, shoulders: /shoulders|delts/, arms: /biceps|triceps/, legs: /quads|hamstrings/, glutes: /glutes/, core: /core|obliques/ };
+    for (const eq of ['home_db', 'gym', 'bodyweight'] as const) {
+      const t = defaultWeekTemplate(5, [], eq, []);
+      const sessions = t.days.flatMap((d) => d.flatMap((s) => (s.kind === 'strength' ? [s.workout] : [])));
+      expect(sessions).toEqual(['U', 'L', 'P', 'R', 'G']);
+      for (const [group, re] of Object.entries(groups)) {
+        const n = sessions.filter((k) => workoutSlots(k, eq, []).some((s) => exerciseById(s.id).primaryMuscles.some((m) => re.test(m)))).length;
+        expect(n, `${group} with ${eq}`).toBeGreaterThanOrEqual(2);
+      }
+      expect(validateTemplate(t, eq, []).filter((w) => w.severity === 'rule')).toEqual([]);
+    }
+  });
+
+  it('warns when the legs day lands the day after Lower', () => {
+    const t = defaultWeekTemplate(5, [], 'home_db', []);
+    const legsAfterLower = applyOps(t, [{ op: 'move', sessionId: 'str-5', toDay: 'wed' }]);
+    expect(validateTemplate(legsAfterLower, 'home_db', []).some((w) => /same main lifts/.test(w.text))).toBe(true);
   });
 
   it('warns when a full-body day lands next to another', () => {

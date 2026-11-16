@@ -98,7 +98,7 @@ export default function HowItWorks() {
             <RuleCard title="2 or 3 days: full body" rule="Never back to back. An easy day in between.">
               <WeekDiagram days={exampleWeeks.fullBody} />
             </RuleCard>
-            <RuleCard title="4 or 5 days: upper and lower" rule="Upper body one day, lower the next, so back to back is fine.">
+            <RuleCard title="4 or 5 days: a split" rule="4 days: upper and lower. 5 days: upper, lower, push, pull, legs. Every muscle twice a week.">
               <WeekDiagram days={exampleWeeks.split} />
             </RuleCard>
           </div>

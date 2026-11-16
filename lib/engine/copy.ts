@@ -48,6 +48,9 @@ export const STRENGTH_PEP: Record<WorkoutKey, string[]> = {
   C: ['Full body today. Smooth and steady.', 'A little of everything. Make it count.', 'Consistent, not perfect.'],
   U: ['Shoulders, back and arms. Let’s build.', 'Upper body day. Good posture starts here.', 'Pull as hard as you push.'],
   L: ['Legs and glutes. Strong from the ground up.', 'Big lifts, steady pace.', 'Drive through the floor.'],
+  P: ['Chest and shoulders. Press with control.', 'Push day. Strong arms, tall posture.', 'Steady presses, full range.'],
+  R: ['Back day. Pull as strong as you push.', 'Rows and pulldowns. Shoulders down and back.', 'Posture starts here.'],
+  G: ['Glutes and hamstrings. Drive through your heels.', 'Legs, one side at a time.', 'Slow on the way down.'],
   F: ['Your focus muscles, your way.', 'Extra work where you want it most.', 'Small muscles, big difference.'],
 };
 

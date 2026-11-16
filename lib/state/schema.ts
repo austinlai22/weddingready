@@ -52,7 +52,7 @@ export const ProfileSchema = z
   .refine((p) => p.startDate <= p.weddingDate, 'The plan must start before the wedding');
 
 const SessionRefSchema = z.discriminatedUnion('kind', [
-  z.object({ id: z.string().min(1).max(80), kind: z.literal('strength'), workout: z.enum(['A', 'B', 'C', 'U', 'L', 'F']) }),
+  z.object({ id: z.string().min(1).max(80), kind: z.literal('strength'), workout: z.enum(['A', 'B', 'C', 'U', 'L', 'P', 'R', 'G', 'F']) }),
   z.object({
     id: z.string().min(1).max(80),
     kind: z.literal('activity'),

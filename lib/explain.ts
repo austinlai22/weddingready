@@ -6,6 +6,7 @@ import { addDays } from './engine/dates';
 import { dayPlan } from './engine/plan';
 import { PHASE_LABEL, weekOf, type PhaseName } from './engine/phases';
 import { defaultWeekTemplate, isHardActivity } from './engine/split';
+import { workoutMeta } from './engine/workouts';
 import { examplePlan } from './example';
 
 // ---------- Strength sets per week across the example plan ----------
@@ -59,7 +60,8 @@ const WALK: Activity = { id: 'walk', type: 'walk', label: 'Walk', days: [0, 1, 2
 function weekFor(strengthDays: 2 | 3 | 4 | 5, activities: Activity[]): Chip[][] {
   return defaultWeekTemplate(strengthDays, [...activities, WALK], 'home_db', []).days.map((d) =>
     d.flatMap((s): Chip[] => {
-      if (s.kind === 'strength') return [{ kind: 'strength', label: 'Lift' }];
+      // Full-body sessions are all "Lift"; split sessions say which part of the body.
+      if (s.kind === 'strength') return [{ kind: 'strength', label: strengthDays <= 3 ? 'Lift' : workoutMeta(s.workout, strengthDays).tag }];
       if (s.type === 'walk') return [];
       return [{ kind: isHardActivity(s.type) ? 'hard' : 'easy', label: s.label }];
     }),
@@ -71,5 +73,5 @@ export const exampleWeeks = {
     { id: 'run', type: 'run', label: 'Run', days: [1] },
     { id: 'yoga', type: 'yoga', label: 'Yoga', days: [5] },
   ]),
-  split: weekFor(4, [{ id: 'spin', type: 'cycling', label: 'Spin', days: [2] }]),
+  split: weekFor(5, [{ id: 'spin', type: 'cycling', label: 'Spin', days: [3] }]),
 };

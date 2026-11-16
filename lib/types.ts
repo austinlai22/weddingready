@@ -73,7 +73,8 @@ export interface Profile {
   goalReachedAt?: string;
 }
 
-export type WorkoutKey = 'A' | 'B' | 'C' | 'U' | 'L' | 'F';
+/** A/B/C full body · U/L upper/lower · P/R/G push, pull, legs · F the old 5-day Focus day (kept so saved plans still load). */
+export type WorkoutKey = 'A' | 'B' | 'C' | 'U' | 'L' | 'P' | 'R' | 'G' | 'F';
 
 export type SessionRef =
   | { id: string; kind: 'strength'; workout: WorkoutKey }

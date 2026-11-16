@@ -298,7 +298,7 @@ export function sanityCheck(e: MealEstimate): MealEstimate {
 // ---------- Schedule edit (SPEC §10.2) ----------
 
 const SessionRefIn = z.discriminatedUnion('kind', [
-  z.object({ id: z.string().max(80), kind: z.literal('strength'), workout: z.enum(['A', 'B', 'C', 'U', 'L', 'F']) }),
+  z.object({ id: z.string().max(80), kind: z.literal('strength'), workout: z.enum(['A', 'B', 'C', 'U', 'L', 'P', 'R', 'G', 'F']) }),
   z.object({ id: z.string().max(80), kind: z.literal('activity'), activityId: z.string().max(64).optional(), type: z.string().max(20), label: z.string().max(40) }),
 ]);
 

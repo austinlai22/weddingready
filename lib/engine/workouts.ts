@@ -82,6 +82,31 @@ const TEMPLATES: Record<Exclude<WorkoutKey, 'F'>, Slot[]> = {
     { main: false, pick: { home_db: 'db-curl', gym: 'cable-curl', bodyweight: 'towel-curl' } },
     { main: false, pick: { home_db: 'overhead-triceps-extension', gym: 'triceps-pushdown', bodyweight: 'bench-dip' } },
   ],
+  // 5 days: push, pull and legs, so each muscle group gets a second session after Upper and Lower.
+  P: [
+    { main: true, pick: { home_db: 'floor-press', gym: 'db-bench', bodyweight: 'pushup' } },
+    { main: true, pick: { home_db: 'ohp', gym: 'shoulder-press', bodyweight: 'pike-pushup' } },
+    { main: false, pick: { home_db: 'db-floor-fly', gym: 'incline-press', bodyweight: 'bw-incline-pushup' } },
+    { main: false, pick: { home_db: 'lateral-raise', gym: 'cable-lateral-raise', bodyweight: 'y-raise' } },
+    { main: false, pick: { home_db: 'overhead-triceps-extension', gym: 'triceps-pushdown', bodyweight: 'bench-dip' } },
+    { main: false, pick: { home_db: 'db-deadbug', gym: 'ab-rollout', bodyweight: 'plank' } },
+  ],
+  R: [
+    { main: true, pick: { home_db: 'one-arm-row', gym: 'cable-row', bodyweight: 'table-row' } },
+    { main: true, pick: { home_db: 'db-pullover', gym: 'lat-pulldown', bodyweight: 'floor-pulldown' } },
+    { main: false, pick: { home_db: 'rear-delt-fly', gym: 'face-pull', bodyweight: 't-raise' } },
+    { main: false, pick: { home_db: 'db-curl', gym: 'cable-curl', bodyweight: 'towel-curl' } },
+    { main: false, pick: { home_db: 'suitcase-carry', gym: 'pallof-press', bodyweight: 'bird-dog' } },
+  ],
+  G: [
+    { main: true, pick: { home_db: 'hip-thrust', gym: 'bb-hip-thrust', bodyweight: 'bw-sl-bridge' } },
+    { main: true, pick: { home_db: 'bulgarian-split-squat', gym: 'gym-split-squat', bodyweight: 'bw-split-squat' } },
+    // Main so the legs day is never placed the day after Lower (they share the hinge).
+    { main: true, pick: { home_db: 'db-sl-rdl', gym: 'back-extension', bodyweight: 'bw-sl-hinge' } },
+    { main: false, pick: { home_db: 'db-sumo-squat', gym: 'leg-press', bodyweight: 'bw-squat' } },
+    { main: false, pick: { home_db: 'db-calf-raise', gym: 'machine-calf-raise', bodyweight: 'sl-calf-raise' } },
+    { main: false, pick: { home_db: 'side-plank', gym: 'pallof-press', bodyweight: 'side-plank' } },
+  ],
   L: [
     { main: true, pick: { home_db: 'goblet-squat', gym: 'back-squat', bodyweight: 'bw-squat' } },
     { main: true, pick: { home_db: 'db-rdl', gym: 'bb-rdl', bodyweight: 'bw-sl-hinge' } },
@@ -107,9 +132,15 @@ export function workoutMeta(key: WorkoutKey, strengthDays?: number): WorkoutMeta
     case 'C':
       return { key, title: 'Strength C', subtitle: 'Full body', tag: 'Str C' };
     case 'U':
-      return { key, title: 'Upper body', subtitle: 'Push & pull', tag: 'Upper' };
+      return { key, title: 'Upper body', subtitle: 'Chest, back, shoulders & arms', tag: 'Upper' };
     case 'L':
       return { key, title: 'Lower body', subtitle: 'Legs & glutes', tag: 'Lower' };
+    case 'P':
+      return { key, title: 'Push', subtitle: 'Chest, shoulders & triceps', tag: 'Push' };
+    case 'R':
+      return { key, title: 'Pull', subtitle: 'Back, rear shoulders & biceps', tag: 'Pull' };
+    case 'G':
+      return { key, title: 'Legs', subtitle: 'Glutes, hamstrings & single-leg work', tag: 'Legs' };
     case 'F':
       return { key, title: 'Focus day', subtitle: 'Your focus areas + core', tag: 'Focus' };
   }
