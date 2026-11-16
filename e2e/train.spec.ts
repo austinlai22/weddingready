@@ -49,7 +49,21 @@ test('log every set with the rest timer, then finish the workout', async ({ page
   await expect(page.getByRole('heading', { level: 1, name: 'Strength B' })).toBeVisible();
   await page.getByRole('button', { name: /^Tuesday/ }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Easy run + walk' })).toBeVisible();
+  // Tuesday is still to come, so it can't be marked done yet. Once it's Tuesday, it can.
+  await expect(page.getByRole('button', { name: 'Mark easy run done' })).toHaveCount(0);
+  await page.clock.setSystemTime(new Date('2026-11-17T09:00:00'));
+  await page.clock.runFor(61_000);
   await page.getByRole('button', { name: 'Mark easy run done' }).click();
   await expect(page.getByText(/1 of 4 sessions this week/).first()).toBeVisible();
   con.expectClean();
+});
+
+test('days still to come can be looked at but not logged', async ({ page }) => {
+  await page.clock.install({ time: MONDAY });
+  await seed(page);
+  await page.goto('/train');
+  await page.getByRole('button', { name: /^Thursday/ }).click();
+  await expect(page.getByText(/Coming up Thursday, Nov 19/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /set 1$/ }).first()).toBeDisabled();
+  await expect(page.getByRole('button', { name: /Finish workout/ })).toHaveCount(0);
 });

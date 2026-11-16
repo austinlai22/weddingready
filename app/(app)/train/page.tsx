@@ -12,7 +12,7 @@ import { daysBetween, fmtDayLong, fmtShort } from '@/lib/engine/dates';
 import { dayPlan, weekDates, type ActivitySession, type DayPlan, type Plan, type StrengthSession } from '@/lib/engine/plan';
 import { doneTargets, isDayDone, latestWeight, REST_ID, weekSessions } from '@/lib/progress';
 import { useApp } from '@/lib/state/store';
-import { usePlan, useToday, useUi, useViewDate } from '@/lib/ui';
+import { usePlan, useSchedule, useToday, useUi, useViewDate } from '@/lib/ui';
 
 const ACTIVITY_TAG = { walk: 'Walk', run: 'Run', pilates: 'Pilates', yoga: 'Yoga', cycling: 'Cycle', classes: 'Class', sports: 'Sport', other: '' } as const;
 
@@ -58,17 +58,17 @@ export default function TrainPage() {
   const plan = usePlan()!;
   const today = useToday();
   const date = useViewDate(plan, today);
-  const overrides = useApp((s) => s.scheduleOverrides);
+  const schedule = useSchedule();
   const logs = useApp((s) => s.logs);
   const select = useUi((s) => s.select);
 
-  const day = useMemo(() => dayPlan(plan, overrides, date), [plan, overrides, date]);
+  const day = useMemo(() => dayPlan(plan, schedule, date), [plan, schedule, date]);
   const dates = weekDates(date);
   const strip: StripDay[] = dates.map((dt) => {
-    const d = dayPlan(plan, overrides, dt);
+    const d = dayPlan(plan, schedule, dt);
     return { date: dt, tag: stripTag(d), done: isDayDone(d, logs), aria: d.title };
   });
-  const week = weekSessions(plan, overrides, dates, logs);
+  const week = weekSessions(plan, schedule, dates, logs);
 
   useEffect(() => {
     track('plan_viewed');
@@ -83,6 +83,8 @@ export default function TrainPage() {
   const daysLeft = Math.max(0, daysBetween(today, plan.timeline.weddingDate));
   const heading = (preStart ? 'Preview · ' : date === today ? 'Today · ' : '') + fmtDayLong(date);
   const dayDone = isDayDone(day, logs);
+  // Days still to come can be looked at, not logged.
+  const future = date > today;
   const closer = PHASE_COPY[day.phase.name].closer;
 
   return (
@@ -134,21 +136,27 @@ export default function TrainPage() {
           </div>
         )}
 
+        {future && day.status === 'active' && !preStart && (
+          <div className="banner">
+            <strong>Coming up {fmtDayLong(date)}.</strong> Have a look ahead; you can log it on the day.
+          </div>
+        )}
+
         {day.mainSessions.map((s) =>
           s.kind === 'strength' ? (
-            <StrengthBlock key={s.ref.id} plan={plan} date={date} s={s} isDone={done.has(s.ref.id)} />
+            <StrengthBlock key={s.ref.id} plan={plan} date={date} s={s} isDone={done.has(s.ref.id)} locked={future} />
           ) : (
-            <ActivityBlock key={s.ref.id} date={date} s={s} isDone={done.has(s.ref.id)} />
+            <ActivityBlock key={s.ref.id} date={date} s={s} isDone={done.has(s.ref.id)} locked={future} />
           ),
         )}
 
         {day.mainSessions.length === 0 && day.status !== 'wedding' && day.status !== 'after' && (
-          <SimpleDay date={date} day={day} />
+          <SimpleDay date={date} day={day} locked={future} />
         )}
 
         {dayDone && <DoneCard plan={plan} day={day} weekDone={week.done} weekTotal={week.total} daysLeft={daysLeft} />}
 
-        {day.walk && day.mainSessions.length > 0 && <WalkCheck date={date} walk={day.walk} />}
+        {day.walk && day.mainSessions.length > 0 && <WalkCheck date={date} walk={day.walk} locked={future} />}
 
         <PhaseSection plan={plan} currentWeek={day.week} />
         <Closer line={day.status === 'wedding' ? 'Enjoy every minute.' : closer} />
@@ -157,7 +165,7 @@ export default function TrainPage() {
   );
 }
 
-function StrengthBlock({ plan, date, s, isDone }: { plan: Plan; date: string; s: StrengthSession; isDone: boolean }) {
+function StrengthBlock({ plan, date, s, isDone, locked }: { plan: Plan; date: string; s: StrengthSession; isDone: boolean; locked: boolean }) {
   const logs = useApp((st) => st.logs);
   const tapSet = useApp((st) => st.tapSet);
   const setWeight = useApp((st) => st.setWeight);
@@ -180,7 +188,7 @@ function StrengthBlock({ plan, date, s, isDone }: { plan: Plan; date: string; s:
           Rest <strong style={{ color: '#2A1F23' }}>{restText}</strong> · tap a set to start the timer
         </p>
       </div>
-      <button type="button" className="check-card" aria-pressed={warm} onClick={() => toggleWarmup(date, s.ref.id)}>
+      <button type="button" className="check-card" aria-pressed={warm} disabled={locked} onClick={() => toggleWarmup(date, s.ref.id)}>
         <CheckBox on={warm} />
         <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span className="t">Warm-up · 5 min</span>
@@ -202,10 +210,11 @@ function StrengthBlock({ plan, date, s, isDone }: { plan: Plan; date: string; s:
             }
           }}
           onWeight={(v) => setWeight(p.exercise.id, v, unit, date)}
+          locked={locked}
         />
       ))}
       <p className="small muted">{s.weightTip}</p>
-      {!isDone && (
+      {!isDone && !locked && (
         <button
           type="button"
           className="btn-primary"
@@ -222,13 +231,13 @@ function StrengthBlock({ plan, date, s, isDone }: { plan: Plan; date: string; s:
   );
 }
 
-function ActivityBlock({ date, s, isDone }: { date: string; s: ActivitySession; isDone: boolean }) {
+function ActivityBlock({ date, s, isDone, locked }: { date: string; s: ActivitySession; isDone: boolean; locked: boolean }) {
   const setSessionDone = useApp((st) => st.setSessionDone);
   return (
     <section className="card-lg" style={{ padding: 24 }} aria-label={s.title}>
       <h2 className="h2">{s.title}</h2>
       <p style={{ fontSize: 16, lineHeight: 1.55, color: '#4A3D42' }}>{s.how}</p>
-      {!isDone && (
+      {!isDone && !locked && (
         <button
           type="button"
           className="btn-primary"
@@ -244,7 +253,7 @@ function ActivityBlock({ date, s, isDone }: { date: string; s: ActivitySession; 
   );
 }
 
-function SimpleDay({ date, day }: { date: string; day: DayPlan }) {
+function SimpleDay({ date, day, locked }: { date: string; day: DayPlan; locked: boolean }) {
   const setSessionDone = useApp((st) => st.setSessionDone);
   const logs = useApp((st) => st.logs);
   const id = doneTargets(day)[0];
@@ -253,7 +262,7 @@ function SimpleDay({ date, day }: { date: string; day: DayPlan }) {
     <section className="card-lg" style={{ padding: 24 }}>
       <h2 className="h2">{day.subtitle}</h2>
       <p style={{ fontSize: 16, lineHeight: 1.55, color: '#4A3D42' }}>{day.how}</p>
-      {!isDone && (
+      {!isDone && !locked && (
         <button
           type="button"
           className="btn-primary"
@@ -288,12 +297,12 @@ function DoneCard({ plan, day, weekDone, weekTotal, daysLeft }: { plan: Plan; da
   );
 }
 
-function WalkCheck({ date, walk }: { date: string; walk: ActivitySession }) {
+function WalkCheck({ date, walk, locked }: { date: string; walk: ActivitySession; locked: boolean }) {
   const logs = useApp((st) => st.logs);
   const setSessionDone = useApp((st) => st.setSessionDone);
   const on = (logs.sessionsDone[date] ?? []).includes(walk.ref.id);
   return (
-    <button type="button" className="check-card" style={{ borderRadius: 18 }} aria-pressed={on} onClick={() => setSessionDone(date, walk.ref.id, !on)}>
+    <button type="button" className="check-card" style={{ borderRadius: 18 }} aria-pressed={on} disabled={locked} onClick={() => setSessionDone(date, walk.ref.id, !on)}>
       <CheckBox on={on} size={26} />
       <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <span className="t" style={{ fontSize: 15 }}>{walk.title}</span>

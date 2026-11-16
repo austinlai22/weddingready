@@ -119,6 +119,21 @@ export function foodAllowed(f: FoodItem & { tags?: string[] }, diet: Diet): bool
   return !(f.tags ?? []).some((t) => excluded.includes(t));
 }
 
+const DIET_CONFLICT: Record<Diet, string> = {
+  none: '',
+  vegetarian: 'Not vegetarian',
+  vegan: 'Not vegan',
+  pescatarian: 'Not pescatarian',
+  no_pork: 'Contains pork',
+  gluten_free: 'Contains gluten',
+  dairy_free: 'Contains dairy',
+};
+
+/** A short label for a food that doesn't fit the person's diet, or null. Search still shows it: people log what they ate. */
+export function dietConflict(f: FoodItem & { tags?: string[] }, diet: Diet): string | null {
+  return foodAllowed(f, diet) ? null : DIET_CONFLICT[diet] || null;
+}
+
 // ---------- Portions ----------
 
 /** SPEC §6.6: three portion tiers by calorie target. */
@@ -235,6 +250,8 @@ export function searchFoods(q: string, myFoods: FoodItem[], diet: Diet, limit = 
     return { results: list.slice(0, limit), total: 0 };
   }
   const match = (f: FoodItem) => toks.every((t) => f.name.toLowerCase().includes(t));
-  const hits = [...mine.filter(match), ...FOODS.filter((f) => match(f))];
+  // My foods first, then foods that fit the diet, then the rest (labelled in the list).
+  const found = FOODS.filter((f) => match(f));
+  const hits = [...mine.filter(match), ...found.filter((f) => foodAllowed(f, diet)), ...found.filter((f) => !foodAllowed(f, diet))];
   return { results: hits.slice(0, limit), total: hits.length };
 }

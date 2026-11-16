@@ -20,7 +20,7 @@ Tell it your wedding date (and your outfit fitting, if you know it). It works ba
 
 **It schedules like a coach.** Strength days are placed by scoring every possible week against training rules:
 - Two or three days are full body, never back to back, with an easy day between.
-- Four or five days split the body in two, so pairs are fine, but never the same session twice running.
+- Four or five days alternate upper and lower body, so pairs are fine, but never the same session twice running.
 - Runs, rides, classes and sports are kept off strength days and the day before them.
 
 If a week can't follow the rules as entered, it names the rule that breaks and suggests the smallest fix: moving a class, or one fewer strength day.
@@ -43,7 +43,7 @@ There are no streaks and no before-and-after photos. Deficits are capped at 0.75
 
 **It works offline and installs like an app.** A hand-written service worker caches the app shell and data. The manifest includes maskable icons for Android and an Apple touch icon.
 
-**Quality bar.** 87 unit tests (engine, nutrition, guardrails, storage, AI handling and limits) and 36 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
+**Quality bar.** 89 unit tests (engine, nutrition, guardrails, storage, AI handling and limits) and 42 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
 
 ## Built with
 
@@ -127,6 +127,10 @@ data/            Exercises, foods (generated), meal templates
 - **Short plans.** With two to four months, Strength and Shape merge into one Build phase. With under four weeks, the plan is lighter and has no calorie deficit.
 - **A fitting too early to fit** starts Maintain as early as the minimum phase lengths allow, and the Plan tab says so.
 - **The final taper** runs from nine days before the wedding through the day itself.
+- **Schedule changes apply from the day they're made.** Moving a session on a Wednesday leaves Monday and Tuesday as they were, with their ticks. The app keeps a short history of earlier layouts for this.
+- **Days still to come are read-only.** You can look ahead at Thursday's workout, but log it on Thursday.
+- **New dates re-spread the phases** over the whole plan, and the app says which phase and week you're now in.
+- **Food search** lists foods that fit your diet first and labels the rest ("Not vegan"), because people log what they actually ate.
 - **Exercise media** is a card with written form cues for now. Drop videos at `public/media/exercises/<id>.mp4` and set `media` in `data/exercises.json`; viewed media is cached offline.
 
 ## Food data

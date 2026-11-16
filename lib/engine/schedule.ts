@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ACTIVITY_TYPES, DAY_IDS, type ActivityType, type Equipment, type FocusArea, type Profile, type SessionRef, type WeekTemplate } from '../types';
-import { DAY_NAMES } from './dates';
+import { ACTIVITY_TYPES, DAY_IDS, type ActivityType, type Equipment, type FocusArea, type Profile, type ScheduleHistoryEntry, type SessionRef, type WeekTemplate } from '../types';
+import { addDays, DAY_NAMES } from './dates';
 import { defaultWeekTemplate, shapeOf, weekIssues } from './split';
 
 export function cloneTemplate(t: WeekTemplate): WeekTemplate {
@@ -11,10 +11,45 @@ export function engineTemplate(p: Profile): WeekTemplate {
   return defaultWeekTemplate(p.strengthDays, p.activities, p.equipment, p.focusAreas);
 }
 
-/** Template in force for the week starting `monday`: the user's edits from their effective week on. */
-export function templateForWeek(p: Profile, overrides: WeekTemplate | null, monday: string): WeekTemplate {
-  if (overrides && (!overrides.effectiveFrom || overrides.effectiveFrom <= monday)) return overrides;
+/** The person's schedule: their current edits plus the layouts that were in force before each change. */
+export interface Schedule {
+  overrides: WeekTemplate | null;
+  history: ScheduleHistoryEntry[];
+}
+
+export function asSchedule(s: Schedule | WeekTemplate | null | undefined): Schedule {
+  if (s && 'overrides' in s) return s;
+  return { overrides: (s as WeekTemplate | null | undefined) ?? null, history: [] };
+}
+
+/**
+ * Template in force on `date`. A change applies from the day it was made, so
+ * earlier days keep the layout they had (from the history); otherwise the
+ * person's edits from their start date on, else the engine default.
+ */
+export function templateForDate(p: Profile, schedule: Schedule | WeekTemplate | null, date: string): WeekTemplate {
+  const { overrides, history } = asSchedule(schedule);
+  for (const h of history) if (date < h.until) return h.template;
+  if (overrides && (!overrides.effectiveFrom || overrides.effectiveFrom <= date)) return overrides;
   return engineTemplate(p);
+}
+
+/** Template shown in the editor: the one in force from `date` on. */
+export function templateForWeek(p: Profile, schedule: Schedule | WeekTemplate | null, monday: string): WeekTemplate {
+  return templateForDate(p, schedule, monday);
+}
+
+/**
+ * Before a change that takes effect on `from`, records the layout in force
+ * the day before, so days before `from` keep it. Several changes on the same
+ * day share one entry. Keeps the newest entries only.
+ */
+export function freezeBefore(p: Profile, schedule: Schedule, from: string, max = 30): ScheduleHistoryEntry[] {
+  const { history } = schedule;
+  if (from <= p.startDate || history[history.length - 1]?.until === from) return history;
+  const before = templateForDate(p, schedule, addDays(from, -1));
+  const entry = { until: from, template: { days: cloneTemplate(before).days } };
+  return [...history, entry].slice(-max);
 }
 
 export interface ScheduleWarning {

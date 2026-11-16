@@ -15,13 +15,13 @@ import {
 } from '@dnd-kit/core';
 import { useRef, useState } from 'react';
 import { track } from '@/lib/analytics';
-import { DAY_ABBR, DAY_NAMES, DAY_SHORT, mondayOf } from '@/lib/engine/dates';
+import { DAY_ABBR, DAY_NAMES, DAY_SHORT } from '@/lib/engine/dates';
 import type { Plan } from '@/lib/engine/plan';
-import { applyOps, cloneTemplate, duplicateSession, OpError, templateForWeek, validateTemplate, type ScheduleOp } from '@/lib/engine/schedule';
+import { applyOps, cloneTemplate, duplicateSession, OpError, templateForDate, validateTemplate, type Schedule, type ScheduleOp } from '@/lib/engine/schedule';
 import { workoutMeta } from '@/lib/engine/workouts';
 import { useApp } from '@/lib/state/store';
 import { DAY_IDS, type SessionRef, type WeekTemplate } from '@/lib/types';
-import { useOnline } from '@/lib/ui';
+import { useOnline, useSchedule } from '@/lib/ui';
 import { Grip } from '../ui/icons';
 import { WeekAdvice } from './WeekAdvice';
 import { applyMoves, suggestWeekFix } from '@/lib/engine/suggest';
@@ -81,12 +81,15 @@ function locateDay(t: WeekTemplate, id: string): number {
 }
 
 export function ScheduleEditor({ plan, today }: { plan: Plan; today: string }) {
-  const overrides = useApp((s) => s.scheduleOverrides);
-  const setOverrides = useApp((s) => s.setOverrides);
+  const schedule = useSchedule();
+  const overrides = schedule.overrides;
+  const editSchedule = useApp((s) => s.editSchedule);
+  const restoreSchedule = useApp((s) => s.restoreSchedule);
   const p = plan.profile;
-  const thisMonday = mondayOf(today < p.startDate ? p.startDate : today);
-  const template = templateForWeek(p, overrides, thisMonday);
-  const [history, setHistory] = useState<(WeekTemplate | null)[]>([]);
+  // Changes apply from today (or Day 1 before the plan starts); earlier days keep their layout.
+  const from = today < p.startDate ? p.startDate : today;
+  const template = templateForDate(p, schedule, from);
+  const [history, setHistory] = useState<Schedule[]>([]);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const [err, setErr] = useState('');
@@ -102,8 +105,8 @@ export function ScheduleEditor({ plan, today }: { plan: Plan; today: string }) {
   );
 
   const commit = (next: WeekTemplate, method: 'drag' | 'ai' | 'menu') => {
-    setHistory((h) => [...h.slice(-19), overrides]);
-    setOverrides({ ...next, effectiveFrom: thisMonday });
+    setHistory((h) => [...h.slice(-19), schedule]);
+    editSchedule(next, from);
     track('schedule_edited', { method: method === 'ai' ? 'ai' : 'drag' });
   };
 
@@ -118,8 +121,9 @@ export function ScheduleEditor({ plan, today }: { plan: Plan; today: string }) {
 
   const undo = () => {
     const prev = history[history.length - 1];
+    if (!prev) return;
     setHistory((h) => h.slice(0, -1));
-    setOverrides(prev ?? null);
+    restoreSchedule(prev);
   };
 
   const onDragStart = (e: DragStartEvent) => {
@@ -164,15 +168,15 @@ export function ScheduleEditor({ plan, today }: { plan: Plan; today: string }) {
             type="button"
             className="btn-ghost"
             onClick={() => {
-              setHistory((h) => [...h.slice(-19), overrides]);
-              setOverrides(null);
+              setHistory((h) => [...h.slice(-19), schedule]);
+              editSchedule(null, from);
             }}
           >
             Reset to suggested
           </button>
         )}
       </div>
-      <p className="small muted">Drag a session to another day, or tap it for options. Changes apply from this week on; past days stay as logged.</p>
+      <p className="small muted">Drag a session to another day, or tap it for options. Changes apply from today on; earlier days stay as they were.</p>
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setActive(null)}>
         <div className="sched">
           {template.days.map((sessions, d) => (

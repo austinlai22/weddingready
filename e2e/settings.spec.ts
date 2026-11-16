@@ -11,7 +11,7 @@ test('changing the wedding date rebuilds the plan and keeps logs', async ({ page
   await page.goto('/settings');
   await page.getByLabel('Wedding date').fill('2027-06-12');
   await page.getByRole('button', { name: 'Save changes' }).click();
-  await expect(page.getByText('Plan updated. Your logs are kept.')).toBeVisible();
+  await expect(page.getByText('Plan updated for your new dates: week 1 of 30, still in Foundation. Your logs are kept.')).toBeVisible();
   const s = await stored(page);
   expect(s.profile?.weddingDate).toBe('2027-06-12');
   expect(s.logs.sets['2026-11-16']['goblet-squat']).toBe(3);
@@ -19,6 +19,16 @@ test('changing the wedding date rebuilds the plan and keeps logs', async ({ page
   await expect(page.getByText(/Week 1 of 30 · Foundation/)).toBeVisible();
   await expect(page.getByText('Done. Nice work.')).toBeVisible();
   con.expectClean();
+});
+
+test('a date change that moves today into another phase says so', async ({ page }) => {
+  // Week 18 of the fixture plan is Strength; an earlier wedding re-spreads the phases into Shape.
+  await page.clock.install({ time: new Date('2027-03-15T09:00:00') });
+  await seed(page);
+  await page.goto('/settings');
+  await page.getByLabel('Wedding date').fill('2027-06-12');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText(/re-spread over your new dates, so you’re now in Shape \(week 18 of 30\), not Strength/)).toBeVisible();
 });
 
 test('export, import and delete everything', async ({ page }) => {

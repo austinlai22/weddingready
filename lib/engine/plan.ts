@@ -5,7 +5,7 @@ import { effectiveProfile, safetyNotes, type SafetyNote } from './guardrails';
 import { menuForDate, type DayMenu } from './meals';
 import { expectedLoss, targets, type Expectation, type Targets } from './nutrition';
 import { buildTimeline, phaseForWeek, weekOf, type Phase, type PhaseName, type Timeline } from './phases';
-import { templateForWeek } from './schedule';
+import { templateForDate, type Schedule } from './schedule';
 import { buildWorkout, WARMUP, weightTip, workoutMeta, type Prescribed, type WorkoutMeta } from './workouts';
 
 export interface Plan {
@@ -124,7 +124,7 @@ function walkMinutesFor(plan: Plan, ref: SessionRef & { kind: 'activity' }): num
   return a?.minutes ?? plan.profile.dailyWalkMinutes;
 }
 
-export function dayPlan(plan: Plan, overrides: WeekTemplate | null, date: string): DayPlan {
+export function dayPlan(plan: Plan, schedule: Schedule | WeekTemplate | null, date: string): DayPlan {
   const t = plan.timeline;
   const week = weekOf(t.startMonday, date);
   const phase = phaseForWeek(t, week);
@@ -134,7 +134,7 @@ export function dayPlan(plan: Plan, overrides: WeekTemplate | null, date: string
   const taper = date >= t.taperStart && date <= t.weddingDate;
   const seed = Math.max(0, daysBetween(t.startMonday, date));
 
-  const template = templateForWeek(plan.profile, overrides, mondayOf(date));
+  const template = templateForDate(plan.profile, schedule, date);
   const refs = status === 'wedding' || status === 'after' ? [] : template.days[(daysBetween(t.startMonday, date) % 7 + 7) % 7];
   const sessions: SessionView[] = refs.map((ref) =>
     ref.kind === 'strength'

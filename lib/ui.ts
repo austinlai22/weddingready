@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { create } from 'zustand';
 import { buildPlan, type Plan } from './engine/plan';
+import type { Schedule } from './engine/schedule';
 import { todayISO } from './engine/dates';
 import { useApp } from './state/store';
 
@@ -42,6 +43,13 @@ export function useToday(): string {
     return () => clearInterval(id);
   }, []);
   return today;
+}
+
+/** The schedule (edits + history) the Train view lays days out from. */
+export function useSchedule(): Schedule {
+  const overrides = useApp((s) => s.scheduleOverrides);
+  const history = useApp((s) => s.scheduleHistory);
+  return useMemo(() => ({ overrides, history: history ?? [] }), [overrides, history]);
 }
 
 export function usePlan(): Plan | null {

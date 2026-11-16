@@ -3,7 +3,8 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 import type { AppState, FoodItem, MealEntry, Profile, SlotId, WeekTemplate } from '../types';
-import { reconcileOverrides } from '../engine/schedule';
+import { addDays, todayISO } from '../engine/dates';
+import { freezeBefore, reconcileOverrides, templateForDate, type Schedule } from '../engine/schedule';
 import { emptyState, migrateState, parseState, STATE_VERSION } from './schema';
 
 export const STORAGE_KEY = 'weddingready-v1';
@@ -22,7 +23,10 @@ interface Actions {
   addMyFood: (f: FoodItem) => void;
   updateMyFood: (id: string, patch: Partial<FoodItem>) => void;
   deleteMyFood: (id: string) => void;
-  setOverrides: (t: WeekTemplate | null) => void;
+  /** A schedule change (drag, menu, AI or reset) that applies from `from` on; earlier days keep their layout. */
+  editSchedule: (next: WeekTemplate | null, from: string) => void;
+  /** Puts back a schedule saved before an edit (Undo). */
+  restoreSchedule: (s: Schedule) => void;
   setAnalyticsOptOut: (v: boolean) => void;
   replaceState: (s: AppState) => void;
   deleteEverything: () => void;
@@ -81,6 +85,7 @@ function dataOf(s: Store): AppState {
   return {
     profile: s.profile,
     scheduleOverrides: s.scheduleOverrides,
+    scheduleHistory: s.scheduleHistory ?? [],
     logs: s.logs,
     myFoods: s.myFoods,
     deviceId: s.deviceId,
@@ -96,8 +101,19 @@ export const useApp = create<Store>()(
       loadError: null,
 
       saveProfile: (p) => {
-        const { template, dropped } = reconcileOverrides(get().scheduleOverrides, p, get().profile);
-        set({ profile: p, scheduleOverrides: template });
+        const old = get();
+        const { template, dropped } = reconcileOverrides(old.scheduleOverrides, p, old.profile);
+        let history = old.scheduleHistory ?? [];
+        // A profile change that moves sessions applies from today: days already past keep their layout.
+        const today = todayISO();
+        if (old.profile && today > old.profile.startDate) {
+          const oldSchedule = { overrides: old.scheduleOverrides, history };
+          const yesterday = addDays(today, -1);
+          const before = templateForDate(old.profile, oldSchedule, yesterday);
+          const after = templateForDate(p, { overrides: template, history }, yesterday);
+          if (JSON.stringify(before.days) !== JSON.stringify(after.days)) history = freezeBefore(old.profile, oldSchedule, today);
+        }
+        set({ profile: p, scheduleOverrides: template, scheduleHistory: history });
         return dropped;
       },
       patchProfile: (patch) => {
@@ -148,7 +164,13 @@ export const useApp = create<Store>()(
       addMyFood: (f) => set({ myFoods: [...get().myFoods, { ...f, mine: true }].slice(-500) }),
       updateMyFood: (id, patch) => set({ myFoods: get().myFoods.map((f) => (f.id === id ? { ...f, ...patch } : f)) }),
       deleteMyFood: (id) => set({ myFoods: get().myFoods.filter((f) => f.id !== id) }),
-      setOverrides: (t) => set({ scheduleOverrides: t }),
+      editSchedule: (next, from) => {
+        const s = get();
+        if (!s.profile) return;
+        const history = freezeBefore(s.profile, { overrides: s.scheduleOverrides, history: s.scheduleHistory ?? [] }, from);
+        set({ scheduleHistory: history, scheduleOverrides: next ? { ...next, effectiveFrom: from } : null });
+      },
+      restoreSchedule: (sched) => set({ scheduleOverrides: sched.overrides, scheduleHistory: sched.history }),
       setAnalyticsOptOut: (v) => set({ settings: { ...get().settings, analyticsOptOut: v } }),
       replaceState: (s) => set({ ...s, deviceId: s.deviceId || get().deviceId || newDeviceId(), loadError: null }),
       deleteEverything: () => {

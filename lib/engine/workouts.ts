@@ -92,16 +92,18 @@ const TEMPLATES: Record<Exclude<WorkoutKey, 'F'>, Slot[]> = {
   ],
 };
 
-export function workoutMeta(key: WorkoutKey, strengthDays: number): WorkoutMeta {
+/**
+ * Display names. A, B and C are the full-body sessions (2–3 days); U and L the
+ * upper/lower split (4 days, and 5 with the Focus day). `strengthDays` is kept
+ * for callers that label by plan size; the names don't currently depend on it.
+ */
+export function workoutMeta(key: WorkoutKey, strengthDays?: number): WorkoutMeta {
+  void strengthDays;
   switch (key) {
     case 'A':
-      return strengthDays === 4
-        ? { key, title: 'Strength A', subtitle: 'Lower body & push', tag: 'Str A' }
-        : { key, title: 'Strength A', subtitle: 'Legs & push', tag: 'Str A' };
+      return { key, title: 'Strength A', subtitle: 'Legs & push', tag: 'Str A' };
     case 'B':
-      return strengthDays === 4
-        ? { key, title: 'Strength B', subtitle: 'Upper pull & glutes', tag: 'Str B' }
-        : { key, title: 'Strength B', subtitle: 'Glutes & pull', tag: 'Str B' };
+      return { key, title: 'Strength B', subtitle: 'Glutes & pull', tag: 'Str B' };
     case 'C':
       return { key, title: 'Strength C', subtitle: 'Full body', tag: 'Str C' };
     case 'U':

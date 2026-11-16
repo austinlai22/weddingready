@@ -6,6 +6,7 @@ import { isISODate } from '../engine/dates';
 // parsed through AppStateSchema; nothing unvalidated reaches the app.
 
 const ISODate = z.string().refine(isISODate, 'Expected a YYYY-MM-DD date');
+export const MAX_SCHEDULE_HISTORY = 30;
 const num = z.number().finite();
 
 export const ActivitySchema = z.object({
@@ -114,6 +115,7 @@ export const LogsSchema = z.object({
 export const AppStateSchema = z.object({
   profile: ProfileSchema.optional(),
   scheduleOverrides: WeekTemplateSchema.nullable(),
+  scheduleHistory: z.array(z.object({ until: ISODate, template: WeekTemplateSchema })).max(MAX_SCHEDULE_HISTORY).optional(),
   logs: LogsSchema,
   myFoods: z.array(FoodItemSchema).max(500),
   deviceId: z.string().max(64),
@@ -126,6 +128,7 @@ export function emptyState(deviceId = ''): AppState {
   return {
     profile: undefined,
     scheduleOverrides: null,
+    scheduleHistory: [],
     logs: { sets: {}, weights: {}, sessionsDone: {}, warmups: {}, meals: {}, extras: {} },
     myFoods: [],
     deviceId,

@@ -1,5 +1,6 @@
 import type { DayPlan, Plan } from './engine/plan';
 import { dayPlan } from './engine/plan';
+import type { Schedule } from './engine/schedule';
 import type { Logs, MealEntry, WeekTemplate, WeightLog } from './types';
 
 export const REST_ID = 'rest';
@@ -19,11 +20,11 @@ export function isDayDone(d: DayPlan, logs: Logs): boolean {
 }
 
 /** "x of y sessions this week": strength + non-walk activities from the plan start through the wedding. */
-export function weekSessions(plan: Plan, overrides: WeekTemplate | null, dates: string[], logs: Logs): { done: number; total: number } {
+export function weekSessions(plan: Plan, schedule: Schedule | WeekTemplate | null, dates: string[], logs: Logs): { done: number; total: number } {
   let done = 0;
   let total = 0;
   for (const date of dates) {
-    const d = dayPlan(plan, overrides, date);
+    const d = dayPlan(plan, schedule, date);
     if (d.status === 'before' || d.status === 'wedding' || d.status === 'after') continue;
     const set = new Set(logs.sessionsDone[date] ?? []);
     for (const s of d.mainSessions) {

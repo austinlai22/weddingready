@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { track } from '@/lib/analytics';
-import { amountText, optionToEntry, searchFoods, type MealOption } from '@/lib/engine/meals';
+import { amountText, dietConflict, optionToEntry, searchFoods, type MealOption } from '@/lib/engine/meals';
 import { kcalFromMacros } from '@/lib/engine/nutrition';
 import { useApp } from '@/lib/state/store';
 import type { Diet, FoodItem, MealEntry, NutritionMode, SlotId } from '@/lib/types';
@@ -262,6 +262,7 @@ function ListLogger({ placeholder, mode, diet, onSave, onCancel }: { placeholder
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
               <span className="n">{f.name}</span>
               <span className="s">
+                {!f.mine && dietConflict(f, diet) ? `${dietConflict(f, diet)} · ` : ''}
                 {f.mine ? 'My food · ' : f.isRestaurantEstimate ? 'Restaurant estimate, varies · ' : f.isLabelEstimate ? 'Check your label · ' : ''}
                 per 1 {f.unit}
                 {mode === 'habits_numbers' ? ` · ${Math.round(f.kcal)} kcal` : ''}

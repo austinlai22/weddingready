@@ -10,7 +10,8 @@ export function splitFor(strengthDays: number): WorkoutKey[] {
     case 3:
       return ['A', 'B', 'C'];
     case 4:
-      return ['A', 'B', 'A', 'B'];
+      // A true upper/lower split, so back-to-back days never work the same muscles hard.
+      return ['U', 'L', 'U', 'L'];
     default:
       return ['U', 'L', 'U', 'L', 'F'];
   }
@@ -21,7 +22,7 @@ export function splitFor(strengthDays: number): WorkoutKey[] {
 // - 2–3 strength days are full-body sessions: never on consecutive days, and
 //   between any two of them at least one recovery day (nothing harder than a
 //   walk, yoga or Pilates).
-// - 4 days (lower/upper pairs) and 5 days (upper/lower + focus) may run back to
+// - 4 days (upper/lower) and 5 days (upper/lower + focus) may run back to
 //   back, but never the same session two days running, at most two strength
 //   days in a row for 4 days (three for 5), and never a week without a
 //   recovery day.

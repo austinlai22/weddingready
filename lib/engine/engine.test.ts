@@ -4,11 +4,11 @@ import { applyMoves, suggestWeekFix } from './suggest';
 import { addDays, dayIndex, mondayOf, nextMonday } from './dates';
 import { PROTOTYPE_USER } from './fixtures';
 import { allowedGoals, allowedNutritionMode, effectiveProfile, isAdult, loseFatBlockedReason, targetWeightAllowed } from './guardrails';
-import { avoidTags, isTreatEntry, menuForDate, portionTier, TEMPLATES, templateAllowed } from './meals';
+import { avoidTags, dietConflict, isTreatEntry, menuForDate, portionTier, searchFoods, TEMPLATES, templateAllowed } from './meals';
 import { activityFactor, bmr, expectedLoss, kcalFromMacros, targets } from './nutrition';
 import { allocatePhases, buildTimeline, weeksToWedding } from './phases';
 import { buildPlan, dayPlan, deficitOn, targetsFor } from './plan';
-import { applyOps, OpError, reconcileOverrides, validateTemplate } from './schedule';
+import { applyOps, engineTemplate, freezeBefore, OpError, reconcileOverrides, templateForDate, validateTemplate } from './schedule';
 import { defaultWeekTemplate } from './split';
 import { buildWorkout, exerciseById, EXERCISES, prescribe, sessionMinutes, trimToFit } from './workouts';
 
@@ -266,6 +266,8 @@ describe('weekly placement (SPEC §6.3 + recovery rules)', () => {
   it('lets 4-day splits go back to back, but never three in a row or the same session twice running', () => {
     const t = defaultWeekTemplate(4, [walk], 'home_db', []);
     expect(strengthDaysOf(t)).toEqual([0, 1, 3, 4]);
+    // Upper and lower alternate, so back-to-back days never repeat the same muscles.
+    expect(t.days.flatMap((d) => d.flatMap((s) => (s.kind === 'strength' ? [s.workout] : [])))).toEqual(['U', 'L', 'U', 'L']);
     const three = applyOps(t, [{ op: 'move', sessionId: 'str-3', toDay: 'wed' }]);
     expect(validateTemplate(three, 'home_db', []).some((w) => /in a row/.test(w.text))).toBe(true);
   });
@@ -448,6 +450,12 @@ describe('avoid list and treat nights', () => {
     expect(withNuts.some((t) => /peanut|almond|walnut/i.test(JSON.stringify(t)))).toBe(true);
     for (const t of TEMPLATES.filter((x) => templateAllowed(x, 'none', ['nuts']))) expect(JSON.stringify(t)).not.toMatch(/peanut|almond|walnut/i);
   });
+  it('lists foods that fit the diet first in search, and labels the rest', () => {
+    const { results } = searchFoods('cheese', [], 'vegan', 20);
+    const firstConflict = results.findIndex((f) => dietConflict(f, 'vegan'));
+    expect(firstConflict).toBeGreaterThanOrEqual(0);
+    expect(results.slice(firstConflict).every((f) => dietConflict(f, 'vegan') === 'Not vegan')).toBe(true);
+  });
   it('counts a treat night only when every word of the treat is there', () => {
     const entry = (name: string) => ({ name, items: [], p: 0, c: 0, f: 0, k: 0, src: 'manual' as const });
     expect(isTreatEntry(entry('Ice cream, 1 cup'), 'ice cream')).toBe(true);
@@ -495,6 +503,29 @@ describe('schedule ops (SPEC §9–10.2)', () => {
     expect(r.dropped).toBe(0);
     expect(runDays(r.template!)).toEqual([3]);
     expect(r.template!.days[2].some((s) => s.id === 'str-1')).toBe(true);
+  });
+});
+
+describe('schedule changes apply from the day they are made', () => {
+  it('keeps the layout of days already past, this week and before', () => {
+    const plan = buildPlan(PROTOTYPE_USER);
+    const strengthDay = (sched: Parameters<typeof dayPlan>[1], date: string) => dayPlan(plan, sched, date).sessions.some((s) => s.kind === 'strength');
+    // Strength A is on Monday Nov 16. On Wednesday the 18th it moves to Saturday.
+    expect(strengthDay(null, '2026-11-16')).toBe(true);
+    const moved = applyOps(engineTemplate(PROTOTYPE_USER), [{ op: 'move', sessionId: 'str-1', toDay: 'sat' }]);
+    const empty = { overrides: null, history: [] };
+    const history = freezeBefore(PROTOTYPE_USER, empty, '2026-11-18');
+    const sched = { overrides: { ...moved, effectiveFrom: '2026-11-18' }, history };
+    expect(strengthDay(sched, '2026-11-16')).toBe(true); // Monday this week keeps its workout
+    expect(strengthDay(sched, '2026-11-21')).toBe(true); // Saturday gets it
+    expect(strengthDay(sched, '2026-11-23')).toBe(false); // next Monday doesn't
+    expect(strengthDay(sched, '2026-11-28')).toBe(true);
+    // A second change the same day doesn't add history; a reset later keeps both earlier layouts.
+    expect(freezeBefore(PROTOTYPE_USER, sched, '2026-11-18')).toHaveLength(1);
+    const reset = { overrides: null, history: freezeBefore(PROTOTYPE_USER, sched, '2026-11-25') };
+    expect(templateForDate(PROTOTYPE_USER, reset, '2026-11-21').days[5].some((s) => s.id === 'str-1')).toBe(true);
+    expect(templateForDate(PROTOTYPE_USER, reset, '2026-11-16').days[0].some((s) => s.id === 'str-1')).toBe(true);
+    expect(templateForDate(PROTOTYPE_USER, reset, '2026-11-30').days[0].some((s) => s.id === 'str-1')).toBe(true);
   });
 });
 

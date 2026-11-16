@@ -77,3 +77,27 @@ test('the current tab stays readable under the pointer', async ({ page }) => {
   await tab.hover();
   await expect(tab).toHaveCSS('color', 'rgb(251, 246, 243)');
 });
+
+test('a change made mid-week leaves the days already past alone', async ({ page }) => {
+  // Wednesday of week 1: Strength A was done on Monday, then it's moved to Saturday.
+  await page.clock.install({ time: new Date('2026-11-18T09:00:00') });
+  await seed(page, undefined, {
+    logs: { sets: {}, weights: {}, sessionsDone: { '2026-11-16': ['str-1'] }, warmups: {}, meals: {}, extras: {} },
+  });
+  await page.route('**/api/edit-schedule', (route) =>
+    route.fulfill({ json: { ops: [{ op: 'move', sessionId: 'str-1', toDay: 'sat' }], summary: 'Strength A moves to Saturday.' } }),
+  );
+  await page.goto('/plan');
+  await page.getByLabel('What should change?').fill('Move strength A to Saturday');
+  await page.getByRole('button', { name: 'Preview changes' }).click();
+  await page.getByRole('button', { name: 'Apply' }).click();
+  const s = await stored(page);
+  expect(s.scheduleOverrides?.effectiveFrom).toBe('2026-11-18');
+  expect(s.scheduleHistory?.[0]?.until).toBe('2026-11-18');
+
+  await page.getByRole('link', { name: 'Train', exact: true }).click();
+  // Monday keeps its finished workout; Saturday gets Strength A from now on.
+  await expect(page.getByRole('button', { name: /Monday, Strength A, done/ })).toBeVisible();
+  await page.getByRole('button', { name: /^Saturday/ }).click();
+  await expect(page.getByRole('region', { name: 'Strength A' })).toBeVisible();
+});

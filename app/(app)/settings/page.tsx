@@ -21,6 +21,8 @@ import { Chevron, CheckBox } from '@/components/ui/icons';
 import { track } from '@/lib/analytics';
 import { defaultStart, draftFromProfile, profileFromDraft, validateAll, type Draft } from '@/lib/draft';
 import { fmtMedium, todayISO } from '@/lib/engine/dates';
+import { phaseForDate, weekOf } from '@/lib/engine/phases';
+import { buildPlan } from '@/lib/engine/plan';
 import { parseImport } from '@/lib/state/schema';
 import { currentData, exportData, useApp } from '@/lib/state/store';
 import type { FoodItem, Profile } from '@/lib/types';
@@ -42,6 +44,22 @@ function Section({ title, children, defaultOpen = false }: { title: string; chil
       {open && <div style={{ padding: '0 18px 18px' }}>{children}</div>}
     </div>
   );
+}
+
+/**
+ * New dates re-spread the phases over the whole plan, which can move today
+ * into a different phase. Says where today now sits, so that's no surprise.
+ */
+function phaseNote(before: Profile, after: Profile, today: string): string {
+  if (before.weddingDate === after.weddingDate && before.fittingDate === after.fittingDate) return 'Plan updated.';
+  const at = today < after.startDate ? after.startDate : today;
+  const t = buildPlan(after).timeline;
+  const was = phaseForDate(buildPlan(before).timeline, at);
+  const now = phaseForDate(t, at);
+  const week = Math.min(Math.max(weekOf(t.startMonday, at), 1), t.totalWeeks);
+  return was.name === now.name
+    ? `Plan updated for your new dates: week ${week} of ${t.totalWeeks}, still in ${now.label}.`
+    : `Your phases were re-spread over your new dates, so you’re now in ${now.label} (week ${week} of ${t.totalWeeks}), not ${was.label}.`;
 }
 
 function changedFields(a: Profile, b: Profile): string[] {
@@ -74,7 +92,10 @@ export default function SettingsPage() {
     fields.forEach((field) => track('settings_changed', { field }));
     setD(draftFromProfile(next));
     setErr(null);
-    showToast(dropped ? 'Plan updated. Some schedule edits no longer fit and were reset.' : 'Plan updated. Your logs are kept.');
+    const where = phaseNote(profile, next, today);
+    showToast(
+      [where, dropped ? 'Some schedule edits no longer fit and were reset.' : 'Your logs are kept.'].filter(Boolean).join(' ') || 'Plan updated.',
+    );
   };
 
   return (

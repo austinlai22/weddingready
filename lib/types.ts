@@ -82,8 +82,14 @@ export type SessionRef =
 export interface WeekTemplate {
   /** Seven entries, Monday first. */
   days: SessionRef[][];
-  /** First Monday (ISO date) the template applies from. Earlier weeks keep the engine default. */
+  /** First date (ISO) the template applies from. Earlier days use the schedule history, else the engine default. */
   effectiveFrom?: string;
+}
+
+/** The layout that was in force for days before `until`, so changes never rewrite days already past. */
+export interface ScheduleHistoryEntry {
+  until: string;
+  template: WeekTemplate;
 }
 
 export type SlotId = 'b' | 'l' | 'd' | 's' | 'x' | 'e';
@@ -137,6 +143,8 @@ export interface Logs {
 export interface AppState {
   profile?: Profile;
   scheduleOverrides: WeekTemplate | null;
+  /** Oldest first. Optional so data saved before it existed still loads. */
+  scheduleHistory?: ScheduleHistoryEntry[];
   logs: Logs;
   myFoods: FoodItem[];
   deviceId: string;
