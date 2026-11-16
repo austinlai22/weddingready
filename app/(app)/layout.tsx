@@ -1,4 +1,4 @@
-import { HydrationGate, LoadErrorNotice, Toast, TopNav } from '@/components/AppShell';
+import { DemoBanner, HydrationGate, LoadErrorNotice, Toast, TopNav } from '@/components/AppShell';
 import { RestTimer } from '@/components/train/RestTimer';
 
 export default function AppLayout({ children }: LayoutProps<'/'>) {
@@ -7,6 +7,7 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
       <main className="app-main">
         <TopNav />
         <div className="stack">
+          <DemoBanner />
           <LoadErrorNotice />
           {children}
         </div>

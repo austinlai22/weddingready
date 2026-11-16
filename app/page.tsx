@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { FeatureTour, type Feature } from '@/components/landing/FeatureTour';
 import { OpenAppLink } from '@/components/landing/OpenAppLink';
+import { TryExampleButton } from '@/components/landing/TryExampleButton';
 import { PlanTimeline } from '@/components/landing/PlanTimeline';
 import { BTN, PRIMARY, SiteFooter, SiteHeader } from '@/components/landing/SiteChrome';
 import { DAY_NAMES, dayIndex, fmtLong } from '@/lib/engine/dates';
@@ -130,11 +131,9 @@ export default function Home() {
               Tell WeddingReady when you’re getting married. It works backwards from the date to plan your workouts and meals, then shows you what to do today.
             </p>
             <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted">Free, for brides, grooms, partners and anyone in the wedding party.</p>
-            <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
+            <div className="mt-9 flex flex-wrap items-center gap-3">
               <OpenAppLink className={PRIMARY} />
-              <Link href="/how-it-works" className="text-[15px] font-semibold text-ink-2 underline-offset-4 hover:text-rose">
-                How the plan works
-              </Link>
+              <TryExampleButton className={`${BTN} border border-line-2 bg-surface text-ink hover:border-rose hover:text-rose`} />
             </div>
           </div>
           <figure className="m-0">

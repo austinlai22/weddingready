@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { demoState } from '../demo';
 import { PROTOTYPE_USER } from '../engine/fixtures';
+import { buildPlan, dayPlan } from '../engine/plan';
 import { emptyState, migrateState, parseImport, parseState, STATE_VERSION } from './schema';
 
 describe('persisted state (SPEC §11)', () => {
@@ -38,5 +40,19 @@ describe('persisted state (SPEC §11)', () => {
     expect(r.ok).toBe(true);
     expect(parseImport('{"hello":1}').ok).toBe(false);
     expect(parseImport('not json').ok).toBe(false);
+  });
+});
+
+describe('example plan ("Try the example plan")', () => {
+  it('is valid saved data, ten weeks in, with recent sessions done', () => {
+    const s = demoState('2026-11-18', 'demo-device');
+    expect(parseState(s).ok).toBe(true);
+    const plan = buildPlan(s.profile!);
+    const today = dayPlan(plan, null, '2026-11-18');
+    expect(today.status).toBe('active');
+    expect(today.week).toBe(11);
+    expect(plan.timeline.totalWeeks).toBe(48);
+    expect(Object.keys(s.logs.sessionsDone).every((d) => d < '2026-11-18')).toBe(true);
+    expect(Object.keys(s.logs.sessionsDone).length).toBeGreaterThan(3);
   });
 });

@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { configureAnalytics } from '@/lib/analytics';
+import { DEMO_KEY } from '@/lib/demo';
 import { useApp } from '@/lib/state/store';
 import { useUi } from '@/lib/ui';
 import { Gear } from './ui/icons';
@@ -110,6 +111,44 @@ export function Toast() {
           Undo
         </button>
       )}
+    </div>
+  );
+}
+
+function isDemo(): boolean {
+  try {
+    return localStorage.getItem(DEMO_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function onStorage(onChange: () => void) {
+  window.addEventListener('storage', onChange);
+  return () => window.removeEventListener('storage', onChange);
+}
+
+/** Shown while the example plan is loaded, with a way to start a real one. */
+export function DemoBanner() {
+  const demo = useSyncExternalStore(onStorage, isDemo, () => false);
+  const deleteEverything = useApp((s) => s.deleteEverything);
+  const router = useRouter();
+  if (!demo) return null;
+  return (
+    <div className="banner row-between" role="note" aria-label="Example plan">
+      <span>
+        <strong>This is an example plan.</strong> Tap around as much as you like. It’s saved only in this browser.
+      </span>
+      <button
+        type="button"
+        className="btn-dark"
+        onClick={() => {
+          deleteEverything();
+          router.push('/setup');
+        }}
+      >
+        Start my own plan
+      </button>
     </div>
   );
 }
