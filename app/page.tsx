@@ -77,6 +77,15 @@ const FAQS: { q: string; a: ReactNode }[] = [
   },
   { q: 'What equipment do I need?', a: 'Whatever you have. There are versions of every workout for home dumbbells, a gym, or no equipment.' },
   {
+    q: 'Can I use it from Claude or another AI assistant?',
+    a: (
+      <>
+        Yes. Add WeddingReady to Claude, or any assistant that supports MCP connectors, and ask for your plan, today’s workout or your protein target in the chat.
+        It uses the same rules as the app and stores nothing. <Link href="/agents">How to connect it</Link>.
+      </>
+    ),
+  },
+  {
     q: 'Is it medical advice?',
     a: 'No, and a dietitian or trainer hasn’t reviewed its rules yet. If you’re pregnant or postpartum, have a medical condition, or have had an eating disorder, it adjusts the plan, but check with your doctor first.',
   },

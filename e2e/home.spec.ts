@@ -16,6 +16,8 @@ test('home page explains the app and starts setup', async ({ page }) => {
   await expect.poll(playing).toEqual(['/media/landing/ai.mp4']);
   await page.locator('[data-feature="train"] video').scrollIntoViewIfNeeded();
   await expect.poll(playing).toEqual(['/media/landing/train.mp4']);
+  await page.getByText('Can I use it from Claude or another AI assistant?').click();
+  await expect(page.getByRole('link', { name: 'How to connect it' })).toHaveAttribute('href', '/agents');
   await page.getByText('Do I need an account?').click();
   await expect(page.getByText(/saved in your browser on your device/)).toBeVisible();
   const hrefs = await page.getByRole('link', { name: 'Start my plan' }).evaluateAll((els) => els.map((e) => e.getAttribute('href')));
