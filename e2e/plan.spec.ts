@@ -69,3 +69,11 @@ test('AI schedule edit: preview, then apply', async ({ page }) => {
   s = await stored(page);
   expect(s.scheduleOverrides?.days[1].some((x) => x.id === 'str-1')).toBe(true);
 });
+
+test('the current tab stays readable under the pointer', async ({ page }) => {
+  await seed(page);
+  await page.goto('/plan');
+  const tab = page.getByRole('link', { name: 'Plan', exact: true });
+  await tab.hover();
+  await expect(tab).toHaveCSS('color', 'rgb(251, 246, 243)');
+});

@@ -22,10 +22,13 @@ export function PhaseTimeline({ plan, today }: { plan: Plan; today: string }) {
   const summary = t.phases.map((p) => `${p.label} ${fmtShort(p.startDate)} to ${fmtShort(p.endDate)}`).join('; ');
   // Keep edge labels inside the bar.
   const place = (x: number) => ({ left: `${Math.min(94, Math.max(6, x))}%` });
+  // Near the end, "Fitting" would run into "Wedding", so it moves above the bar.
+  const fittingOnTop = showFitting && pct(fitting!) > 72;
   return (
     <figure style={{ margin: 0 }} className="stack-8">
       <div className="tl-labels" aria-hidden="true">
         {showToday && <span style={{ ...place(pct(today)), color: '#3B1F2E' }}>Today</span>}
+        {showFitting && fittingOnTop && <span style={{ ...place(pct(fitting!)), color: '#A63D63' }}>Fitting</span>}
       </div>
       <svg className="timeline" viewBox="0 0 1000 60" preserveAspectRatio="none" role="img" aria-label={`Phase timeline: ${summary}. Wedding ${fmtShort(t.weddingDate)}.`} style={{ height: 44 }}>
         {t.phases.map((p, i) => {
@@ -38,7 +41,7 @@ export function PhaseTimeline({ plan, today }: { plan: Plan; today: string }) {
         <rect x={994} y={0} width={6} height={60} fill="#A63D63" />
       </svg>
       <div className="tl-labels" aria-hidden="true">
-        {showFitting && <span style={{ ...place(pct(fitting!)), color: '#A63D63' }}>Fitting</span>}
+        {showFitting && !fittingOnTop && <span style={{ ...place(pct(fitting!)), color: '#A63D63' }}>Fitting</span>}
         <span style={{ left: 'auto', right: 0, transform: 'none', color: '#3B1F2E' }}>Wedding</span>
       </div>
       <figcaption className="legend">

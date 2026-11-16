@@ -24,7 +24,7 @@ export default function PlanPage() {
     <>
       <section className="hero" aria-labelledby="plan-title">
         <p className="kicker">Your plan</p>
-        <h1 id="plan-title" style={{ fontSize: 40 }}>{weeksLeft} {weeksLeft === 1 ? 'week' : 'weeks'} to {fmtShort(t.weddingDate)}</h1>
+        <h1 id="plan-title" style={{ fontSize: 40 }}>{weeksLeft} {weeksLeft === 1 ? 'week' : 'weeks'} to {fmtShort(t.weddingDate).replace(' ', '\u00a0')}</h1>
         <p className="pep">
           {fmtLong(t.weddingDate)} · {Math.max(0, daysBetween(today, t.weddingDate))} days to go · week {Math.min(week, t.totalWeeks)} of {t.totalWeeks}
           {p.fittingDate ? ` · fitting ${fmtShort(p.fittingDate)}` : ''}

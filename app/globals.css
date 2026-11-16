@@ -80,7 +80,7 @@
 .seg { flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; background: var(--color-seg); padding: 5px; border-radius: 16px; }
 .seg-btn { min-height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--color-ink-2); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none; }
 .seg-btn[aria-current="page"], .seg-btn[aria-pressed="true"] { background: var(--color-plum); color: var(--color-ground); }
-.seg-btn:hover { color: inherit; }
+.seg-btn:not([aria-current="page"]):not([aria-pressed="true"]):hover { color: inherit; }
 .icon-btn { text-decoration: none; width: 58px; flex: none; border-radius: 16px; border: 1px solid var(--color-line); background: var(--color-surface); display: flex; align-items: center; justify-content: center; color: var(--color-ink-2); }
 .icon-btn[aria-current="page"] { background: var(--color-plum); color: var(--color-ground); border-color: var(--color-plum); }
 .stack { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; padding-top: 8px; }
