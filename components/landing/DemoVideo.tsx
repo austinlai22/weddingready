@@ -47,8 +47,17 @@ export function DemoVideo({ src, poster, label }: { src: string; poster: string;
       { threshold: [0, 0.25, 0.5, 0.6, 0.7, 0.8, 0.9, 1] },
     );
     io.observe(video);
+    // Start loading a little before it arrives, so it never starts blank.
+    const near = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && video.preload === 'none') video.preload = 'auto';
+      },
+      { rootMargin: '400px 0px' },
+    );
+    near.observe(video);
     return () => {
       io.disconnect();
+      near.disconnect();
       visible.delete(video);
       video.pause();
     };
@@ -58,7 +67,9 @@ export function DemoVideo({ src, poster, label }: { src: string; poster: string;
     <div className="relative">
       <video
         ref={ref}
-        className="block aspect-[390/844] w-full"
+        className="block aspect-[390/844] w-full bg-cover bg-top"
+        // The poster stays behind the video while the first frame loads.
+        style={{ backgroundImage: `url(${poster})` }}
         src={src}
         poster={poster}
         muted

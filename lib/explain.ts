@@ -1,15 +1,12 @@
 // Data for the diagrams on "How the plan works", all produced by the real
 // engine (like lib/example.ts) so the page can't drift from what the app does.
 
-import type { Activity, WeekTemplate, WorkoutKey } from './types';
+import type { Activity } from './types';
 import { addDays } from './engine/dates';
 import { dayPlan } from './engine/plan';
 import { PHASE_LABEL, weekOf, type PhaseName } from './engine/phases';
-import { targets } from './engine/nutrition';
-import { defaultWeekTemplate, isHardActivity, shapeOf, weekIssues } from './engine/split';
-import { suggestWeekFix } from './engine/suggest';
-import { workoutMeta } from './engine/workouts';
-import { examplePlan, exampleTargets } from './example';
+import { defaultWeekTemplate, isHardActivity } from './engine/split';
+import { examplePlan } from './example';
 
 // ---------- Strength sets per week across the example plan ----------
 
@@ -55,55 +52,24 @@ export interface Chip {
   kind: ChipKind;
   label: string;
 }
-export interface ExampleWeek {
-  days: Chip[][];
-  /** Workout letter → what it trains, for the legend. */
-  sessions: { key: string; subtitle: string }[];
-  problems: string[];
-}
 
 const WALK: Activity = { id: 'walk', type: 'walk', label: 'Walk', days: [0, 1, 2, 3, 4, 5, 6] };
 
-function weekFor(strengthDays: 2 | 3 | 4 | 5, activities: Activity[]): ExampleWeek {
-  const t: WeekTemplate = defaultWeekTemplate(strengthDays, activities, 'home_db', []);
-  const keys = new Set<string>();
-  const days = t.days.map((d) =>
+/** The week the app lays out for these inputs, as chips per day. Walks are left out to keep it readable. */
+function weekFor(strengthDays: 2 | 3 | 4 | 5, activities: Activity[]): Chip[][] {
+  return defaultWeekTemplate(strengthDays, [...activities, WALK], 'home_db', []).days.map((d) =>
     d.flatMap((s): Chip[] => {
-      if (s.kind === 'strength') {
-        keys.add(s.workout);
-        return [{ kind: 'strength', label: s.workout }];
-      }
-      if (s.type === 'walk') return []; // every example walks daily; said once in the caption
+      if (s.kind === 'strength') return [{ kind: 'strength', label: 'Lift' }];
+      if (s.type === 'walk') return [];
       return [{ kind: isHardActivity(s.type) ? 'hard' : 'easy', label: s.label }];
     }),
   );
-  const problems = weekIssues(shapeOf(t), 'home_db', [])
-    .filter((i) => i.severity === 'rule')
-    .map((i) => i.text);
-  return { days, sessions: [...keys].map((key) => ({ key, subtitle: workoutMeta(key as WorkoutKey, strengthDays).subtitle })), problems };
 }
 
-const threeDay = [{ id: 'run', type: 'run', label: 'Run', days: [1] }, { id: 'yoga', type: 'yoga', label: 'Yoga', days: [5] }, WALK] satisfies Activity[];
-const fourDay = [{ id: 'spin', type: 'cycling', label: 'Spin', days: [2] }, WALK] satisfies Activity[];
-const packed = [
-  { id: 'class', type: 'classes', label: 'Class', days: [0, 1, 2, 3] },
-  { id: 'run', type: 'run', label: 'Run', days: [3] },
-  { id: 'sports', type: 'sports', label: 'Sports', days: [0] },
-  WALK,
-] satisfies Activity[];
-
-const packedFix = suggestWeekFix({ strengthDays: 3, activities: packed, equipment: 'home_db', focusAreas: [] });
-
 export const exampleWeeks = {
-  three: weekFor(3, threeDay),
-  four: weekFor(4, fourDay),
-  packed: weekFor(3, packed),
-  packedFix,
-  packedFixed: packedFix?.kind === 'days' ? weekFor(packedFix.strengthDays, packed) : null,
+  fullBody: weekFor(3, [
+    { id: 'run', type: 'run', label: 'Run', days: [1] },
+    { id: 'yoga', type: 'yoga', label: 'Yoga', days: [5] },
+  ]),
+  split: weekFor(4, [{ id: 'spin', type: 'cycling', label: 'Spin', days: [2] }]),
 };
-
-// ---------- Energy ----------
-
-/** Same person, no deficit: their estimated maintenance. */
-export const exampleMaintenance = targets(examplePlan.profile, false);
-export const exampleLoseFat = exampleTargets;

@@ -21,25 +21,41 @@ const FEATURES: Feature[] = [
     id: 'train',
     title: 'Today’s workout',
     body: 'Each exercise shows its sets and reps. Tap a set when it’s done and the rest timer starts. Your weights carry over to next time.',
-    points: ['Sets and reps change as you move through the phases', 'A rest timer counts down between sets', 'Versions for home dumbbells, a gym or no equipment'],
+    points: [
+      { icon: 'phases', text: 'Sets and reps change as you move through the phases' },
+      { icon: 'timer', text: 'A rest timer counts down between sets' },
+      { icon: 'dumbbell', text: 'Versions for home dumbbells, a gym or no equipment' },
+    ],
   },
   {
     id: 'eat',
     title: 'Meals',
     body: 'Pick one of the day’s suggested meals, or look up what you actually ate. Food values come from the USDA’s database.',
-    points: ['A few suggestions for each meal, matched to how you eat', `Search ${FOODS.length} foods, or save your own`, 'One or two dessert nights every week'],
+    points: [
+      { icon: 'meal', text: 'A few suggestions for each meal, matched to how you eat' },
+      { icon: 'search', text: `Search ${FOODS.length} foods, or save your own` },
+      { icon: 'dessert', text: 'One or two dessert nights every week' },
+    ],
   },
   {
     id: 'ai',
     title: 'Logging takeout',
     body: 'Type what you had and roughly how much. You get an estimate with its assumptions, and you can change any number before saving.',
-    points: ['Says what it assumed about the portion', 'Flags estimates whose numbers don’t add up', 'Or skip it and enter the numbers yourself'],
+    points: [
+      { icon: 'list', text: 'Says what it assumed about the portion' },
+      { icon: 'alert', text: 'Flags estimates whose numbers don’t add up' },
+      { icon: 'pencil', text: 'Or skip it and enter the numbers yourself' },
+    ],
   },
   {
     id: 'plan',
     title: 'Your week',
     body: 'Strength days are placed around the runs, classes and sports you already do. When life gets in the way, move things.',
-    points: ['Drag a session to another day, or type the change', 'Warns when a change leaves too little time to recover', 'Undo, or go back to the suggested week'],
+    points: [
+      { icon: 'move', text: 'Drag a session to another day, or type the change' },
+      { icon: 'rest', text: 'Warns when a change leaves too little time to recover' },
+      { icon: 'undo', text: 'Undo, or go back to the suggested week' },
+    ],
   },
 ];
 

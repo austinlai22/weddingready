@@ -33,10 +33,7 @@ test('“How the plan works” explains the rules', async ({ page }) => {
   }
   // The pictures come from the engine.
   await expect(page.getByRole('table', { name: 'Strength sets per week' })).toBeAttached();
-  await expect(page.getByRole('img', { name: /^Monday: Lift A/ }).first()).toBeVisible();
-  await expect(page.getByText('The app suggests:')).toBeVisible();
-  await page.getByRole('link', { name: /Safety/ }).click();
-  await expect(page).toHaveURL(/#safety$/);
+  await expect(page.getByRole('img', { name: /^Monday: Lift/ }).first()).toBeVisible();
   con.expectClean();
 });
 

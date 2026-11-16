@@ -1,3 +1,4 @@
+import { LineIcon, type IconName } from '@/components/ui/LineIcon';
 import { DemoVideo } from './DemoVideo';
 import { PhoneFrame } from './PhoneFrame';
 
@@ -5,7 +6,7 @@ export interface Feature {
   id: string;
   title: string;
   body: string;
-  points: string[];
+  points: { icon: IconName; text: string }[];
 }
 
 // Paper colours behind each phone, in order.
@@ -27,11 +28,11 @@ export function FeatureTour({ features }: { features: Feature[] }) {
               <p className="font-display text-sm italic text-muted">{String(i + 1).padStart(2, '0')}</p>
               <h3 className="mt-1 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">{f.title}</h3>
               <p className="mt-4 max-w-md text-[17px] leading-relaxed text-ink-2">{f.body}</p>
-              <ul className="m-0 mt-6 max-w-md list-none border-b border-line p-0">
+              <ul className="m-0 mt-7 max-w-md list-none space-y-3 p-0">
                 {f.points.map((p) => (
-                  <li key={p} className="flex gap-3 border-t border-line py-3 text-[15px] text-ink-2">
-                    <span aria-hidden="true" className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-rose" />
-                    {p}
+                  <li key={p.text} className="flex items-center gap-3.5 text-[15px] text-ink-2">
+                    <LineIcon name={p.icon} size="sm" />
+                    {p.text}
                   </li>
                 ))}
               </ul>

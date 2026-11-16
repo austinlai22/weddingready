@@ -49,7 +49,7 @@ export function WeeklySetsChart({ weeks, fittingWeek, weddingDate }: { weeks: We
               className="flex h-8 items-center overflow-hidden rounded-[4px] px-2 text-[12px] font-semibold sm:text-[13px]"
               style={{ gridColumn: `${b.from} / span ${b.span}`, background: PHASE_BAND[b.phase].fill, color: PHASE_BAND[b.phase].ink }}
             >
-              <span className="truncate">{b.label}</span>
+              <span className="hidden truncate sm:inline">{b.label}</span>
             </div>
           ))}
         </div>
@@ -100,7 +100,7 @@ export function WeeklySetsChart({ weeks, fittingWeek, weddingDate }: { weeks: We
       </div>
 
       <figcaption className="mt-2 max-w-2xl text-[15px] leading-relaxed text-ink-2">
-        Strength sets per week in the example plan. The lighter bars are the recovery weeks and the last ten days, when every exercise drops to two sets.
+        Strength sets per week. Lighter bars are easy weeks: every sixth week, and the last ten days.
       </figcaption>
 
       <table className="sr-only">
