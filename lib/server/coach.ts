@@ -48,15 +48,19 @@ export const CoachRequestSchema = z.object({
 });
 export type CoachRequest = z.infer<typeof CoachRequestSchema>;
 
-export type Proposal =
+/** Every proposal says what the person told the coach that it relies on, shown in the preview. */
+export type Proposal = { basedOn: string } & (
   | { kind: 'schedule'; scope: 'this_week' | 'from_now_on'; ops: ScheduleOp[]; summary: string }
   | { kind: 'swap'; from: string; to: string; fromName: string; toName: string; reason: string }
   | { kind: 'equipment'; from: string; to: string; equipment: Equipment; reason: string }
-  | { kind: 'meal'; slot: SlotId; entry: MealEntry };
+  | { kind: 'meal'; slot: SlotId; entry: MealEntry }
+);
 
 export interface CoachReply {
   reply: string;
   proposals: Proposal[];
+  /** Quick answers to the coach's question, when it asked one. */
+  options?: string[];
   model: string;
 }
 
@@ -97,15 +101,27 @@ const DECLARED = {
         .min(1)
         .max(6),
       summary: z.string().max(200).describe('One sentence describing the change for the person.'),
+      based_on: z.string().min(3).max(200).describe('What the person told you that this relies on, in their terms, e.g. “free Saturday morning”, “hotel gym has dumbbells only”. If you’d have to guess, call ask_question instead.'),
     }),
   },
   propose_exercise_swap: {
     description: 'Propose replacing an exercise in every workout from now on (e.g. lunges for a sore knee). to_exercise_id must come from exercise_alternatives.',
-    schema: z.object({ from_exercise_id: z.string().max(64), to_exercise_id: z.string().max(64), reason: z.string().max(160) }),
+    schema: z.object({
+      from_exercise_id: z.string().max(64),
+      to_exercise_id: z.string().max(64),
+      reason: z.string().max(160),
+      based_on: z.string().min(3).max(200).describe('What the person told you that this relies on, in their terms, e.g. “free Saturday morning”, “hotel gym has dumbbells only”. If you’d have to guess, call ask_question instead.'),
+    }),
   },
   propose_equipment_change: {
     description: 'Propose different equipment for a stretch of dates (e.g. a hotel gym while travelling), up to 4 weeks.',
-    schema: z.object({ from_date: isoDate, to_date: isoDate, equipment: z.enum(['home_dumbbells', 'gym', 'bodyweight']), reason: z.string().max(160) }),
+    schema: z.object({
+      from_date: isoDate,
+      to_date: isoDate,
+      equipment: z.enum(['home_dumbbells', 'gym', 'bodyweight']).describe('home_dumbbells = dumbbells only (many hotel gyms); gym = racks, cables and machines; bodyweight = nothing.'),
+      reason: z.string().max(160),
+      based_on: z.string().min(3).max(200).describe('What the person told you that this relies on, in their terms, e.g. “free Saturday morning”, “hotel gym has dumbbells only”. If you’d have to guess, call ask_question instead.'),
+    }),
   },
   get_nutrition_today: {
     description: 'Today’s food targets and what’s logged so far, as the person has chosen to see them (some people see no numbers).',
@@ -125,6 +141,15 @@ const DECLARED = {
       carbs_g: z.number().min(0).max(600),
       fat_g: z.number().min(0).max(300),
       kcal: z.number().min(0).max(4000),
+      based_on: z.string().min(3).max(200).describe('What the person told you that this relies on, in their terms, e.g. “free Saturday morning”, “hotel gym has dumbbells only”. If you’d have to guess, call ask_question instead.'),
+    }),
+  },
+  ask_question: {
+    description:
+      'Ask the person for something you need before you can propose a change correctly: which days they’re free, the exact dates, what equipment they’ll have, which exercise hurts and how, where they’re eating. One question at a time. Give 2–5 short options when there are likely answers. This ends your turn.',
+    schema: z.object({
+      question: z.string().min(5).max(240),
+      options: z.array(z.string().min(1).max(60)).max(5).optional().describe('Short answers they can tap, e.g. ["Friday", "Saturday", "Not this week"].'),
     }),
   },
 } satisfies Record<string, { description: string; schema: z.ZodType }>;
@@ -170,6 +195,8 @@ const SLOT_ID: Record<string, SlotId> = { breakfast: 'b', lunch: 'l', dinner: 'd
 export class CoachSession {
   readonly plan: Plan;
   readonly proposals: Proposal[] = [];
+  /** Set when the coach asked the person something; the turn ends there. */
+  question: { text: string; options: string[] } | null = null;
   private readonly from: string;
 
   constructor(
@@ -197,6 +224,27 @@ export class CoachSession {
       const past = date < this.from;
       return { day: d, date, past, sessions: this.sessionsOn(past ? this.schedule : upcoming, date).map((s) => ({ ...s, done: done.has(s.id) })) };
     });
+  }
+
+  /**
+   * For each strength session still to come this week, the days it could move
+   * to (this week only) without breaking a training rule. Offer only these.
+   */
+  private moveOptions(t: WeekTemplate) {
+    const p = this.plan.profile;
+    const todayIdx = dayIndex(this.from);
+    const ok = (next: WeekTemplate) => !validateTemplate(next, p.equipment, p.focusAreas).some((w) => w.severity === 'rule');
+    return t.days.flatMap((sessions, day) =>
+      day < todayIdx
+        ? []
+        : sessions
+            .filter((s) => s.kind === 'strength' && !(this.req.done[addDays(mondayOf(this.from), day)] ?? []).includes(s.id))
+            .map((s) => ({
+              session_id: s.id,
+              now_on: DAY_IDS[day],
+              can_move_to: DAY_IDS.filter((d, i) => i >= todayIdx && i !== day && ok(applyOps(t, [{ op: 'move', sessionId: s.id, toDay: d }], p))),
+            })),
+    );
   }
 
   /** Alternatives that aren't already in a workout alongside the exercise being replaced. */
@@ -231,6 +279,7 @@ export class CoachSession {
           today: `${DAY_NAMES[dayIndex(this.req.today)]} ${this.req.today}`,
           days: this.weekView(monday, this.schedule),
           rule_problems: validateTemplate(t, p.equipment, p.focusAreas).filter((w) => w.severity === 'rule').map((w) => w.text),
+          ...(a.week === 'next' ? {} : { move_options: this.moveOptions(t) }),
         };
       }
       case 'get_workout': {
@@ -269,7 +318,7 @@ export class CoachSession {
         }
         const before = templateForDate(p, this.schedule, this.from);
         const after = applyOps(before, ops, p);
-        const proposal: Proposal = { kind: 'schedule', scope, ops, summary: String(a.summary) };
+        const proposal: Proposal = { kind: 'schedule', scope, ops, summary: String(a.summary), basedOn: String(a.based_on) };
         const at = this.proposals.findIndex((x) => x.kind === 'schedule');
         if (at >= 0) this.proposals[at] = proposal;
         else this.proposals.push(proposal);
@@ -283,7 +332,7 @@ export class CoachSession {
         const from = exerciseById(a.from_exercise_id as string);
         const to = this.swapOptions(from.id).find((o) => o.exercise.id === a.to_exercise_id)?.exercise;
         if (!to) return { error: `${a.to_exercise_id} can’t replace ${from.name} with this equipment. Use an id from exercise_alternatives.` };
-        this.proposals.push({ kind: 'swap', from: from.id, to: to.id, fromName: from.name, toName: to.name, reason: String(a.reason) });
+        this.proposals.push({ kind: 'swap', from: from.id, to: to.id, fromName: from.name, toName: to.name, reason: String(a.reason), basedOn: String(a.based_on) });
         return { proposed: true, swap: `${from.name} → ${to.name} in every workout from now on` };
       }
       case 'propose_equipment_change': {
@@ -294,7 +343,7 @@ export class CoachSession {
         if (to > addDays(from, 27)) return { error: 'Keep it to 4 weeks or less; for a lasting change, the person can change equipment in Settings.' };
         if (to >= this.plan.timeline.weddingDate) return { error: 'That runs into the wedding.' };
         const equipment = EQUIPMENT_INPUT[a.equipment as keyof typeof EQUIPMENT_INPUT];
-        this.proposals.push({ kind: 'equipment', from, to, equipment, reason: String(a.reason) });
+        this.proposals.push({ kind: 'equipment', from, to, equipment, reason: String(a.reason), basedOn: String(a.based_on) });
         return { proposed: true, change: `${EQUIPMENT_NAMES[equipment]} from ${from} to ${to}; the workouts switch to versions for that equipment.` };
       }
       case 'get_nutrition_today': {
@@ -337,8 +386,12 @@ export class CoachSession {
           conf: 'medium',
           note: 'Suggested by your coach; restaurant portions vary.',
         };
-        this.proposals.push({ kind: 'meal', slot: SLOT_ID[a.slot as string], entry });
+        this.proposals.push({ kind: 'meal', slot: SLOT_ID[a.slot as string], entry, basedOn: String(a.based_on) });
         return { proposed: true };
+      }
+      case 'ask_question': {
+        this.question = { text: String(a.question), options: ((a.options as string[] | undefined) ?? []).slice(0, 5) };
+        return { asked: true };
       }
     }
   }
@@ -352,9 +405,18 @@ function systemPrompt(req: CoachRequest, plan: Plan): string {
   return `You are the coach inside WeddingReady, an app that plans strength training and food for the months before someone's wedding.
 Today is ${DAY_NAMES[dayIndex(req.today)]} ${req.today}. The wedding is ${plan.timeline.weddingDate}. They train ${p.strengthDays} days a week with ${EQUIPMENT_NAMES[p.equipment]}. ${numbers}
 
+A wrong change is worse than no change. Before proposing anything, make sure you know what you need. If something important is missing or could mean two things, call ask_question: one question at a time, with tap-able options when there are likely answers. Don't ask about things you can look up with the tools or work out from today's date.
+
+What you need before proposing:
+- Missed or busy day: which session it is (look it up), and which day they can train instead. get_week lists move_options: the days each session can move to without breaking a training rule. Ask which of those days works, offering only those days plus "Skip it this week". If they already named a day, check it's in move_options; if not, say why and offer the ones that are.
+- Travel: the exact dates (turn "next week" into dates yourself and say them back) and what they'll have to train with. "Hotel gym" can mean dumbbells only (home_dumbbells), a full gym with racks and machines (gym), or almost nothing (bodyweight): always ask unless they told you.
+- Pain or injury: which exercise or movement hurts, and whether it's sharp, swollen or getting worse. If it is, tell them to stop training that area and see a doctor or physio, and don't propose a swap. For a dull ache in certain moves, swap those moves.
+- Eating out: where they're eating, and (to log it) what they're ordering or considering.
+- Lasting changes (a new class schedule, a new job): which days, and whether it's every week from now on.
+
 How to work:
-- Look before you act: use get_week or get_workout to see the plan, then propose changes with the propose_ tools.
-- When the request is clear, make the proposal straight away instead of asking whether to; the person reviews every proposal and can discard it.
+- Look before you act: use get_week or get_workout to see the plan.
+- Once you have what you need, propose straight away with the propose_ tools; don't ask "would you like me to". Fill based_on with what they told you.
 - You can only propose. Write "I suggest…" or "Here's a change you can apply". Never write "I've updated", "I've changed" or "done": nothing changes until they tap Apply.
 - Use ids exactly as tools return them.
 - Training rules: with 2–3 strength days (full body) never put two on back-to-back days and keep an easy day between them; with 4–5 days, never the same session two days running. If a proposal returns rule_problems, fix it or explain the trade-off.
@@ -363,7 +425,7 @@ How to work:
 - Eating out or "what should I eat": call get_nutrition_today, choose one specific order that fits what's left of their day, and propose_meal with it so they can log it in one tap.
 - Food: never change their calorie targets or suggest eating less than their target. Keep their diet in mind.
 - Not medical advice. Don't discuss weight loss for anyone who chose no food numbers.
-- Reply in plain, warm, short sentences: under 90 words, no headings, no tables. Ask one question only if you truly can't proceed.`;
+- Reply in plain, warm, short sentences: under 90 words, no headings, no tables.`;
 }
 
 let client: GoogleGenAI | null = null;
@@ -424,7 +486,10 @@ export async function runCoach(req: CoachRequest): Promise<CoachReply> {
       if (!nudged && !session.proposals.length && CLAIMS_CHANGE.test(text)) {
         nudged = true;
         contents.push({ role: 'model', parts: [{ text }] });
-        contents.push({ role: 'user', parts: [{ text: '(App note, not from the person) Nothing has been proposed yet, so there is nothing to apply. Call the right propose_ tool now, then reply in one or two sentences.' }] });
+        contents.push({
+          role: 'user',
+          parts: [{ text: '(App note, not from the person) Nothing has been proposed, so there is nothing to apply. If you know everything the change needs, call the right propose_ tool now. If anything is missing or you would be guessing, call ask_question instead.' }],
+        });
         continue;
       }
       const reply = session.proposals.length ? honest(text) : text;
@@ -436,6 +501,13 @@ export async function runCoach(req: CoachRequest): Promise<CoachReply> {
       role: 'user',
       parts: calls.map((c) => ({ functionResponse: { name: c.name ?? '', ...(c.id ? { id: c.id } : {}), response: { result: session.run(c.name ?? '', c.args) } } })),
     });
+    if (session.question) {
+      // The coach needs an answer first. Anything it proposed in the same breath
+      // was made without it, so it's dropped: a wrong change is worse than none.
+      const preamble = (turn?.parts ?? []).map((part) => part.text ?? '').join(' ').trim();
+      const reply = preamble && !preamble.includes(session.question.text) ? `${preamble} ${session.question.text}` : session.question.text;
+      return { reply, proposals: [], options: session.question.options, model };
+    }
   }
   return {
     reply: session.proposals.length ? 'Here’s what I’d change. Have a look and tap Apply if it works for you.' : 'That took more steps than I can manage. Try a simpler request.',

@@ -6,7 +6,7 @@
 
 import { z } from 'zod';
 import { isISODate } from './engine/dates';
-import { ACTIVITY_TYPES, FOCUS_AREAS, type Activity, type Equipment, type Experience, type FocusArea, type Goal, type Outfit, type Profile } from './types';
+import { ACTIVITY_TYPES, FOCUS_AREAS, type Activity, type ActivityType, type Equipment, type EquipmentOverride, type Experience, type FocusArea, type Goal, type Outfit, type Profile, type SessionRef, type WeekTemplate } from './types';
 
 const PREFIX = 'wr1.';
 const isoDate = z.string().refine(isISODate);
@@ -16,6 +16,9 @@ const HandoffSchema = z.object({
   f: isoDate.optional(),
   s: isoDate.optional(),
   sw: z.record(z.string().max(64), z.string().max(64)).optional(),
+  // The week as the person has arranged it: per day, strength workout keys ("S:A"), activities by index ("a0"), or added ones ("x:yoga:Yoga").
+  l: z.array(z.array(z.string().max(60)).max(8)).length(7).optional(),
+  eo: z.array(z.object({ f: isoDate, t: isoDate, e: z.enum(['home_db', 'gym', 'bodyweight']) })).max(20).optional(),
   g: z.array(z.enum(['tone', 'strength', 'lose_fat', 'maintain'])).max(4),
   d: z.union([z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
   e: z.enum(['home_db', 'gym', 'bodyweight']),
@@ -34,6 +37,9 @@ export interface PlanHandoff {
   /** The plan's first day, so phases and week numbers line up with the app. */
   startDate?: string;
   exerciseSwaps?: Record<string, string>;
+  /** The person's own week layout, if they rearranged it. */
+  layout?: WeekTemplate;
+  equipmentOverrides?: EquipmentOverride[];
   goals: Goal[];
   strengthDays: 2 | 3 | 4 | 5;
   equipment: Equipment;
@@ -58,8 +64,11 @@ function fromBase64Url(code: string): string {
   return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
 }
 
-export function handoffFromProfile(p: Profile): PlanHandoff {
+/** `layout`: the week as arranged in the app (from the schedule), so other places show the same sessions. */
+export function handoffFromProfile(p: Profile, layout?: WeekTemplate | null): PlanHandoff {
   return {
+    ...(layout ? { layout } : {}),
+    ...(p.equipmentOverrides?.length ? { equipmentOverrides: p.equipmentOverrides } : {}),
     weddingDate: p.weddingDate,
     ...(p.fittingDate ? { fittingDate: p.fittingDate } : {}),
     startDate: p.startDate,
@@ -81,6 +90,8 @@ export function encodePlan(h: PlanHandoff): string {
     ...(h.fittingDate ? { f: h.fittingDate } : {}),
     ...(h.startDate ? { s: h.startDate } : {}),
     ...(h.exerciseSwaps ? { sw: h.exerciseSwaps } : {}),
+    ...(h.layout ? { l: encodeLayout(h.layout, h.activities) } : {}),
+    ...(h.equipmentOverrides?.length ? { eo: h.equipmentOverrides.map((o) => ({ f: o.from, t: o.to, e: o.equipment })) } : {}),
     g: h.goals,
     d: h.strengthDays,
     e: h.equipment,
@@ -106,7 +117,10 @@ export function decodePlan(code: string): PlanHandoff | null {
   const r = HandoffSchema.safeParse(raw);
   if (!r.success) return null;
   const c = r.data;
+  const activities: Activity[] = c.t.map((a, i) => ({ id: `a${i + 1}`, type: a.y, label: a.l || a.y, days: a.d, ...(a.n ? { minutes: a.n } : {}) }));
   return {
+    ...(c.l ? { layout: decodeLayout(c.l, activities) } : {}),
+    ...(c.eo ? { equipmentOverrides: c.eo.map((o) => ({ from: o.f, to: o.t, equipment: o.e })) } : {}),
     weddingDate: c.w,
     ...(c.f ? { fittingDate: c.f } : {}),
     ...(c.s ? { startDate: c.s } : {}),
@@ -118,7 +132,39 @@ export function decodePlan(code: string): PlanHandoff | null {
     sessionMinutes: c.m,
     outfit: c.o,
     focusAreas: c.a,
-    activities: c.t.map((a, i) => ({ id: `a${i + 1}`, type: a.y, label: a.l || a.y, days: a.d, ...(a.n ? { minutes: a.n } : {}) })),
+    activities,
+  };
+}
+
+const KEYS = ['A', 'B', 'C', 'U', 'L', 'P', 'R', 'G', 'F'] as const;
+
+function encodeLayout(t: WeekTemplate, activities: Activity[]): string[][] {
+  return t.days.map((day) =>
+    day.map((s) => {
+      if (s.kind === 'strength') return `S:${s.workout}`;
+      const i = activities.findIndex((a) => a.id === s.activityId);
+      return i >= 0 ? `a${i}` : `x:${s.type}:${s.label.replace(/:/g, ' ').slice(0, 40)}`;
+    }),
+  );
+}
+
+function decodeLayout(days: string[][], activities: Activity[]): WeekTemplate {
+  let n = 0;
+  return {
+    days: days.map((day, d) =>
+      day.flatMap((tok): SessionRef[] => {
+        if (tok.startsWith('S:')) {
+          const key = tok.slice(2) as (typeof KEYS)[number];
+          return KEYS.includes(key) ? [{ id: `str-${++n}`, kind: 'strength', workout: key }] : [];
+        }
+        if (/^a\d+$/.test(tok)) {
+          const a = activities[Number(tok.slice(1))];
+          return a ? [{ id: `act-${a.id}-${d}`, kind: 'activity', activityId: a.id, type: a.type, label: a.label }] : [];
+        }
+        const [, type, label] = tok.split(':');
+        return (ACTIVITY_TYPES as readonly string[]).includes(type) ? [{ id: `act-x${d}-${label}`, kind: 'activity', type: type as ActivityType, label: label || type }] : [];
+      }),
+    ),
   };
 }
 

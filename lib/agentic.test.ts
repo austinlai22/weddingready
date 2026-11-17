@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calendarEvents, toICS } from './calendar';
+import { calendarEvents, isTimeZone, toICS, utcStamp } from './calendar';
 import { PROTOTYPE_USER } from './engine/fixtures';
 import { buildPlan, dayPlan } from './engine/plan';
 import { applyOps, engineTemplate, templateForDate, thisWeekOnly } from './engine/schedule';
@@ -20,6 +20,18 @@ describe('plan codes', () => {
     // Nothing about the body or health goes in a code.
     const json = JSON.stringify(back);
     for (const k of ['weightKg', 'heightCm', 'age', 'safety', 'sex']) expect(json).not.toContain(k);
+  });
+
+  it('carry the week as the person arranged it, and travel equipment', () => {
+    const moved = applyOps(engineTemplate(PROTOTYPE_USER), [{ op: 'move', sessionId: 'str-2', toDay: 'sat' }, { op: 'add', activity: 'yoga', day: 'sun' }], PROTOTYPE_USER);
+    const p = { ...PROTOTYPE_USER, equipmentOverrides: [{ from: '2026-11-23', to: '2026-11-29', equipment: 'gym' as const }] };
+    const back = decodePlan(encodePlan(handoffFromProfile(p, moved)))!;
+    const shape = (t: { days: { kind: string; label?: string; workout?: string }[][] }) => t.days.map((d) => d.map((s) => (s.kind === 'strength' ? s.workout : s.label)));
+    expect(shape(back.layout!)).toEqual(shape(moved));
+    expect(back.equipmentOverrides).toEqual(p.equipmentOverrides);
+    // The calendar from the code follows the arranged week.
+    const events = calendarEvents(buildPlan(PROTOTYPE_USER), back.layout!, { from: '2026-11-16', weeks: 1 });
+    expect(events.map((e) => e.date)).toEqual(['2026-11-16', '2026-11-21']);
   });
 
   it('reject damaged codes and read them from a link', () => {
@@ -68,11 +80,22 @@ describe('calendar', () => {
     const events = calendarEvents(plan, null, { from: '2026-11-16', weeks: 2, time: '18:30' });
     expect(events.map((e) => e.date)).toEqual(['2026-11-16', '2026-11-19', '2026-11-23', '2026-11-26']);
     expect(events[0]).toMatchObject({ start: '18:30', title: 'Strength A: Legs & push' });
-    const ics = toICS(events, new Date('2026-11-16T12:00:00Z'));
+    const ics = toICS(events, { now: new Date('2026-11-16T12:00:00Z') });
     expect(ics.startsWith('BEGIN:VCALENDAR\r\n')).toBe(true);
     expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(4);
     expect(ics).toContain('DTSTART:20261116T183000');
     for (const line of ics.split('\r\n')) expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
+  });
+
+  it('writes times in UTC for the person’s time zone, across daylight saving', () => {
+    expect(utcStamp('2026-11-23', '18:30', 'America/Los_Angeles')).toBe('20261124T023000Z'); // PST, UTC−8
+    expect(utcStamp('2027-07-12', '18:30', 'America/Los_Angeles')).toBe('20270713T013000Z'); // PDT, UTC−7
+    expect(utcStamp('2027-03-28', '07:00', 'Europe/London')).toBe('20270328T060000Z'); // the morning the clocks go forward
+    const plan = buildPlan(PROTOTYPE_USER);
+    const ics = toICS(calendarEvents(plan, null, { from: '2026-11-16', weeks: 1, time: '07:00' }), { timeZone: 'Asia/Tokyo' });
+    expect(ics).toContain('DTSTART:20261115T220000Z');
+    expect(ics).toContain('X-WR-TIMEZONE:Asia/Tokyo');
+    expect(isTimeZone('Not/AZone')).toBe(false);
   });
 
   it('can include the person’s other activities, never walks', () => {

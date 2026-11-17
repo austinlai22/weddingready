@@ -12,7 +12,7 @@ import { defaultWeekTemplate, shapeOf, weekIssues } from '../../engine/split';
 import { suggestWeekFix } from '../../engine/suggest';
 import { sessionMinutes, workoutMeta } from '../../engine/workouts';
 import { MAX_PLAN_DAYS, OUTFIT_FOCUS } from '../../draft';
-import { calendarEvents, MAX_CALENDAR_WEEKS, toICS } from '../../calendar';
+import { calendarEvents, isTimeZone, MAX_CALENDAR_WEEKS, toICS } from '../../calendar';
 import { decodePlan, encodePlan, handoffFromProfile, setupLink } from '../../handoff';
 import {
   DAY_IDS,
@@ -27,6 +27,7 @@ import {
   type Job,
   type Outfit,
   type Profile,
+  type EquipmentOverride,
   type SessionRef,
   type Sex,
   type WeekTemplate,
@@ -64,6 +65,9 @@ export interface TrainingInput {
   activities?: ActivityInput[];
   /** From a plan code only: exercises the person swapped in the app. */
   exercise_swaps?: Record<string, string>;
+  /** From a plan code only: the week as arranged in the app, and dated equipment changes. */
+  layout?: WeekTemplate;
+  equipment_overrides?: EquipmentOverride[];
 }
 
 const ACTIVITY_LABEL: Record<ActivityType, string> = {
@@ -103,6 +107,8 @@ export function withPlanCode<T extends TrainingInput>(input: T): T {
     ...(h.fittingDate ? { fitting_date: h.fittingDate } : {}),
     ...(h.startDate ? { start_date: h.startDate } : {}),
     ...(h.exerciseSwaps ? { exercise_swaps: h.exerciseSwaps } : {}),
+    ...(h.layout ? { layout: h.layout } : {}),
+    ...(h.equipmentOverrides ? { equipment_overrides: h.equipmentOverrides } : {}),
     goals: h.goals,
     strength_days: h.strengthDays,
     equipment: EQUIPMENT_INPUT[h.equipment],
@@ -173,6 +179,7 @@ function trainingProfile(raw: TrainingInput, today: string): Profile {
     safety: { pregnantOrPostpartum: false, edHistory: false, medicalCondition: false },
     startDate: start,
     ...(input.exercise_swaps ? { exerciseSwaps: input.exercise_swaps } : {}),
+    ...(input.equipment_overrides ? { equipmentOverrides: input.equipment_overrides } : {}),
   };
 }
 
@@ -257,7 +264,7 @@ export function buildWeddingPlan(input: TrainingInput, today: string) {
 
 // ---------- calendar_events ----------
 
-type CalendarInput = TrainingInput & { from?: string; weeks?: number; time?: string; include_activities?: boolean };
+type CalendarInput = TrainingInput & { from?: string; weeks?: number; time?: string; include_activities?: boolean; time_zone?: string };
 
 function eventsFor(input: CalendarInput, today: string) {
   const profile = trainingProfile(input, today);
@@ -267,19 +274,27 @@ function eventsFor(input: CalendarInput, today: string) {
   const time = input.time ?? '07:00';
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new ToolInputError('time must be HH:MM in 24-hour time, e.g. 07:00 or 18:30.');
   const weeks = input.weeks ?? 4;
-  const events = calendarEvents(plan, null, { from, weeks, time, includeActivities: input.include_activities, appUrl: SITE });
+  if (input.time_zone && !isTimeZone(input.time_zone)) throw new ToolInputError('time_zone must be an IANA name such as America/New_York.');
+  const events = calendarEvents(plan, withPlanCode(input).layout ?? null, { from, weeks, time, includeActivities: input.include_activities, appUrl: SITE });
   return { profile, events, from, time, weeks };
 }
 
 /** The calendar file for a plan, for /api/ics. */
 export function icsForPlan(input: CalendarInput, today: string): string {
-  return toICS(eventsFor(input, today).events);
+  return toICS(eventsFor(input, today).events, { timeZone: input.time_zone });
 }
 
 export function calendarForPlan(input: CalendarInput, today: string) {
   const { profile, events, from, time, weeks } = eventsFor(input, today);
-  const code = encodePlan(handoffFromProfile(profile));
-  const params = new URLSearchParams({ plan: code, from, weeks: String(Math.min(weeks, MAX_CALENDAR_WEEKS)), time, ...(input.include_activities ? { activities: '1' } : {}) });
+  const code = encodePlan(handoffFromProfile(profile, withPlanCode(input).layout));
+  const params = new URLSearchParams({
+    plan: code,
+    from,
+    weeks: String(Math.min(weeks, MAX_CALENDAR_WEEKS)),
+    time,
+    ...(input.include_activities ? { activities: '1' } : {}),
+    ...(input.time_zone ? { tz: input.time_zone } : {}),
+  });
   return {
     events: events.map((e) => ({ date: e.date, start: e.start, duration_minutes: e.minutes, title: e.title, description: e.description })),
     ics_url: `${SITE}/api/ics?${params}`,
@@ -295,7 +310,7 @@ export function getWorkout(input: TrainingInput & { date?: string }, today: stri
   const plan: Plan = buildPlan(profile);
   const date = input.date ?? today;
   if (!isISODate(date)) throw new ToolInputError('date must be a real date as YYYY-MM-DD.');
-  const day = dayPlan(plan, null, date);
+  const day = dayPlan(plan, withPlanCode(input).layout ?? null, date);
   const t = plan.timeline;
   const status =
     day.status === 'before' ? `before the plan starts on ${profile.startDate} (this is a preview)` : day.status === 'after' ? 'after the wedding' : day.status === 'wedding' ? 'the wedding day' : 'during the plan';

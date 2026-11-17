@@ -13,6 +13,7 @@ export async function GET(request: Request) {
         weeks: Number(q.get('weeks')) || 4,
         time: q.get('time') ?? undefined,
         include_activities: q.get('activities') === '1',
+        time_zone: q.get('tz') ?? undefined,
       },
       todayISO(),
     );

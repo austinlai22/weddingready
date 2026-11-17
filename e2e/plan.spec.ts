@@ -101,6 +101,39 @@ test('a “this week only” change from the coach keeps past days and ends on S
   await expect(page.getByRole('region', { name: 'Strength B' })).toBeVisible();
 });
 
+test('the coach asks when it needs more, and proposes only after the answer', async ({ page }) => {
+  await page.clock.install({ time: MONDAY });
+  await seed(page);
+  let calls = 0;
+  await page.route('**/api/coach', async (route) => {
+    const body = route.request().postDataJSON();
+    calls++;
+    if (calls === 1) {
+      await route.fulfill({ json: { reply: 'What will you have to train with at the hotel?', proposals: [], options: ['Dumbbells only', 'Full gym', 'Nothing'] } });
+      return;
+    }
+    // The answer goes back with the conversation so far.
+    expect(body.message).toBe('Dumbbells only');
+    expect(body.history.map((h: { role: string }) => h.role)).toEqual(['user', 'coach']);
+    await route.fulfill({
+      json: {
+        reply: 'I suggest dumbbell versions for your trip.',
+        proposals: [{ kind: 'equipment', from: '2026-11-23', to: '2026-11-29', equipment: 'home_db', reason: 'Hotel stay.', basedOn: 'hotel gym has dumbbells only' }],
+      },
+    });
+  });
+  await page.goto('/plan');
+  await page.getByLabel('Message to your coach').fill('I’m travelling next week');
+  await page.getByRole('button', { name: 'Ask', exact: true }).click();
+  await expect(page.getByText('What will you have to train with at the hotel?')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Apply', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Dumbbells only' }).click();
+  await expect(page.getByText('Based on: hotel gym has dumbbells only')).toBeVisible();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
+  const s = await stored(page);
+  expect(s.profile?.equipmentOverrides).toEqual([{ from: '2026-11-23', to: '2026-11-29', equipment: 'home_db' }]);
+});
+
 test('coach swaps and equipment changes show in Settings and can be undone', async ({ page }) => {
   await page.clock.install({ time: MONDAY });
   await seed(page);
@@ -131,16 +164,42 @@ test('coach swaps and equipment changes show in Settings and can be undone', asy
   expect(s.profile?.exerciseSwaps).toEqual({});
 });
 
-test('take your plan along: a calendar file and a plan code', async ({ page }) => {
+test('take your plan along: Apple, Google, Outlook or a file, and a plan code', async ({ page }) => {
   await page.clock.install({ time: MONDAY });
   await seed(page);
   await page.goto('/plan');
   await page.getByLabel('How far ahead').selectOption('4');
+  await page.getByLabel('Time', { exact: true }).fill('18:30');
+
+  // Apple subscribes over webcal; Google and Outlook open their own "add calendar" pages.
+  const apple = await page.getByRole('link', { name: 'Add to Apple Calendar' }).getAttribute('href');
+  expect(apple).toMatch(/^webcal:\/\/[^/]+\/api\/ics\?plan=wr1\./);
+  const params = new URL(apple!.replace('webcal://', 'https://')).searchParams;
+  expect(params.get('time')).toBe('18:30');
+  expect(params.get('weeks')).toBe('4');
+  expect(params.get('tz')).toBeTruthy();
+  await page.getByRole('button', { name: 'Google Calendar' }).click();
+  const google = new URL((await page.getByRole('link', { name: 'Add to Google Calendar' }).getAttribute('href'))!);
+  expect(google.host).toBe('calendar.google.com');
+  expect(google.searchParams.get('cid')).toMatch(/^webcal:\/\/.+\/api\/ics\?plan=wr1\./);
+  await page.getByRole('button', { name: 'Outlook' }).click();
+  const outlook = new URL((await page.getByRole('link', { name: 'Add to Outlook' }).getAttribute('href'))!);
+  expect(outlook.host).toBe('outlook.live.com');
+  expect(outlook.searchParams.get('url')).toMatch(/^https:\/\/.+\/api\/ics\?plan=wr1\./);
+  await expect(page.getByRole('link', { name: 'Using a work or school account?' })).toHaveAttribute('href', /outlook\.office\.com/);
+
+  // The subscription address returns the same sessions.
+  const res = await page.request.get(`/api/ics?${params}`);
+  expect(res.headers()['content-type']).toContain('text/calendar');
+  expect((await res.text()).match(/BEGIN:VEVENT/g)?.length).toBeGreaterThan(0);
+
+  await page.getByRole('button', { name: 'Other app' }).click();
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download calendar file' }).click()]);
   expect(download.suggestedFilename()).toBe('weddingready-training.ics');
   const ics = readFileSync(await download.path(), 'utf8');
   expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(8);
   expect(ics).toContain('SUMMARY:Strength A: Legs & push');
+  expect(ics).toMatch(/DTSTART:\d{8}T\d{6}Z/);
   await expect(page.getByText(/8 sessions, Nov 16 to Dec 10/)).toBeVisible();
   await expect(page.getByText(/^wr1\./)).toBeVisible();
 });

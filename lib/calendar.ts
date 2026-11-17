@@ -88,6 +88,37 @@ function fold(line: string): string {
 
 const stamp = (date: string, time: string) => `${date.replace(/-/g, '')}T${time.replace(':', '')}00`;
 
+export function isTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Minutes `tz` is ahead of UTC at the instant `utcMs`. */
+function offsetMinutes(utcMs: number, tz: string): number {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      .formatToParts(new Date(utcMs))
+      .map((p) => [p.type, p.value]),
+  );
+  const asUtc = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);
+  return Math.round((asUtc - utcMs) / 60000);
+}
+
+/** A wall-clock date and time in `tz` as a UTC stamp ("20261124T023000Z"), right across daylight-saving changes. */
+export function utcStamp(date: string, time: string, tz: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  const [h, mi] = time.split(':').map(Number);
+  const guess = Date.UTC(y, m - 1, d, h, mi);
+  let utc = guess - offsetMinutes(guess, tz) * 60000;
+  const second = guess - offsetMinutes(utc, tz) * 60000;
+  if (second !== utc) utc = second;
+  return new Date(utc).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+
 function addMinutes(date: string, time: string, minutes: number): { date: string; time: string } {
   const [h, m] = time.split(':').map(Number);
   const total = h * 60 + m + minutes;
@@ -96,17 +127,36 @@ function addMinutes(date: string, time: string, minutes: number): { date: string
   return { date: d, time: `${String(Math.floor(rest / 60)).padStart(2, '0')}:${String(rest % 60).padStart(2, '0')}` };
 }
 
-export function toICS(events: CalendarEvent[], now = new Date()): string {
+/**
+ * With `timeZone` (the person's, e.g. "America/Los_Angeles") times are written
+ * in UTC, which Apple, Google and Outlook all read the same way. Without it
+ * they're "floating" local times.
+ */
+export function toICS(events: CalendarEvent[], opts: { timeZone?: string; now?: Date } = {}): string {
+  const now = opts.now ?? new Date();
+  const tz = opts.timeZone && isTimeZone(opts.timeZone) ? opts.timeZone : null;
+  const at = (date: string, time: string) => (tz ? utcStamp(date, time, tz) : stamp(date, time));
   const dtstamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//WeddingReady//Training plan//EN', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:WeddingReady training'];
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//WeddingReady//Training plan//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:WeddingReady training',
+    ...(tz ? [`X-WR-TIMEZONE:${tz}`] : []),
+    // Subscribed calendars check back about twice a day.
+    'REFRESH-INTERVAL;VALUE=DURATION:PT12H',
+    'X-PUBLISHED-TTL:PT12H',
+  ];
   for (const e of events) {
     const end = addMinutes(e.date, e.start, e.minutes);
     lines.push(
       'BEGIN:VEVENT',
       `UID:${e.uid}`,
       `DTSTAMP:${dtstamp}`,
-      `DTSTART:${stamp(e.date, e.start)}`,
-      `DTEND:${stamp(end.date, end.time)}`,
+      `DTSTART:${at(e.date, e.start)}`,
+      `DTEND:${at(end.date, end.time)}`,
       `SUMMARY:${esc(e.title)}`,
       `DESCRIPTION:${esc(e.description)}`,
       'END:VEVENT',

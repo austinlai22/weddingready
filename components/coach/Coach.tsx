@@ -16,6 +16,8 @@ interface Message {
   role: 'user' | 'coach';
   text: string;
   proposals?: Proposal[];
+  /** Quick answers to the coach's question. */
+  options?: string[];
   status?: 'applied' | 'discarded';
 }
 
@@ -98,9 +100,9 @@ export function Coach({ plan, today }: { plan: Plan; today: string }) {
         setErr(body.error ?? 'The coach couldn’t answer. Try again in a minute.');
         return;
       }
-      const reply = body as { reply: string; proposals: Proposal[] };
-      track('coach', { status: 'ok', proposals: reply.proposals.length });
-      setMessages((cur) => [...cur, { role: 'coach', text: reply.reply, proposals: reply.proposals }]);
+      const reply = body as { reply: string; proposals: Proposal[]; options?: string[] };
+      track('coach', { status: reply.options ? 'asked' : 'ok', proposals: reply.proposals.length });
+      setMessages((cur) => [...cur, { role: 'coach', text: reply.reply, proposals: reply.proposals, options: reply.options }]);
     } catch {
       setErr('Couldn’t reach the coach. Check your connection.');
     } finally {
@@ -155,6 +157,17 @@ export function Coach({ plan, today }: { plan: Plan; today: string }) {
                 {msg.role === 'coach' && <span className="sr-only">Coach: </span>}
                 {msg.text}
               </p>
+              {msg.options && msg.options.length > 0 && i === messages.length - 1 && !busy && (
+                <ul className="chips" aria-label="Quick answers" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                  {msg.options.map((o) => (
+                    <li key={o}>
+                      <button type="button" className="btn-ghost" style={{ minHeight: 40, fontSize: 14 }} onClick={() => void send(o)}>
+                        {o}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
               {msg.proposals && msg.proposals.length > 0 && (
                 <ProposalCard
                   plan={plan}
@@ -295,6 +308,9 @@ function ProposalCard({
           </div>
         );
       })}
+      {[...new Set(proposals.map((pr) => pr.basedOn).filter(Boolean))].map((b) => (
+        <p key={b} className="tiny muted">Based on: {b}</p>
+      ))}
       {status ? (
         <p className="small muted">{status === 'applied' ? 'Applied.' : 'Discarded.'}</p>
       ) : (

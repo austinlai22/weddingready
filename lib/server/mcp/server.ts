@@ -108,6 +108,7 @@ export function createWeddingReadyServer(deps: McpDeps): McpServer {
         weeks: z.number().int().min(1).max(16).optional().describe('How many weeks. Default 4.'),
         time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().describe('Start time, 24-hour HH:MM, local to the person. Default 07:00.'),
         include_activities: z.boolean().optional().describe('Also include runs, classes and other activities (never walks). Default false.'),
+        time_zone: z.string().max(64).optional().describe('The person’s IANA time zone, e.g. "America/New_York", so the calendar file has the right times. Recommended.'),
       }),
       annotations: readOnly,
     },

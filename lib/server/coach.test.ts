@@ -64,13 +64,23 @@ describe('coach tools', () => {
     expect(week.days[3].sessions.some((s) => s.id === 'str-2')).toBe(true);
   });
 
+  it('list only the days a session can move to without breaking a rule', () => {
+    const week = session().run('get_week', {}) as { move_options: { session_id: string; now_on: string; can_move_to: string[] }[] };
+    const b = week.move_options.find((o) => o.session_id === 'str-2')!;
+    expect(b.now_on).toBe('thu');
+    // Wednesday or Friday would be the day after/before nothing hard; Sunday is the day before Monday's Strength A.
+    expect(b.can_move_to).not.toContain('sun');
+    expect(b.can_move_to).toContain('sat');
+    expect(week.move_options.some((o) => o.session_id === 'str-1')).toBe(false); // already done on Monday
+  });
+
   it('check every schedule proposal against the recovery rules', () => {
     const s = session();
-    const bad = s.run('propose_schedule_change', { scope: 'this_week', changes: [{ op: 'move', session_id: 'str-2', to_day: 'tue' }], summary: 'x' }) as { error?: string };
+    const bad = s.run('propose_schedule_change', { based_on: 'what they said', scope: 'this_week', changes: [{ op: 'move', session_id: 'str-2', to_day: 'tue' }], summary: 'x' }) as { error?: string };
     expect(bad.error).toMatch(/already passed/);
-    const backToBack = s.run('propose_schedule_change', { scope: 'from_now_on', changes: [{ op: 'move', session_id: 'str-2', to_day: 'sun' }], summary: 'x' }) as { rule_problems: string[] };
+    const backToBack = s.run('propose_schedule_change', { based_on: 'what they said', scope: 'from_now_on', changes: [{ op: 'move', session_id: 'str-2', to_day: 'sun' }], summary: 'x' }) as { rule_problems: string[] };
     expect(backToBack.rule_problems.join(' ')).toMatch(/Sunday and Monday/);
-    const ok = s.run('propose_schedule_change', { scope: 'this_week', changes: [{ op: 'move', session_id: 'str-2', to_day: 'sat' }], summary: 'Thursday to Saturday' }) as { rule_problems: string[] };
+    const ok = s.run('propose_schedule_change', { based_on: 'what they said', scope: 'this_week', changes: [{ op: 'move', session_id: 'str-2', to_day: 'sat' }], summary: 'Thursday to Saturday' }) as { rule_problems: string[] };
     expect(ok.rule_problems).toEqual([]);
     // A later schedule proposal replaces the earlier one.
     expect(s.proposals.filter((p) => p.kind === 'schedule')).toHaveLength(1);
@@ -81,10 +91,10 @@ describe('coach tools', () => {
     const s = session();
     const alts = s.run('exercise_alternatives', { exercise_id: 'reverse-lunge' }) as { options: { exercise_id: string }[] };
     expect(alts.options.length).toBeGreaterThan(0);
-    expect(s.run('propose_exercise_swap', { from_exercise_id: 'reverse-lunge', to_exercise_id: 'lat-pulldown', reason: 'x' })).toHaveProperty('error');
-    expect(s.run('propose_exercise_swap', { from_exercise_id: 'reverse-lunge', to_exercise_id: alts.options[0].exercise_id, reason: 'knee' })).toHaveProperty('proposed', true);
-    expect(s.run('propose_equipment_change', { from_date: '2026-11-23', to_date: '2027-01-30', equipment: 'gym', reason: 'x' })).toHaveProperty('error');
-    expect(s.run('propose_equipment_change', { from_date: '2026-11-23', to_date: '2026-11-29', equipment: 'gym', reason: 'trip' })).toHaveProperty('proposed', true);
+    expect(s.run('propose_exercise_swap', { based_on: 'what they said', from_exercise_id: 'reverse-lunge', to_exercise_id: 'lat-pulldown', reason: 'x' })).toHaveProperty('error');
+    expect(s.run('propose_exercise_swap', { based_on: 'what they said', from_exercise_id: 'reverse-lunge', to_exercise_id: alts.options[0].exercise_id, reason: 'knee' })).toHaveProperty('proposed', true);
+    expect(s.run('propose_equipment_change', { based_on: 'what they said', from_date: '2026-11-23', to_date: '2027-01-30', equipment: 'gym', reason: 'x' })).toHaveProperty('error');
+    expect(s.run('propose_equipment_change', { based_on: 'what they said', from_date: '2026-11-23', to_date: '2026-11-29', equipment: 'gym', reason: 'trip' })).toHaveProperty('proposed', true);
     expect(s.proposals.map((p) => p.kind)).toEqual(['swap', 'equipment']);
   });
 
@@ -93,13 +103,13 @@ describe('coach tools', () => {
     expect(JSON.stringify(portions.run('get_nutrition_today', {}))).not.toMatch(/\d/);
     expect(JSON.stringify(portions.run('search_foods', { query: 'chicken' }))).not.toMatch(/kcal|protein_g/);
     const s = session();
-    expect(s.run('propose_meal', { slot: 'dinner', name: 'Bowl', items: ['bowl'], protein_g: 40, carbs_g: 60, fat_g: 20, kcal: 1500 })).toHaveProperty('error');
-    expect(s.run('propose_meal', { slot: 'dinner', name: 'Bowl', items: ['bowl'], protein_g: 40, carbs_g: 60, fat_g: 20, kcal: 580 })).toHaveProperty('proposed', true);
+    expect(s.run('propose_meal', { based_on: 'what they said', slot: 'dinner', name: 'Bowl', items: ['bowl'], protein_g: 40, carbs_g: 60, fat_g: 20, kcal: 1500 })).toHaveProperty('error');
+    expect(s.run('propose_meal', { based_on: 'what they said', slot: 'dinner', name: 'Bowl', items: ['bowl'], protein_g: 40, carbs_g: 60, fat_g: 20, kcal: 580 })).toHaveProperty('proposed', true);
     expect(s.proposals[0]).toMatchObject({ kind: 'meal', slot: 'd', entry: { p: 40, k: 580, src: 'ai' } });
   });
 
   it('turn bad arguments into an error the model can read', () => {
-    expect(session().run('propose_schedule_change', { scope: 'later' })).toHaveProperty('error');
+    expect(session().run('propose_schedule_change', { based_on: 'what they said', scope: 'later' })).toHaveProperty('error');
     expect(session().run('no_such_tool', {})).toHaveProperty('error');
   });
 });
@@ -108,7 +118,7 @@ describe('the coach loop', () => {
   it('looks, proposes, then answers, returning the proposals', async () => {
     generateContent
       .mockResolvedValueOnce(call('get_week', {}))
-      .mockResolvedValueOnce(call('propose_schedule_change', { scope: 'this_week', changes: [{ op: 'move', session_id: 'str-2', to_day: 'sat' }], summary: 'Thursday’s session moves to Saturday.' }))
+      .mockResolvedValueOnce(call('propose_schedule_change', { based_on: 'free Saturday', scope: 'this_week', changes: [{ op: 'move', session_id: 'str-2', to_day: 'sat' }], summary: 'Thursday’s session moves to Saturday.' }))
       .mockResolvedValueOnce(text('I suggest moving Thursday’s session to Saturday this week.'));
     const r = await runCoach(request);
     expect(r.reply).toMatch(/Saturday/);
@@ -119,14 +129,39 @@ describe('the coach loop', () => {
     expect(generateContent.mock.calls[0][0].config.tools[0].functionDeclarations.map((d: { name: string }) => d.name)).toContain('propose_meal');
   });
 
+  it('asks the person when it needs more, with options, and proposes nothing yet', async () => {
+    generateContent
+      .mockResolvedValueOnce(call('get_week', {}))
+      .mockResolvedValueOnce({
+        functionCalls: [
+          { name: 'propose_schedule_change', args: { scope: 'this_week', changes: [{ op: 'move', session_id: 'str-2', to_day: 'sat' }], summary: 'x', based_on: 'a guess' } },
+          { name: 'ask_question', args: { question: 'Which day works instead?', options: ['Friday', 'Saturday', 'Not this week'] } },
+        ],
+        candidates: [{ content: { role: 'model', parts: [{ text: 'No problem.' }, { functionCall: { name: 'ask_question', args: {} } }] } }],
+      });
+    const r = await runCoach(request);
+    expect(r.reply).toBe('No problem. Which day works instead?');
+    expect(r.options).toEqual(['Friday', 'Saturday', 'Not this week']);
+    // A proposal made in the same breath as a question was made without the answer.
+    expect(r.proposals).toEqual([]);
+    expect(generateContent).toHaveBeenCalledTimes(2);
+  });
+
+  it('carries what each proposal is based on to the preview', () => {
+    const s = session();
+    s.run('propose_equipment_change', { from_date: '2026-11-23', to_date: '2026-11-29', equipment: 'home_dumbbells', reason: 'trip', based_on: 'hotel gym has dumbbells only' });
+    expect(s.proposals[0]).toMatchObject({ kind: 'equipment', equipment: 'home_db', basedOn: 'hotel gym has dumbbells only' });
+    expect(s.run('propose_equipment_change', { from_date: '2026-11-23', to_date: '2026-11-29', equipment: 'gym', reason: 'trip' })).toHaveProperty('error');
+  });
+
   it('asks the model to propose when it only described a change', async () => {
     generateContent
       .mockResolvedValueOnce(text('Would you like me to move it to Saturday?'))
-      .mockResolvedValueOnce(call('propose_schedule_change', { scope: 'this_week', changes: [{ op: 'move', session_id: 'str-2', to_day: 'sat' }], summary: 'x' }))
+      .mockResolvedValueOnce(call('propose_schedule_change', { based_on: 'free Saturday', scope: 'this_week', changes: [{ op: 'move', session_id: 'str-2', to_day: 'sat' }], summary: 'x' }))
       .mockResolvedValueOnce(text('Here’s a change you can apply.'));
     const r = await runCoach(request);
     expect(r.proposals).toHaveLength(1);
-    expect(JSON.stringify(generateContent.mock.calls[1][0].contents)).toMatch(/Nothing has been proposed yet/);
+    expect(JSON.stringify(generateContent.mock.calls[1][0].contents)).toMatch(/Nothing has been proposed.*call ask_question/);
   });
 
   it('never says a proposal is already done', async () => {
