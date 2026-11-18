@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useSyncExternalStore } from 'react';
+import { track } from '@/lib/analytics';
 import { STORAGE_KEY } from '@/lib/state/store';
 
 function hasPlanOnDevice(): boolean {
@@ -18,10 +19,10 @@ function subscribe(onChange: () => void) {
 }
 
 /** "Start my plan" for new visitors; "Open my plan" for someone who already has one on this device. */
-export function OpenAppLink({ className, startLabel = 'Start my plan' }: { className: string; startLabel?: string }) {
+export function OpenAppLink({ className, startLabel = 'Start my plan', where }: { className: string; startLabel?: string; where: string }) {
   const hasPlan = useSyncExternalStore(subscribe, hasPlanOnDevice, () => false);
   return (
-    <Link href={hasPlan ? '/train' : '/setup'} className={className}>
+    <Link href={hasPlan ? '/train' : '/setup'} className={className} data-cta={where} onClick={() => track('cta_clicked', { where, has_plan: hasPlan })}>
       {hasPlan ? 'Open my plan' : startLabel}
     </Link>
   );

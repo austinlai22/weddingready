@@ -18,7 +18,7 @@ export function SiteHeader() {
             <Link href="/how-it-works" className="text-ink-2 no-underline hover:text-rose">How the plan works</Link>
             <Link href="/#faqs" className="text-ink-2 no-underline hover:text-rose">FAQs</Link>
           </nav>
-          <OpenAppLink className={`${PRIMARY} min-h-11 px-5 text-sm`} />
+          <OpenAppLink className={`${PRIMARY} min-h-11 px-5 text-sm`} where="header" />
         </div>
       </div>
     </header>

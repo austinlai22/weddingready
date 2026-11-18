@@ -1,6 +1,6 @@
 # WeddingReady
 
-**A free web app that plans your workouts and meals for every day between now and your wedding.**
+**WeddingReady helps people getting married in the next few months look and feel their best on the day, by working back from the wedding and fitting dates to a daily training and food plan that adjusts when life gets in the way.** Free, with no sign-up, and your data stays on your device.
 
 Tell it your wedding date (and your outfit fitting, if you know it). It works backwards to build a phased training and nutrition plan, fits strength sessions around the runs, classes and sports you already do, and shows you exactly what to do today.
 
@@ -63,7 +63,7 @@ There are no streaks and no before-and-after photos. Deficits are capped at 0.75
 
 **The coach is tested on behaviour.** `npm run coach:eval` runs 15 realistic requests through the real coach on the free Gemini tier and checks what it does, not what it says: it asks when the day, dates, equipment or kind of pain is missing; proposes when they aren't; never proposes a week that breaks the rules; stops on sharp pain; shows no food numbers to someone who chose none; never claims a change is already made; and isn't talked out of its rules. The latest run passed 30 of 30 (two runs each). For assistants, `experiment/` is a hand-run kit of 13 questions with engine-computed answers (energy, protein, scheduling, safety) to compare assistants with and without the WeddingReady connector.
 
-**Quality bar.** 162 unit tests (engine, nutrition, guardrails, storage, the coach's tools and loop, AI handling and limits) and 56 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
+**Quality bar.** 167 unit tests (engine, nutrition, guardrails, storage, the coach's tools and loop, AI handling and limits) and 57 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
 
 ## Built with
 
@@ -92,7 +92,7 @@ It runs with no environment variables at all: AI falls back to manual entry, ana
 | `npm run lint` / `typecheck` | ESLint and TypeScript |
 | `npm run foods:verify` | Rebuilds `data/foods.json` from USDA FoodData Central |
 | `npm run demos:record` | Re-records the home page's demo clips from the real app (needs `next start -p 3100` and ffmpeg) |
-| `npm run posthog:dashboard` | Creates a metrics dashboard in PostHog |
+| `npm run posthog:dashboard` | Creates the metrics dashboard in PostHog: activation, day-1 action, weekly use, traffic sources, the funnel by source (visit → setup → first workout → back in week 2), week-2 return, and the “how did you hear” answers |
 
 ### Environment
 
@@ -108,7 +108,7 @@ All optional. See `.env.example`.
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_*`) | Rate limits and the spend cap shared across serverless instances. Needed in production. |
 | `GEMINI_DAILY_CALLS` | Free-model calls a day across all AI routes and users. Default `2000`. |
 | `RATE_LIMIT_SECRET` | Secret for hashing device IDs and IPs in rate-limit keys |
-| `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | Anonymous usage analytics |
+| `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | Anonymous usage analytics: cookieless, no autocapture or recordings. Funnel events carry first-touch source (UTM tags like `?utm_source=linkedin&utm_medium=social`, or the referring domain), and setup ends with an optional “How did you hear about us?” |
 
 ### Deploying to Vercel
 

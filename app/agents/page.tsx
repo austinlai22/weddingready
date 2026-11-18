@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { LandingAnalytics } from '@/components/landing/LandingAnalytics';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { CopyButton } from '@/components/landing/CopyButton';
@@ -122,6 +123,7 @@ export default function Agents() {
         </div>
       </main>
       <SiteFooter />
+      <LandingAnalytics page="agents" />
     </div>
   );
 }

@@ -28,7 +28,7 @@ WHERE event IN ('setup_started', 'setup_completed') AND timestamp > now() - INTE
     name: 'Day-1 action',
     description: '% of activated people who log a set, session or meal within 24 hours of setup.',
     query: `SELECT count() AS activated,
-       countIf(b.t1 IS NOT NULL AND b.t1 <= a.t0 + INTERVAL 1 DAY) AS acted_day1,
+       countIf(b.t1 >= a.t0 AND b.t1 <= a.t0 + INTERVAL 1 DAY) AS acted_day1,
        round(100 * acted_day1 / nullIf(activated, 0), 1) AS day1_pct
 FROM ${SETUP} AS a
 LEFT JOIN (SELECT distinct_id, min(timestamp) AS t1 FROM events WHERE event IN ${ACTIONS} GROUP BY distinct_id) AS b
@@ -85,6 +85,71 @@ GROUP BY event, status ORDER BY event, calls DESC`,
        countIf(event = 'schedule_edited' AND properties.method = 'drag') AS manual_edits,
        countIf(event = 'schedule_edited' AND properties.method = 'ai') AS ai_edits
 FROM events WHERE event IN ('setup_completed', 'schedule_edited')`,
+  },
+  {
+    name: 'Where visitors come from',
+    description: 'First-touch source and medium (UTM tags, or the referring site, or direct), visitors and setups, last 90 days.',
+    query: `SELECT properties.source AS source, properties.medium AS medium,
+       count(DISTINCT if(event = 'landing_viewed', distinct_id, NULL)) AS visitors,
+       count(DISTINCT if(event = 'setup_completed', distinct_id, NULL)) AS set_up,
+       round(100 * set_up / nullIf(visitors, 0), 1) AS setup_pct
+FROM events
+WHERE event IN ('landing_viewed', 'setup_completed') AND timestamp > now() - INTERVAL 90 DAY
+GROUP BY source, medium
+ORDER BY visitors DESC`,
+  },
+  {
+    name: 'Funnel by source',
+    description: 'Visit → start setup → finish setup → first workout → back in week 2 (days 7–13 after setup), by first-touch source.',
+    query: `SELECT coalesce(nullIf(s.source, ''), 'unknown') AS source,
+       count() AS people,
+       countIf(s.visited) AS visited,
+       countIf(s.started) AS started_setup,
+       countIf(s.finished = 1) AS finished_setup,
+       countIf(w.did = 1) AS did_a_workout,
+       countIf(r.week2 = 1) AS back_in_week_2
+FROM (
+  SELECT distinct_id,
+         argMin(properties.source, timestamp) AS source,
+         max(event = 'landing_viewed') AS visited,
+         max(event = 'setup_started') AS started,
+         max(event = 'setup_completed') AS finished
+  FROM events WHERE event IN ('landing_viewed', 'setup_started', 'setup_completed')
+  GROUP BY distinct_id
+) AS s
+LEFT JOIN (SELECT distinct_id, 1 AS did FROM events WHERE event = 'session_finished' GROUP BY distinct_id) AS w ON s.distinct_id = w.distinct_id
+LEFT JOIN (
+  SELECT e.distinct_id AS distinct_id, max(dateDiff('day', a2.t0, e.timestamp) BETWEEN 7 AND 13) AS week2
+  FROM events AS e JOIN ${SETUP} AS a2 ON e.distinct_id = a2.distinct_id
+  WHERE e.event = 'app_opened'
+  GROUP BY e.distinct_id
+) AS r ON s.distinct_id = r.distinct_id
+GROUP BY source
+ORDER BY people DESC`,
+  },
+  {
+    name: 'Back in week 2',
+    description: 'The product-market-fit signal for a free app: % of people who finished setup 14+ days ago and opened the app again on days 7–13.',
+    query: `SELECT count() AS set_up_14_days_ago,
+       countIf(r.week2 = 1) AS came_back,
+       round(100 * came_back / nullIf(set_up_14_days_ago, 0), 1) AS week2_return_pct
+FROM ${SETUP} AS a
+LEFT JOIN (
+  SELECT e.distinct_id AS distinct_id, max(dateDiff('day', a2.t0, e.timestamp) BETWEEN 7 AND 13) AS week2
+  FROM events AS e JOIN ${SETUP} AS a2 ON e.distinct_id = a2.distinct_id
+  WHERE e.event = 'app_opened'
+  GROUP BY e.distinct_id
+) AS r ON a.distinct_id = r.distinct_id
+WHERE a.t0 < now() - INTERVAL 14 DAY`,
+  },
+  {
+    name: 'How people heard about it',
+    description: 'Answers to the optional question at the end of setup, newest first.',
+    query: `SELECT timestamp, properties.heard_about AS answer, properties.source AS first_touch_source
+FROM events
+WHERE event = 'setup_completed' AND coalesce(properties.heard_about, '') != ''
+ORDER BY timestamp DESC
+LIMIT 200`,
   },
 ];
 

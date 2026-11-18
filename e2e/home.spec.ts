@@ -79,3 +79,19 @@ test('“For AI assistants” gives the connector address and the tools', async 
   for (const tool of ['build_plan', 'get_workout', 'plan_week', 'nutrition_targets', 'search_foods']) await expect(page.getByRole('listitem').getByText(tool, { exact: true })).toBeVisible();
   con.expectClean();
 });
+
+test('on phones, Start my plan stays in reach while reading', async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobile', 'The sticky bar is for phone widths only.');
+  await page.goto('/');
+  const sticky = page.locator('[data-cta="sticky"]');
+  // At the top the header and hero buttons are on screen, so the bar stays hidden.
+  await expect(sticky).not.toBeInViewport();
+  await page.getByRole('heading', { name: /every day/i }).first().evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
+  await expect(sticky).toBeInViewport();
+  // At the closing button it gets out of the way.
+  await page.locator('[data-cta="home_closing"]').scrollIntoViewIfNeeded();
+  await expect(sticky).not.toBeInViewport();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
+  await sticky.click();
+  await expect(page).toHaveURL(/\/setup$/);
+});

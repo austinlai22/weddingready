@@ -4,7 +4,9 @@ import type { ReactNode } from 'react';
 import { NutritionModes } from '@/components/explain/FoodVisuals';
 import { WeekDiagram } from '@/components/explain/WeekDiagram';
 import { WeeklySetsChart } from '@/components/explain/WeeklySetsChart';
+import { LandingAnalytics } from '@/components/landing/LandingAnalytics';
 import { OpenAppLink } from '@/components/landing/OpenAppLink';
+import { StickyStart } from '@/components/landing/StickyStart';
 import { BTN, SiteFooter, SiteHeader } from '@/components/landing/SiteChrome';
 import { LineIcon, type IconName } from '@/components/ui/LineIcon';
 import { PHASE_COPY } from '@/lib/engine/copy';
@@ -173,11 +175,13 @@ export default function HowItWorks() {
         <section className="bg-plum">
           <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-5 py-16 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
             <p className="max-w-xl font-display text-3xl font-semibold leading-tight text-ground sm:text-4xl">See it with your own dates.</p>
-            <OpenAppLink className={`${BTN} bg-ground text-plum hover:bg-rose-tint hover:text-plum`} />
+            <OpenAppLink className={`${BTN} bg-ground text-plum hover:bg-rose-tint hover:text-plum`} where="how_closing" />
           </div>
         </section>
       </main>
       <SiteFooter />
+      <StickyStart />
+      <LandingAnalytics page="how_it_works" />
     </div>
   );
 }

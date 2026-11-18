@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { FeatureTour, type Feature } from '@/components/landing/FeatureTour';
+import { LandingAnalytics } from '@/components/landing/LandingAnalytics';
 import { OpenAppLink } from '@/components/landing/OpenAppLink';
+import { StickyStart } from '@/components/landing/StickyStart';
 import { TryExampleButton } from '@/components/landing/TryExampleButton';
 import { PlanTimeline } from '@/components/landing/PlanTimeline';
 import { BTN, PRIMARY, SiteFooter, SiteHeader } from '@/components/landing/SiteChrome';
@@ -13,8 +15,8 @@ import { exampleDay, exampleDaysToGo, exampleMinutes, examplePlan, exampleTarget
 export const metadata: Metadata = {
   title: { absolute: 'WeddingReady · A plan for every day until your wedding' },
   description:
-    'Tell WeddingReady your wedding date. It works backwards from it to plan your workouts and meals, and shows you what to do today. Free.',
-  openGraph: { title: 'WeddingReady', description: 'A plan for every day until your wedding. Free.', type: 'website' },
+    'For anyone getting married in the next few months: a free daily workout and food plan that works back from your wedding and fitting dates, and adjusts when life gets in the way.',
+  openGraph: { title: 'WeddingReady', description: 'A free daily workout and food plan that works back from your wedding and fitting dates.', type: 'website' },
 };
 
 const FEATURES: Feature[] = [
@@ -149,11 +151,11 @@ export default function Home() {
           <div>
             <h1 className="font-display text-[44px] font-semibold leading-[1.05] tracking-tight text-ink sm:text-6xl">A plan for every day between now and your wedding.</h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-2">
-              Tell WeddingReady when you’re getting married. It works backwards from the date to plan your workouts and meals, then shows you what to do today.
+              For anyone getting married in the next few months who wants to feel their best on the day. WeddingReady works back from your wedding and fitting dates to a daily workout and food plan, and adjusts it when life gets in the way.
             </p>
             <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted">Free, for brides, grooms, partners and anyone in the wedding party.</p>
             <div className="mt-9 flex flex-wrap items-center gap-3">
-              <OpenAppLink className={PRIMARY} />
+              <OpenAppLink className={PRIMARY} where="home_hero" />
               <TryExampleButton className={`${BTN} border border-line-2 bg-surface text-ink hover:border-rose hover:text-rose`} />
             </div>
           </div>
@@ -226,11 +228,13 @@ export default function Home() {
             <p className="max-w-xl font-display text-3xl font-semibold leading-tight text-ground sm:text-4xl">
               It’s free and takes about two minutes to set up.
             </p>
-            <OpenAppLink className={`${BTN} bg-ground text-plum hover:bg-rose-tint hover:text-plum`} />
+            <OpenAppLink className={`${BTN} bg-ground text-plum hover:bg-rose-tint hover:text-plum`} where="home_closing" />
           </div>
         </section>
       </main>
       <SiteFooter />
+      <StickyStart />
+      <LandingAnalytics page="home" />
     </div>
   );
 }

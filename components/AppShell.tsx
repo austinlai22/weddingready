@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useSyncExternalStore } from 'react';
-import { configureAnalytics } from '@/lib/analytics';
+import { configureAnalytics, track } from '@/lib/analytics';
+import { daysBetween, todayISO } from '@/lib/engine/dates';
 import { DEMO_KEY } from '@/lib/demo';
 import { useApp } from '@/lib/state/store';
 import { useUi } from '@/lib/ui';
@@ -14,6 +15,32 @@ const TABS = [
   { href: '/eat', label: 'Eat' },
   { href: '/plan', label: 'Plan' },
 ] as const;
+
+const LAST_OPEN_KEY = 'weddingready-last-open';
+
+/** Days since the plan started, in buckets, for return rates (week 2 is days 7–13). */
+export function openBucket(days: number): string {
+  if (days < 0) return 'before_start';
+  if (days === 0) return 'day_0';
+  if (days < 7) return 'days_1_6';
+  if (days < 14) return 'days_7_13';
+  if (days < 28) return 'days_14_27';
+  return 'days_28_plus';
+}
+
+/** One app_opened a day per device (never for the example plan), so return visits can be counted. */
+function countAppOpen() {
+  const p = useApp.getState().profile;
+  if (!p) return;
+  const today = todayISO();
+  try {
+    if (localStorage.getItem(DEMO_KEY) || localStorage.getItem(LAST_OPEN_KEY) === today) return;
+    localStorage.setItem(LAST_OPEN_KEY, today);
+  } catch {
+    return;
+  }
+  track('app_opened', { since_start: openBucket(daysBetween(p.startDate, today)) });
+}
 
 /** Loads saved data on the client, then shows setup or the app. */
 export function HydrationGate({ children, requireProfile = true }: { children: React.ReactNode; requireProfile?: boolean }) {
@@ -29,6 +56,9 @@ export function HydrationGate({ children, requireProfile = true }: { children: R
   useEffect(() => {
     if (hydrated && deviceId) configureAnalytics(deviceId, optOut);
   }, [hydrated, deviceId, optOut]);
+  useEffect(() => {
+    if (hydrated && hasProfile) countAppOpen();
+  }, [hydrated, hasProfile]);
   useEffect(() => {
     if (hydrated && requireProfile && !hasProfile) router.replace('/setup');
   }, [hydrated, requireProfile, hasProfile, router]);

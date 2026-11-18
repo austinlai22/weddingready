@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'sw
 
 export const metadata: Metadata = {
   title: { default: 'WeddingReady', template: '%s · WeddingReady' },
-  description: 'A free training and nutrition plan that works back from your wedding date and tells you what to do each day.',
+  description: 'A free daily workout and food plan that works back from your wedding and fitting dates, and adjusts when life gets in the way.',
   applicationName: 'WeddingReady',
   appleWebApp: { capable: true, title: 'WeddingReady', statusBarStyle: 'default' },
   icons: { apple: '/icons/apple-180.png' },

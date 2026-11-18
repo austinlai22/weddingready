@@ -1,13 +1,19 @@
 'use client';
 
 import type { PostHog } from 'posthog-js';
+import { attributionProps, rememberAttribution } from './attribution';
 
 // Anonymous analytics (SPEC §12). PostHog with no cookies or local storage of
 // its own (memory persistence); the app's random deviceId is the distinct ID.
 // Events carry buckets and enums only: never names, dates, weights or food text.
+// Funnel events also carry where the visitor first came from (lib/attribution.ts),
+// and setup_completed an optional, anonymous "how did you hear about us" answer.
 // No-op without NEXT_PUBLIC_POSTHOG_KEY, and when the user opts out.
 
 export type AnalyticsEvent =
+  | 'landing_viewed'
+  | 'cta_clicked'
+  | 'app_opened'
   | 'setup_started'
   | 'setup_step_completed'
   | 'setup_completed'
@@ -39,6 +45,7 @@ const HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
 export function configureAnalytics(id: string, optOut: boolean) {
   deviceId = id;
   optedOut = optOut;
+  rememberAttribution();
   if (optOut) {
     queue.length = 0;
     client?.opt_out_capturing();
@@ -70,8 +77,12 @@ export function configureAnalytics(id: string, optOut: boolean) {
   }
 }
 
+/** Funnel steps carry first-touch attribution, so each source's conversion can be compared. */
+const FUNNEL: ReadonlySet<AnalyticsEvent> = new Set(['landing_viewed', 'cta_clicked', 'setup_started', 'setup_completed']);
+
 export function track(event: AnalyticsEvent, props?: Props) {
   if (optedOut || !KEY) return;
+  if (FUNNEL.has(event)) props = { ...attributionProps(), ...props };
   if (client) client.capture(event, props);
   else if (queue.length < 50) queue.push([event, props]);
 }

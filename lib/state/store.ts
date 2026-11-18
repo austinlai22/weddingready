@@ -6,6 +6,7 @@ import type { AppState, FoodItem, MealEntry, Profile, SlotId, WeekTemplate } fro
 import { addDays, todayISO } from '../engine/dates';
 import { freezeBefore, lastingChange, reconcileOverrides, templateForDate, thisWeekOnly, type Schedule } from '../engine/schedule';
 import { emptyState, migrateState, parseState, STATE_VERSION } from './schema';
+import { existingVisitorId } from '../attribution';
 
 export const STORAGE_KEY = 'weddingready-v1';
 
@@ -45,6 +46,9 @@ export interface Store extends AppState, Actions {
 }
 
 function newDeviceId(): string {
+  // A visitor who looked around the site first keeps the same ID, so the funnel links up.
+  const visitor = existingVisitorId();
+  if (visitor) return visitor;
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
   return `d-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 }

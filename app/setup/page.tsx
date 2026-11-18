@@ -22,6 +22,7 @@ import {
 import { DescribeYourself } from '@/components/setup/DescribeYourself';
 import { ExpectationLine } from '@/components/setup/ExpectationLine';
 import { track } from '@/lib/analytics';
+import { cleanVerbatim } from '@/lib/attribution';
 import { defaultStart, draftFromHandoff, emptyDraft, profileFromDraft, SETUP_SCREENS, STEP_COUNT, validateScreen, type Draft } from '@/lib/draft';
 import { codeFromHash, decodePlan, type PlanHandoff } from '@/lib/handoff';
 import { WeekAdvice } from '@/components/plan/WeekAdvice';
@@ -50,6 +51,7 @@ function Setup() {
   const [step, setStep] = useState(prefill ? 2 : 1);
   const [d, setD] = useState<Draft>(() => (prefill ? draftFromHandoff(linked) : emptyDraft()));
   const [err, setErr] = useState<string | null>(null);
+  const [heard, setHeard] = useState('');
   const [handoff, setHandoff] = useState<PlanHandoff | null>(linked && existing ? linked : null);
   const [fromAssistant, setFromAssistant] = useState(prefill);
   const set: SetDraft = (patch) => setD((cur) => (typeof patch === 'function' ? patch(cur) : { ...cur, ...patch }));
@@ -105,6 +107,7 @@ function Setup() {
       strengthDays: profile.strengthDays,
       equipment: profile.equipment,
       nutritionMode: profile.nutritionMode,
+      ...(cleanVerbatim(heard) ? { heard_about: cleanVerbatim(heard) } : {}),
     });
     router.push('/train');
   };
@@ -216,7 +219,7 @@ function Setup() {
                 <Group title="Anything we should know?"><SafetyFields d={d} set={set} /></Group>
               </>
             )}
-            {step === STEP_COUNT && <Summary d={d} set={set} today={today} onStart={start} />}
+            {step === STEP_COUNT && <Summary d={d} set={set} today={today} onStart={start} heard={heard} setHeard={setHeard} />}
 
             {err && (
               <p role="alert" className="err" style={{ fontSize: 15 }}>
@@ -245,7 +248,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-function Summary({ d, set, today, onStart }: { d: Draft; set: SetDraft; today: string; onStart: (startDate: string) => void }) {
+function Summary({ d, set, today, onStart, heard, setHeard }: { d: Draft; set: SetDraft; today: string; onStart: (startDate: string) => void; heard: string; setHeard: (v: string) => void }) {
   const monday = defaultStart(today, d.weddingDate);
   const plan = useMemo(() => buildPlan(profileFromDraft(d, monday)), [d, monday]);
   const p = plan.profile;
@@ -318,6 +321,12 @@ function Summary({ d, set, today, onStart }: { d: Draft; set: SetDraft; today: s
           )}
         </p>
       ))}
+
+      <label className="field">
+        <span>How did you hear about WeddingReady? (optional)</span>
+        <input className="input" type="text" maxLength={120} value={heard} onChange={(e) => setHeard(e.target.value)} placeholder="e.g. a friend, LinkedIn, a search" />
+        <span className="tiny muted">Shared anonymously to help us improve. Please leave out names.</span>
+      </label>
 
       <button type="button" className="btn-primary" onClick={() => onStart(monday)}>
         Start my plan{mondayIsToday ? ' today' : ` on ${fmtDayLong(monday)}`}
