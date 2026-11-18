@@ -46,3 +46,7 @@ next-env.d.ts
 /playwright-report
 /lighthouse
 !.env.example
+
+# Experiment answer key and results (keep private)
+experiment/questions.csv
+experiment/results.csv

@@ -11,6 +11,7 @@ import { addDays, DAY_NAMES, dayIndex, isISODate, mondayOf } from '../engine/dat
 import { kcalFromMacros } from '../engine/nutrition';
 import { buildPlan, dayPlan, type Plan } from '../engine/plan';
 import { applyOps, OpError, ScheduleOpSchema, templateForDate, validateTemplate, type Schedule, type ScheduleOp } from '../engine/schedule';
+import { replanWeek } from '../engine/replan';
 import { splitFor } from '../engine/split';
 import { alternativesFor, equipmentOn, exerciseById, workoutSlots } from '../engine/workouts';
 import { dietConflict, searchFoods } from '../engine/meals';
@@ -82,6 +83,16 @@ const DECLARED = {
   exercise_alternatives: {
     description: 'Exercises that can replace one (same movement first, then gentler related ones), for the person’s equipment.',
     schema: z.object({ exercise_id: z.string().max(64) }),
+  },
+  find_best_week: {
+    description:
+      'The way to move strength sessions. Give the days the person can’t train; it searches every arrangement of their remaining strength sessions with the training rules (done sessions and other activities stay put), proposes the best one with the fewest changes, and if no arrangement keeps the rules this week, skips one session instead. scope this_week for a one-off, from_now_on for a lasting change. Replaces any earlier schedule proposal.',
+    schema: z.object({
+      scope: z.enum(['this_week', 'from_now_on']),
+      unavailable_days: z.array(z.enum(DAY_IDS)).max(7).describe('Days they can’t train, from what they told you.'),
+      preferred_days: z.array(z.enum(DAY_IDS)).max(7).optional().describe('Days they said suit them, e.g. ["sat"]. Used when they keep the rules.'),
+      based_on: z.string().min(3).max(200).describe('What the person told you, e.g. “busy Tuesday and Thursday this week”.'),
+    }),
   },
   propose_schedule_change: {
     description:
@@ -174,6 +185,10 @@ const ING: Record<string, string> = {
   replaced: 'replacing',
   logged: 'logging',
   scheduled: 'scheduling',
+  rescheduled: 'rescheduling',
+  arranged: 'arranging',
+  put: 'putting',
+  prepared: 'preparing',
   adjusted: 'adjusting',
   set: 'setting',
 };
@@ -183,11 +198,21 @@ const ING: Record<string, string> = {
  * "I suggest moving it" (small models slip into the past tense despite the prompt).
  */
 export function honest(text: string): string {
-  return text.replace(/\bI(?:['’]ve| have) (?:also )?(updated|changed|moved|added|removed|swapped|switched|replaced|logged|scheduled|adjusted|set)\b/gi, (_m, verb: string) => `I suggest ${ING[verb.toLowerCase()]}`);
+  return text.replace(/\bI(?:['’]ve| have) (?:also )?(updated|changed|moved|added|removed|swapped|switched|replaced|logged|scheduled|rescheduled|prepared|arranged|put|adjusted|set)\b/gi, (_m, verb: string) => `I suggest ${ING[verb.toLowerCase()]}`);
 }
 
+/** Questions that only ask permission to propose (not for missing information). */
+const PERMISSION_ONLY = /^(would you like|do you want|shall i|should i|want me to|can i (go ahead|propose)|would it help if i)/i;
+
+/** What the person has said in this conversation, to check proposals are grounded in it. */
+function personSaid(req: CoachRequest): string {
+  return [req.message, ...req.history.filter((h) => h.role === 'user').map((h) => h.text)].join(' ');
+}
+
+const EQUIPMENT_WORDS = /dumbbell|gym|machine|rack|barbell|cable|nothing|no equipment|bodyweight|body weight|weights|kettlebell|band/i;
+
 /** Replies that talk about a change to apply or log, or ask whether to make one. */
-const CLAIMS_CHANGE = /propos|tap apply|apply (it|this|the)|log it|one tap|would you like me to|want me to|shall i/i;
+const CLAIMS_CHANGE = /propos|tap apply|apply (it|this|the)|log it|one tap|would you like (me )?to|do you want (me )?to|want me to|shall i/i;
 
 const SLOT_ID: Record<string, SlotId> = { breakfast: 'b', lunch: 'l', dinner: 'd', snack: 's', dessert: 'x', extra: 'e' };
 
@@ -303,6 +328,38 @@ export class CoachSession {
             .map((o) => ({ exercise_id: o.exercise.id, name: o.exercise.name, same_movement: o.same, works: o.exercise.primaryMuscles.join(', ') })),
         };
       }
+      case 'find_best_week': {
+        const scope = a.scope as 'this_week' | 'from_now_on';
+        const unavailable = (a.unavailable_days as string[]).map((d) => DAY_IDS.indexOf(d as (typeof DAY_IDS)[number]));
+        const monday = mondayOf(this.from);
+        const template = templateForDate(p, this.schedule, this.from);
+        const done = scope === 'this_week' ? DAY_IDS.flatMap((_, i) => this.req.done[addDays(monday, i)] ?? []) : [];
+        const preferred = ((a.preferred_days as string[] | undefined) ?? []).map((d) => DAY_IDS.indexOf(d as (typeof DAY_IDS)[number]));
+        // A one-off move needs a day the person said works: guessing one could land on a day they're busy.
+        if (scope === 'this_week' && preferred.length === 0) {
+          return {
+            error: 'Ask which day works for them first (ask_question, offering the days in move_options from get_week, plus “Skip it this week”), then call again with preferred_days. If they said any day is fine, pass those days.',
+          };
+        }
+        const r = replanWeek({ template, fromDay: scope === 'this_week' ? dayIndex(this.from) : 0, scope, unavailable, done, preferred, equipment: p.equipment, focusAreas: p.focusAreas });
+        if (!r.changed) return { no_change_needed: true, note: r.problems.length ? r.problems.join(' ') : 'The current week already works around those days.' };
+        const names = new Map(template.days.flat().map((s) => [s.id, s.kind === 'strength' ? `Strength ${s.workout}` : s.label]));
+        const parts = [
+          ...r.moved.map((m) => `${names.get(m.id)} ${DAY_NAMES[m.from]} → ${DAY_NAMES[m.to]}`),
+          ...r.skipped.map((id) => `skip ${names.get(id)} this week`),
+        ];
+        const proposal: Proposal = { kind: 'schedule', scope, ops: r.ops, summary: parts.join('; ') + '.', basedOn: String(a.based_on) };
+        const at = this.proposals.findIndex((x) => x.kind === 'schedule');
+        if (at >= 0) this.proposals[at] = proposal;
+        else this.proposals.push(proposal);
+        return {
+          proposed: true,
+          changes: parts,
+          skipped_because: r.skipped.length ? 'No arrangement of every session kept the recovery rules this week, so one is skipped rather than trained too close together.' : undefined,
+          week_after: this.weekView(monday, r.after).map((d) => ({ day: d.day, sessions: d.sessions.map((s) => s.name) })),
+          rule_problems: r.problems,
+        };
+      }
       case 'propose_schedule_change': {
         const scope = a.scope as 'this_week' | 'from_now_on';
         const ops = (a.changes as { op: string; session_id?: string; to_day?: string; activity?: string; day?: string }[]).map((c) => {
@@ -342,6 +399,7 @@ export class CoachSession {
         if (to < from) return { error: 'to_date must be on or after from_date.' };
         if (to > addDays(from, 27)) return { error: 'Keep it to 4 weeks or less; for a lasting change, the person can change equipment in Settings.' };
         if (to >= this.plan.timeline.weddingDate) return { error: 'That runs into the wedding.' };
+        if (!EQUIPMENT_WORDS.test(personSaid(this.req))) return { error: 'They haven’t said what equipment they’ll have. Ask with ask_question: dumbbells only, a full gym, or nothing.' };
         const equipment = EQUIPMENT_INPUT[a.equipment as keyof typeof EQUIPMENT_INPUT];
         this.proposals.push({ kind: 'equipment', from, to, equipment, reason: String(a.reason), basedOn: String(a.based_on) });
         return { proposed: true, change: `${EQUIPMENT_NAMES[equipment]} from ${from} to ${to}; the workouts switch to versions for that equipment.` };
@@ -372,6 +430,12 @@ export class CoachSession {
         };
       }
       case 'propose_meal': {
+        // Only meals the person has told us about: never a made-up example.
+        const said = new Set(personSaid(this.req).toLowerCase().match(/[a-z]{4,}/g) ?? []);
+        const named = `${a.name} ${(a.items as string[]).join(' ')}`.toLowerCase().match(/[a-z]{4,}/g) ?? [];
+        if (!named.some((w) => said.has(w) || said.has(w.replace(/s$/, '')))) {
+          return { error: 'They haven’t said what they’re eating, so there’s nothing to log yet. Ask with ask_question (where they’re eating, or what they’re having).' };
+        }
         const k = Math.round(a.kcal as number);
         const fromMacros = kcalFromMacros(a.protein_g as number, a.carbs_g as number, a.fat_g as number);
         if (Math.abs(k - fromMacros) / Math.max(k, fromMacros, 1) > 0.25) return { error: `Calories (${k}) don’t match the macros (${fromMacros}). Fix the numbers.` };
@@ -408,11 +472,11 @@ Today is ${DAY_NAMES[dayIndex(req.today)]} ${req.today}. The wedding is ${plan.t
 A wrong change is worse than no change. Before proposing anything, make sure you know what you need. If something important is missing or could mean two things, call ask_question: one question at a time, with tap-able options when there are likely answers. Don't ask about things you can look up with the tools or work out from today's date.
 
 What you need before proposing:
-- Missed or busy day: which session it is (look it up), and which day they can train instead. get_week lists move_options: the days each session can move to without breaking a training rule. Ask which of those days works, offering only those days plus "Skip it this week". If they already named a day, check it's in move_options; if not, say why and offer the ones that are.
+- Missed or busy days: which days they can't train, and whether it's just this week. Then call find_best_week with those days (and any day they said suits them as preferred_days); never work out moves for strength sessions yourself. Describe the result exactly as find_best_week returns it. If they want a specific day instead, check it against move_options from get_week; if it isn't there, say why and offer the days that are.
 - Travel: the exact dates (turn "next week" into dates yourself and say them back) and what they'll have to train with. "Hotel gym" can mean dumbbells only (home_dumbbells), a full gym with racks and machines (gym), or almost nothing (bodyweight): always ask unless they told you.
 - Pain or injury: which exercise or movement hurts, and whether it's sharp, swollen or getting worse. If it is, tell them to stop training that area and see a doctor or physio, and don't propose a swap. For a dull ache in certain moves, swap those moves.
 - Eating out: where they're eating, and (to log it) what they're ordering or considering.
-- Lasting changes (a new class schedule, a new job): which days, and whether it's every week from now on.
+- Lasting changes (a new class schedule, a new job): which days, and whether it's every week from now on. For strength sessions use find_best_week with scope from_now_on; to add or remove other activities use propose_schedule_change.
 
 How to work:
 - Look before you act: use get_week or get_workout to see the plan.
@@ -501,6 +565,13 @@ export async function runCoach(req: CoachRequest): Promise<CoachReply> {
       role: 'user',
       parts: calls.map((c) => ({ functionResponse: { name: c.name ?? '', ...(c.id ? { id: c.id } : {}), response: { result: session.run(c.name ?? '', c.args) } } })),
     });
+    if (session.question && !nudged && PERMISSION_ONLY.test(session.question.text.trim())) {
+      // Asking permission isn't asking for information: propose it instead, since they can discard it.
+      nudged = true;
+      session.question = null;
+      contents.push({ role: 'user', parts: [{ text: '(App note, not from the person) That question only asks permission. Don’t ask; make the proposal with the right propose_ tool (they can discard it). Use ask_question only for information you’re missing.' }] });
+      continue;
+    }
     if (session.question) {
       // The coach needs an answer first. Anything it proposed in the same breath
       // was made without it, so it's dropped: a wrong change is worse than none.

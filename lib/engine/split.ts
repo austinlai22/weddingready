@@ -210,6 +210,23 @@ function hardByDay(activities: Activity[]): string[][] {
   return hard;
 }
 
+/**
+ * Penalty for a whole week as laid out (lower is better): every rule break and
+ * compromise, plus days with two strength sessions or more than two sessions.
+ * Used by the coach's week search (replan.ts).
+ */
+export function scoreWeek(t: WeekTemplate, equipment: Equipment, focus: FocusArea[]): number {
+  let score = 0;
+  for (const issue of weekIssues(shapeOf(t), equipment, focus)) score += WEIGHT[issue.kind];
+  for (const d of t.days) {
+    const strength = d.filter((s) => s.kind === 'strength').length;
+    const sessions = d.filter((s) => !(s.kind === 'activity' && s.type === 'walk')).length;
+    if (strength > 1) score += 10000;
+    if (sessions > 2) score += 150;
+  }
+  return score;
+}
+
 /** Score for a set of strength days: rule breaks dominate, then compromises, then even spacing, then closeness to the usual days. */
 export function scorePlacement(days: number[], strengthDays: number, activities: Activity[], equipment: Equipment, focus: FocusArea[]): number {
   const keys = splitFor(strengthDays);

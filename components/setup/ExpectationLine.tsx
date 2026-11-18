@@ -1,7 +1,7 @@
 import type { Plan } from '@/lib/engine/plan';
 import { fmtShort } from '@/lib/engine/dates';
 
-/** SPEC §6.6 realistic-expectations line. Never a promise, never a goal weight. */
+/** SPEC §6.6 realistic-expectations line. Never a promise; with a goal weight, says honestly whether the plan can reach it safely. */
 export function ExpectationLine({ plan }: { plan: Plan }) {
   const p = plan.profile;
   if (p.safety.edHistory) return null;
@@ -26,6 +26,17 @@ export function ExpectationLine({ plan }: { plan: Plan }) {
   const hi = Math.max(lo, Math.round(conv(e.highKg)));
   const unit = imperial ? 'lb' : 'kg';
   const until = plan.expectationUntil === 'your fitting' ? 'your fitting' : `the time Maintain starts (${fmtShort(plan.timeline.maintainStartDate)})`;
+  if (plan.goal) {
+    const target = Math.max(1, Math.round(conv(plan.goal.toLoseKg)));
+    return (
+      <p className="banner">
+        <strong>Your goal:</strong> {target} {unit} by {until}.{' '}
+        {plan.goal.reachable
+          ? `Your calories are set to aim for it. Realistically, expect about ${lo === hi ? lo : `${lo}–${hi}`} ${unit}; bodies vary.`
+          : `That’s more than the plan can safely aim for in the time, so your calories use the safest pace instead: realistically about ${lo === hi ? lo : `${lo}–${hi}`} ${unit}. Strength and shape will change more than the scale.`}
+      </p>
+    );
+  }
   return (
     <p className="banner">
       <strong>What to expect:</strong> about {lo === hi ? lo : `${lo}–${hi}`} {unit} lighter by {until}, if you stay consistent. Bodies vary, so treat this as a rough guide, not a target.

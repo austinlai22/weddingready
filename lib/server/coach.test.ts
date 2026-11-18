@@ -74,6 +74,19 @@ describe('coach tools', () => {
     expect(week.move_options.some((o) => o.session_id === 'str-1')).toBe(false); // already done on Monday
   });
 
+  it('find the best week with the engine, not the model', () => {
+    const s = session();
+    // Without a day the person said works, it asks rather than guessing.
+    expect(s.run('find_best_week', { scope: 'this_week', unavailable_days: ['thu'], based_on: 'busy Thursday' })).toHaveProperty('error');
+    const r = s.run('find_best_week', { scope: 'this_week', unavailable_days: ['thu'], preferred_days: ['fri', 'sat'], based_on: 'busy Thursday, free at the weekend' }) as { changes: string[]; rule_problems: string[] };
+    expect(r.rule_problems).toEqual([]);
+    expect(r.changes[0]).toMatch(/^Strength B Thursday → (Friday|Saturday)$/);
+    expect(s.proposals[0]).toMatchObject({ kind: 'schedule', scope: 'this_week', basedOn: 'busy Thursday, free at the weekend' });
+    // Monday's done session never moves.
+    expect(JSON.stringify(s.proposals[0])).not.toContain('str-1');
+    expect(session().run('find_best_week', { scope: 'this_week', unavailable_days: ['sun'], preferred_days: ['thu'], based_on: 'busy Sunday' })).toHaveProperty('no_change_needed', true);
+  });
+
   it('check every schedule proposal against the recovery rules', () => {
     const s = session();
     const bad = s.run('propose_schedule_change', { based_on: 'what they said', scope: 'this_week', changes: [{ op: 'move', session_id: 'str-2', to_day: 'tue' }], summary: 'x' }) as { error?: string };
@@ -88,7 +101,7 @@ describe('coach tools', () => {
   });
 
   it('only swap to real alternatives, and only change equipment for up to 4 weeks', () => {
-    const s = session();
+    const s = session({ message: 'Next week the hotel gym only has dumbbells, and dinner tonight is a bowl.' });
     const alts = s.run('exercise_alternatives', { exercise_id: 'reverse-lunge' }) as { options: { exercise_id: string }[] };
     expect(alts.options.length).toBeGreaterThan(0);
     expect(s.run('propose_exercise_swap', { based_on: 'what they said', from_exercise_id: 'reverse-lunge', to_exercise_id: 'lat-pulldown', reason: 'x' })).toHaveProperty('error');
@@ -102,10 +115,17 @@ describe('coach tools', () => {
     const portions = session({ nutrition: { mode: 'portions_only', diet: 'none', logged: [] } as never });
     expect(JSON.stringify(portions.run('get_nutrition_today', {}))).not.toMatch(/\d/);
     expect(JSON.stringify(portions.run('search_foods', { query: 'chicken' }))).not.toMatch(/kcal|protein_g/);
-    const s = session();
+    const s = session({ message: 'Next week the hotel gym only has dumbbells, and dinner tonight is a bowl.' });
     expect(s.run('propose_meal', { based_on: 'what they said', slot: 'dinner', name: 'Bowl', items: ['bowl'], protein_g: 40, carbs_g: 60, fat_g: 20, kcal: 1500 })).toHaveProperty('error');
     expect(s.run('propose_meal', { based_on: 'what they said', slot: 'dinner', name: 'Bowl', items: ['bowl'], protein_g: 40, carbs_g: 60, fat_g: 20, kcal: 580 })).toHaveProperty('proposed', true);
     expect(s.proposals[0]).toMatchObject({ kind: 'meal', slot: 'd', entry: { p: 40, k: 580, src: 'ai' } });
+  });
+
+  it('only propose what the person actually said', () => {
+    const s = session({ message: 'I’m eating out tonight and travelling next week.' });
+    expect(s.run('propose_meal', { slot: 'dinner', name: 'Grilled salmon', items: ['salmon', 'potatoes'], protein_g: 40, carbs_g: 50, fat_g: 20, kcal: 540, based_on: 'eating out' })).toHaveProperty('error');
+    expect(s.run('propose_equipment_change', { from_date: '2026-11-23', to_date: '2026-11-29', equipment: 'gym', reason: 'trip', based_on: 'travelling' })).toHaveProperty('error');
+    expect(s.proposals).toEqual([]);
   });
 
   it('turn bad arguments into an error the model can read', () => {
@@ -148,7 +168,7 @@ describe('the coach loop', () => {
   });
 
   it('carries what each proposal is based on to the preview', () => {
-    const s = session();
+    const s = session({ message: 'Next week the hotel gym only has dumbbells, and dinner tonight is a bowl.' });
     s.run('propose_equipment_change', { from_date: '2026-11-23', to_date: '2026-11-29', equipment: 'home_dumbbells', reason: 'trip', based_on: 'hotel gym has dumbbells only' });
     expect(s.proposals[0]).toMatchObject({ kind: 'equipment', equipment: 'home_db', basedOn: 'hotel gym has dumbbells only' });
     expect(s.run('propose_equipment_change', { from_date: '2026-11-23', to_date: '2026-11-29', equipment: 'gym', reason: 'trip' })).toHaveProperty('error');
@@ -168,6 +188,7 @@ describe('the coach loop', () => {
     const { honest } = await import('./coach');
     expect(honest('I’ve also updated your training for next week and I have moved Thursday.')).toBe('I suggest updating your training for next week and I suggest moving Thursday.');
     expect(honest('I’ve proposed a swap.')).toBe('I’ve proposed a swap.');
+    expect(honest('I’ve put that bowl in your dinner slot.')).toBe('I suggest putting that bowl in your dinner slot.');
   });
 
   it('needs the free Gemini key, and costs nothing', async () => {

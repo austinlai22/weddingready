@@ -58,9 +58,15 @@ export function targetWeightAllowed(targetKg: number, heightCm: number): boolean
 }
 
 export function effectiveProfile(p: Profile): Profile {
+  const goals = allowedGoals(p.goals, p);
+  // A goal weight counts only with Lose fat, without an eating-disorder history, and at a healthy weight for the height.
+  const goalOk = p.goalWeightKg !== undefined && goals.includes('lose_fat') && !p.safety.edHistory && targetWeightAllowed(p.goalWeightKg, p.heightCm);
+  const { goalWeightKg: _drop, ...rest } = p;
+  void _drop;
   return {
-    ...p,
-    goals: allowedGoals(p.goals, p),
+    ...rest,
+    ...(goalOk ? { goalWeightKg: p.goalWeightKg } : {}),
+    goals,
     nutritionMode: allowedNutritionMode(p.nutritionMode, p.safety),
   };
 }

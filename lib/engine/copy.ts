@@ -75,6 +75,7 @@ export function activityHow(type: ActivityType, label: string, phase: PhaseName,
   }
   switch (type) {
     case 'walk':
+      if (label === 'Easy cardio') return `${walkMinutes ?? 30} minutes of easy cardio: a brisk walk, bike or swim, at a pace you could talk through.`;
       return walkMinutes ? `${walkMinutes} minutes of walking. Steady pace, any route.` : 'A steady walk, any route.';
     case 'run':
       return phase === 'maintain' || phase === 'feelgood'

@@ -7,6 +7,7 @@ import {
   ActivityFields,
   BodyFields,
   DateFields,
+  ExperienceFields,
   FocusFields,
   FoodFields,
   GoalFields,
@@ -19,7 +20,7 @@ import {
 } from '@/components/setup/Fields';
 import { Chevron, CheckBox } from '@/components/ui/icons';
 import { track } from '@/lib/analytics';
-import { defaultStart, draftFromProfile, profileFromDraft, validateAll, type Draft } from '@/lib/draft';
+import { defaultStart, draftFromProfile, draftGoalWeightKg, draftWeightKg, profileFromDraft, validateAll, type Draft } from '@/lib/draft';
 import { fmtMedium, todayISO } from '@/lib/engine/dates';
 import { phaseForDate, weekOf } from '@/lib/engine/phases';
 import { EXERCISES } from '@/lib/engine/workouts';
@@ -87,7 +88,10 @@ export default function SettingsPage() {
     }
     let start = profile.startDate;
     if (start > d.weddingDate) start = defaultStart(today, d.weddingDate);
-    const next = profileFromDraft(d, start);
+    // A new weight or goal weight re-times the deficit from today.
+    const kgDiffers = (a: number, b: number) => (Number.isFinite(a) || Number.isFinite(b)) && !(Math.abs(a - b) < 0.3);
+    const reset = kgDiffers(draftWeightKg(d), profile.weightKg) || kgDiffers(draftGoalWeightKg(d), profile.goalWeightKg ?? NaN);
+    const next = profileFromDraft({ ...d, goalSetOn: reset ? today : d.goalSetOn }, start);
     const fields = changedFields(profile, next);
     const dropped = saveProfile(next);
     fields.forEach((field) => track('settings_changed', { field }));
@@ -122,7 +126,12 @@ export default function SettingsPage() {
           </div>
         </Section>
         <Section title="Focus areas"><FocusFields d={d} set={set} /></Section>
-        <Section title="Training"><TrainingFields d={d} set={set} /></Section>
+        <Section title="Training">
+          <div className="stack-12">
+            <ExperienceFields d={d} set={set} />
+            <TrainingFields d={d} set={set} />
+          </div>
+        </Section>
         <Section title="Your activities"><ActivityFields d={d} set={set} /></Section>
         <Section title="Daily movement"><MovementFields d={d} set={set} /></Section>
         <Section title="Food and nutrition style"><FoodFields d={d} set={set} /></Section>

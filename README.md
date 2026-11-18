@@ -25,6 +25,12 @@ Tell it your wedding date (and your outfit fitting, if you know it). It works ba
 
 If a week can't follow the rules as entered, it names the rule that breaks and suggests the smallest fix: moving a class, or one fewer strength day.
 
+**It can choose for beginners.** "Choose for me" in setup picks the number of strength days and any easy cardio from rules, not the model: 3 full-body days for someone new (2 with under two months or a maintain-only goal), an upper/lower split for experienced lifters chasing strength, one fewer when the week already has four or more hard sessions, and easy cardio to reach about 150 active minutes a week (a little more when losing fat), counting what they already do. It shows the reasons, and everything stays editable.
+
+**Men and women get what the evidence supports, no more.** The training principles are the same for both sexes. The differences: women, who tend to recover faster between sets, rest about 15 seconds less on accessory exercises; men rest about 30 seconds more on main lifts; a new female lifter starts push-ups on an incline; focus-area defaults differ when the outfit doesn't set them; calorie needs use the sex-specific Mifflin-St Jeor equation and floors (1,200 or 1,500 kcal).
+
+**A goal weight sizes the deficit, within limits.** Setup already asks age, sex, height and weight for resting energy and activity. An optional goal weight (only with Lose fat, never with an eating-disorder history or below a healthy BMI) sets the deficit to what the goal needs by the Maintain phase, allowing for real-world adherence, but capped at 20% of what you burn and 0.75% of body weight a week, and never below resting needs. The summary says honestly whether the goal is within a safe pace.
+
 ![How the plan works: example weeks for full-body and split schedules](docs/screenshots/week-rules.png)
 
 **It works around the dates that matter.** If you give a fitting date, the Maintain phase starts at least two weeks before it, so alterations still fit on the day. Every sixth week is a lighter recovery week, and the last ten days ease off.
@@ -39,7 +45,7 @@ There are no streaks and no before-and-after photos. Deficits are capped at 0.75
 
 **Your data never leaves your device.** There are no accounts. The plan and logs live in the browser, validated by Zod on every load, with versioned migrations and export/import. I chose this over sign-in to keep health data off a server entirely.
 
-**A coach that acts, with guardrails.** On the Plan tab, the coach is a small agent: tell it "I can't train tomorrow", "my knee hurts doing lunges", "I'm in a hotel next week" or "I'm at Chipotle", and it looks at the plan with tools (the week, a day's workout, exercise alternatives, today's food), then proposes changes: move sessions for this week only or from now on, swap an exercise in every workout, use other equipment for some dates, or log a meal. Every proposal is checked by the engine (recovery rules, valid alternatives, calories that match the macros, no past days) and the result goes back to the model so it can fix problems before answering. A wrong change is worse than none, so the coach has a checklist of what each kind of request needs (which day works, the exact travel dates, what equipment a hotel gym really has, whether pain is sharp) and an `ask_question` tool with tap-able answers; anything proposed in the same breath as a question is dropped, every proposal states what it's based on, and moves are only offered to days the engine has checked against the rules. If the model describes a change without proposing it, the loop points that out once. The app shows a before/after preview, and nothing changes until you tap Apply; "this week only" changes end on Sunday, and past days never change. The coach never sees weight, height, age or health answers, never changes calorie targets, and shows no food numbers to anyone who chose none.
+**A coach that acts, with guardrails.** On the Plan tab, the coach is a small agent: tell it "I can't train tomorrow", "my knee hurts doing lunges", "I'm in a hotel next week" or "I'm at Chipotle", and it looks at the plan with tools (the week, a day's workout, exercise alternatives, today's food), then proposes changes: move sessions for this week only or from now on, swap an exercise in every workout, use other equipment for some dates, or log a meal. Every proposal is checked by the engine (recovery rules, valid alternatives, calories that match the macros, no past days) and the result goes back to the model so it can fix problems before answering. A wrong change is worse than none, so the coach has a checklist of what each kind of request needs (which day works, the exact travel dates, what equipment a hotel gym really has, whether pain is sharp) and an `ask_question` tool with tap-able answers; anything proposed in the same breath as a question is dropped, every proposal states what it's based on, and moves are worked out by a deterministic planner (`find_best_week`, in `lib/engine/replan.ts`): the coach asks which days are off-limits and which suit, and the planner tries every arrangement of the remaining strength sessions, scores each with the same rules as setup, prefers the fewest moves, and skips one session this week rather than break a rule. The model only describes the result. Meals and equipment changes must be grounded in words the person actually said. If the model describes a change without proposing it, the loop points that out once. The app shows a before/after preview, and nothing changes until you tap Apply; "this week only" changes end on Sunday, and past days never change. The coach never sees weight, height, age or health answers, never changes calorie targets, and shows no food numbers to anyone who chose none.
 
 **Plans move between chat and the app.** A plan code (`wr1.…`, the training details only, base64url JSON validated with Zod) carries a plan both ways without accounts: the MCP tool returns a link that opens setup with the plan filled in (the code rides after the `#`, so it never reaches the server), and the app's "Copy for Claude" hands the plan to an assistant. Workouts go to Apple Calendar, Google Calendar or Outlook as a subscription built from the plan code (times converted to UTC for the person's time zone, across daylight saving), or to any calendar as an `.ics` file made on the device, and the `calendar_events` tool gives assistants dated events to add with their own calendar connector.
 
@@ -51,7 +57,9 @@ There are no streaks and no before-and-after photos. Deficits are capped at 0.75
 
 **It works offline and installs like an app.** A hand-written service worker caches the app shell and data. The manifest includes maskable icons for Android and an Apple touch icon.
 
-**Quality bar.** 120 unit tests (engine, nutrition, guardrails, storage, the coach's tools and loop, AI handling and limits) and 52 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
+**The coach is tested on behaviour.** `npm run coach:eval` runs 14 realistic requests through the real coach on the free Gemini tier and checks what it does, not what it says: it asks when the day, dates, equipment or kind of pain is missing; proposes when they aren't; never proposes a week that breaks the rules; stops on sharp pain; shows no food numbers to someone who chose none; never claims a change is already made; and isn't talked out of its rules. The latest run passed 28 of 28 (two runs each). For assistants, `experiment/` is a hand-run kit of 13 questions with engine-computed answers (energy, protein, scheduling, safety) to compare assistants with and without the WeddingReady connector.
+
+**Quality bar.** 135 unit tests (engine, nutrition, guardrails, storage, the coach's tools and loop, AI handling and limits) and 54 Playwright end-to-end tests at phone and desktop widths. Lighthouse on mobile scores 100 for performance, accessibility, best practices and SEO on the home page, How the plan works, and the app's tabs.
 
 ## Built with
 
@@ -73,6 +81,8 @@ It runs with no environment variables at all: AI falls back to manual entry, ana
 |---|---|
 | `npm run dev` / `build` / `start` | Development server, production build, production server |
 | `npm test` | Unit tests (Vitest) |
+| `npm run coach:eval` | The coach's behaviour suite against free Gemini (needs `GEMINI_API_KEY`; `-- --runs 3`, `-- --only pain`) |
+| `npm run experiment:generate` / `experiment:summarize` | The assistant experiment: write the private answer key; score `experiment/results.csv` (see `experiment/README.md`) |
 | `npm run e2e` | End-to-end tests (Playwright) at 390px and 1280px. Run `npm run build` first; it starts `next start` on port 3100 |
 | `npm run lint` / `typecheck` | ESLint and TypeScript |
 | `npm run foods:verify` | Rebuilds `data/foods.json` from USDA FoodData Central |
@@ -135,7 +145,7 @@ data/            Exercises, foods (generated), meal templates
 ## Decisions and defaults
 
 - **Goal adjustments to phase lengths apply.** A tone + lose-fat plan of 48 weeks is Foundation 8 / Strength 11 / Shape 17 / Maintain 12.
-- **Expectations are conservative.** The "what to expect" line shows 40–70% of a straight-line projection, stops at BMI 22, and never shows a goal weight.
+- **Expectations are conservative.** The "what to expect" line shows 40–70% of a straight-line projection, stops at BMI 22, and never shows a weight below a healthy BMI. A goal weight, if given, is checked against the same limits.
 - **Recovery weeks** come every sixth week after Foundation, only in the harder phases, and only on plans of 12 weeks or more.
 - **Short plans.** With two to four months, Strength and Shape merge into one Build phase. With under four weeks, the plan is lighter and has no calorie deficit.
 - **A fitting too early to fit** starts Maintain as early as the minimum phase lengths allow, and the Plan tab says so.

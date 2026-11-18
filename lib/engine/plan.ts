@@ -16,6 +16,10 @@ export interface Plan {
   suggestCardio: boolean;
   expectation: Expectation | null;
   expectationUntil: string;
+  /** Days the deficit runs: from when the weight or goal was set (or the start) to Maintain. */
+  deficitDays: number;
+  /** With a goal weight: how far it is, and whether the plan can safely reach it. */
+  goal: { kg: number; toLoseKg: number; reachable: boolean } | null;
   shortTimeline: boolean;
 }
 
@@ -28,9 +32,12 @@ export function buildPlan(raw: Profile): Plan {
     .filter((a) => CARDIO.includes(a.type))
     .reduce((t, a) => t + new Set(a.days).size, 0);
   const loseFat = profile.goals.includes('lose_fat') && timeline.totalWeeks >= 4;
-  const t = targets(profile, loseFat);
-  const deficitWeeks = Math.max(0, daysBetween(timeline.startMonday, timeline.maintainStartDate) / 7);
-  const expectation = loseFat && !profile.safety.edHistory ? expectedLoss(profile, t.deficit, deficitWeeks) : null;
+  const from = profile.goalSetOn && profile.goalSetOn > timeline.startMonday ? profile.goalSetOn : timeline.startMonday;
+  const deficitDays = Math.max(0, daysBetween(from, timeline.maintainStartDate));
+  const t = targets(profile, loseFat, deficitDays);
+  const expectation = loseFat && !profile.safety.edHistory ? expectedLoss(profile, t.deficit, deficitDays / 7) : null;
+  const goalKg = loseFat && !profile.safety.edHistory ? profile.goalWeightKg : undefined;
+  const goal = goalKg && goalKg < profile.weightKg ? { kg: goalKg, toLoseKg: profile.weightKg - goalKg, reachable: !!expectation && expectation.highKg + 0.25 >= profile.weightKg - goalKg } : null;
   return {
     profile,
     timeline,
@@ -38,6 +45,8 @@ export function buildPlan(raw: Profile): Plan {
     suggestCardio: loseFat && cardioSessions < 2,
     expectation,
     expectationUntil: profile.fittingDate && profile.fittingDate < profile.weddingDate ? 'your fitting' : 'Maintain',
+    deficitDays,
+    goal,
     shortTimeline: timeline.totalWeeks < 4,
   };
 }
@@ -52,7 +61,7 @@ export function deficitOn(plan: Plan, date: string): boolean {
 }
 
 export function targetsFor(plan: Plan, date: string): Targets {
-  return targets(plan.profile, deficitOn(plan, date));
+  return targets(plan.profile, deficitOn(plan, date), plan.deficitDays);
 }
 
 export type DayStatus = 'before' | 'active' | 'wedding' | 'after';
@@ -105,6 +114,7 @@ function strengthView(plan: Plan, ref: SessionRef & { kind: 'strength' }, phase:
     focusAreas: p.focusAreas,
     recovery,
     taper,
+    sex: p.sex,
   }, p.exerciseSwaps);
   const restMin = Math.min(...exercises.map((e) => e.restMin));
   const restMax = Math.max(...exercises.map((e) => e.restMax));

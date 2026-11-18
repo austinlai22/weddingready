@@ -17,9 +17,11 @@ describe('plan codes', () => {
     expect(back.startDate).toBe(p.startDate);
     expect(back.strengthDays).toBe(p.strengthDays);
     expect(back.activities.map((a) => [a.type, a.label, a.days])).toEqual(p.activities.map((a) => [a.type, a.label, [...a.days].sort()]));
-    // Nothing about the body or health goes in a code.
+    // Nothing about weight, height, age or health goes in a code.
     const json = JSON.stringify(back);
-    for (const k of ['weightKg', 'heightCm', 'age', 'safety', 'sex']) expect(json).not.toContain(k);
+    for (const k of ['weightKg', 'heightCm', 'age', 'safety', 'goalWeightKg']) expect(json).not.toContain(k);
+    // Sex is carried because it changes rest times; nothing else about the body is.
+    expect(back.sex).toBe('female');
   });
 
   it('carry the week as the person arranged it, and travel equipment', () => {

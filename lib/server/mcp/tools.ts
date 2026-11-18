@@ -3,8 +3,8 @@
 // Nothing here stores anything; every input arrives with the call.
 
 import { PHASE_COPY } from '../../engine/copy';
-import { addDays, DAY_NAMES, dayIndex, isISODate, nextMonday } from '../../engine/dates';
-import { ED_HELPLINE, isAdult, loseFatBlockedReason, safetyNotes } from '../../engine/guardrails';
+import { addDays, DAY_NAMES, dayIndex, daysBetween, isISODate, nextMonday, todayISO } from '../../engine/dates';
+import { ED_HELPLINE, isAdult, loseFatBlockedReason, safetyNotes, targetWeightAllowed } from '../../engine/guardrails';
 import { dietConflict, FOODS, searchFoods } from '../../engine/meals';
 import { targets } from '../../engine/nutrition';
 import { buildPlan, dayPlan, type Plan } from '../../engine/plan';
@@ -63,6 +63,8 @@ export interface TrainingInput {
   outfit?: Outfit;
   focus_areas?: FocusArea[];
   activities?: ActivityInput[];
+  /** Changes rest times between sets; unspecified keeps the defaults. */
+  sex?: Sex;
   /** From a plan code only: exercises the person swapped in the app. */
   exercise_swaps?: Record<string, string>;
   /** From a plan code only: the week as arranged in the app, and dated equipment changes. */
@@ -106,6 +108,7 @@ export function withPlanCode<T extends TrainingInput>(input: T): T {
     wedding_date: h.weddingDate,
     ...(h.fittingDate ? { fitting_date: h.fittingDate } : {}),
     ...(h.startDate ? { start_date: h.startDate } : {}),
+    ...(h.sex ? { sex: h.sex } : {}),
     ...(h.exerciseSwaps ? { exercise_swaps: h.exerciseSwaps } : {}),
     ...(h.layout ? { layout: h.layout } : {}),
     ...(h.equipmentOverrides ? { equipment_overrides: h.equipmentOverrides } : {}),
@@ -160,7 +163,7 @@ function trainingProfile(raw: TrainingInput, today: string): Profile {
     weddingDate: input.wedding_date!,
     ...(input.fitting_date ? { fittingDate: input.fitting_date } : {}),
     age: 30,
-    sex: 'unspecified',
+    sex: input.sex ?? 'unspecified',
     heightCm: 170,
     weightKg: 70,
     units: 'metric',
@@ -373,6 +376,9 @@ export interface NutritionInput {
   strength_days?: number;
   activities?: ActivityInput[];
   goal?: 'lose_fat' | 'maintain';
+  /** Lose fat: a goal weight and the date to reach it by (e.g. two weeks before the fitting). */
+  goal_weight_kg?: number;
+  goal_date?: string;
   pregnant_or_postpartum?: boolean;
   eating_disorder_history?: boolean;
   medical_condition?: boolean;
@@ -408,12 +414,25 @@ export function nutritionTargets(input: NutritionInput) {
   };
   const blocked = loseFatBlockedReason({ safety, weightKg: input.weight_kg, heightCm: input.height_cm });
   const wantsLoss = input.goal === 'lose_fat';
+  let goalNote: string | undefined;
+  let deficitDays: number | undefined;
+  if (wantsLoss && !blocked && input.goal_weight_kg !== undefined) {
+    if (!input.goal_date || !isISODate(input.goal_date)) throw new ToolInputError('With goal_weight_kg, give goal_date (YYYY-MM-DD): when to reach it, e.g. two weeks before the fitting.');
+    if (input.goal_weight_kg >= input.weight_kg) throw new ToolInputError('goal_weight_kg must be below weight_kg.');
+    if (!targetWeightAllowed(input.goal_weight_kg, input.height_cm)) {
+      goalNote = 'That goal weight is below a healthy weight for this height, so it isn’t used; the targets use the standard gentle deficit.';
+    } else {
+      profile.goalWeightKg = input.goal_weight_kg;
+      deficitDays = Math.max(1, daysBetween(todayISO(), input.goal_date));
+    }
+  }
   const maintenance = targets(profile, false);
-  const deficit = wantsLoss && !blocked ? targets(profile, true) : null;
+  const deficit = wantsLoss && !blocked ? targets(profile, true, deficitDays) : null;
   const t = deficit ?? maintenance;
   return {
     goal: deficit ? 'lose fat' : 'maintain',
     lose_fat_not_offered: wantsLoss && blocked ? blocked : undefined,
+    goal_weight_note: goalNote,
     calories_per_day: {
       maintenance_range: maintenance.kcalRange,
       target_range: t.kcalRange,
@@ -427,7 +446,7 @@ export function nutritionTargets(input: NutritionInput) {
     method: [
       'Resting needs: Mifflin-St Jeor (the mean of the female and male equations when sex is unspecified).',
       'Activity factor from job, daily walking and weekly sessions, capped at 1.75. Shown as a ±7.5% range because estimates can be off by 10% or more.',
-      'Fat loss: 15% below maintenance, capped at 0.75% of body weight a week, never below resting needs (or 1,200 kcal; 1,500 for men).',
+      'Fat loss: 15% below maintenance; with a goal weight and date, sized to reach it allowing for adaptation, up to 20%. Always capped at 0.75% of body weight a week and never below resting needs (or 1,200 kcal; 1,500 for men).',
       'Protein 1.6–2.0 g per kg (at BMI 30+, per kg of the weight at BMI 27). Fat 25–30% of calories, at least 0.6 g/kg. Carbs are the rest.',
       'Calories go back to maintenance once the Maintain phase starts (two weeks before the fitting).',
     ],

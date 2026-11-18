@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { HydrationGate } from '@/components/AppShell';
 import {
   ActivityFields,
+  ExperienceFields,
+  WeekChooser,
   BodyFields,
   DateFields,
   FocusFields,
@@ -195,6 +197,12 @@ function Setup() {
             )}
             {step === 4 && (
               <>
+                <Group title="Where you’re starting">
+                  <div className="stack-12">
+                    <ExperienceFields d={d} set={set} />
+                    <WeekChooser d={d} set={set} today={today} />
+                  </div>
+                </Group>
                 <Group title="Strength training"><TrainingFields d={d} set={set} /></Group>
                 <Group title="What you already do"><ActivityFields d={d} set={set} /></Group>
                 <Group title="Everyday movement"><MovementFields d={d} set={set} /></Group>

@@ -61,15 +61,34 @@ const round10 = (n: number) => Math.round(n / 10) * 10;
  * Daily targets. `deficitAllowed` is decided by the plan (goal, phase,
  * guardrails, "I've reached my goal"); this function only does the math.
  */
-export function targets(p: Profile, deficitAllowed: boolean): Targets {
+/** Share of the straight-line weight-loss maths people actually see (adaptation, real life); also used for expectations. */
+const REALISTIC_SHARE = 0.7;
+
+/**
+ * Daily deficit for Lose fat. With a goal weight and the days left until
+ * Maintain, it's sized to reach the goal (allowing for adaptation), up to 20%
+ * of needs; without one, a gentle 15%. Either way never more than 0.75% of
+ * body weight a week.
+ */
+export function plannedDeficit(p: Pick<Profile, 'weightKg' | 'goalWeightKg'>, tdee: number, deficitDays?: number): number {
+  const cap = (0.0075 * p.weightKg * KCAL_PER_KG) / 7; // ≤ 0.75% of body weight per week
+  if (p.goalWeightKg && deficitDays && deficitDays > 0) {
+    const toLose = p.weightKg - p.goalWeightKg;
+    if (toLose <= 0) return 0;
+    const needed = (toLose * KCAL_PER_KG) / deficitDays / REALISTIC_SHARE;
+    return Math.min(needed, 0.2 * tdee, cap);
+  }
+  return Math.min(0.15 * tdee, cap);
+}
+
+export function targets(p: Profile, deficitAllowed: boolean, deficitDays?: number): Targets {
   const b = bmr(p);
   const factor = activityFactor(p);
   const tdee = b * factor;
   let kcal = tdee;
   let deficit = 0;
   if (deficitAllowed) {
-    const cap = (0.0075 * p.weightKg * KCAL_PER_KG) / 7; // ≤ 0.75% of body weight per week
-    deficit = Math.min(0.15 * tdee, cap);
+    deficit = plannedDeficit(p, tdee, deficitDays);
     const floor = Math.max(b, p.sex === 'male' ? 1500 : 1200);
     kcal = Math.min(tdee, Math.max(tdee - deficit, floor));
     deficit = tdee - kcal;
@@ -115,7 +134,7 @@ export function expectedLoss(p: Profile, deficitKcal: number, weeks: number): Ex
   const cap = Math.max(0, p.weightKg - weightAtBmi(22, p.heightCm));
   if (cap <= 0) return null;
   const lowKg = Math.min(linear * 0.4, cap * 0.6);
-  const highKg = Math.min(linear * 0.7, cap);
+  const highKg = Math.min(linear * REALISTIC_SHARE, cap);
   return { lowKg, highKg };
 }
 

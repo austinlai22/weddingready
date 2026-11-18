@@ -108,6 +108,8 @@ export default function HowItWorks() {
                 { icon: 'rest', title: 'Hard days stay apart', body: 'Runs, rides, classes and sports are kept off strength days.' },
                 { icon: 'alert', title: 'Too full? It says so', body: 'You get a suggested fix, like moving a class or one fewer strength day.' },
                 { icon: 'move', title: 'Change anything', body: 'Drag sessions to other days. It warns you if recovery gets short.' },
+                { icon: 'list', title: 'Not sure? It chooses', body: 'From your goals and experience: strength days, plus easy cardio if you need it. It says why.' },
+                { icon: 'timer', title: 'Men and women', body: 'The same training principles. Women rest a little less between accessory sets; men rest a little more on main lifts.' },
               ]}
             />
           </div>
@@ -119,6 +121,7 @@ export default function HowItWorks() {
             <Facts
               items={[
                 { icon: 'meal', title: 'Gentle deficit', body: 'To lose fat, about 15% under what you burn. Never below your resting needs.' },
+                { icon: 'calendar', title: 'A goal weight, if you want', body: 'Calories aim for it by your fitting, never faster than 0.75% of your weight a week. It tells you if that’s not enough.' },
                 { icon: 'dumbbell', title: 'Protein first', body: '1.6 to 2 g per kg of body weight a day.' },
                 { icon: 'dessert', title: 'Dessert stays', body: 'One or two dessert nights every week.' },
               ]}

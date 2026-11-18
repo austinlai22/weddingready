@@ -6,7 +6,7 @@
 
 import { z } from 'zod';
 import { isISODate } from './engine/dates';
-import { ACTIVITY_TYPES, FOCUS_AREAS, type Activity, type ActivityType, type Equipment, type EquipmentOverride, type Experience, type FocusArea, type Goal, type Outfit, type Profile, type SessionRef, type WeekTemplate } from './types';
+import { ACTIVITY_TYPES, FOCUS_AREAS, type Activity, type ActivityType, type Equipment, type EquipmentOverride, type Experience, type FocusArea, type Goal, type Outfit, type Profile, type SessionRef, type Sex, type WeekTemplate } from './types';
 
 const PREFIX = 'wr1.';
 const isoDate = z.string().refine(isISODate);
@@ -15,6 +15,7 @@ const HandoffSchema = z.object({
   w: isoDate,
   f: isoDate.optional(),
   s: isoDate.optional(),
+  sx: z.enum(['female', 'male', 'unspecified']).optional(),
   sw: z.record(z.string().max(64), z.string().max(64)).optional(),
   // The week as the person has arranged it: per day, strength workout keys ("S:A"), activities by index ("a0"), or added ones ("x:yoga:Yoga").
   l: z.array(z.array(z.string().max(60)).max(8)).length(7).optional(),
@@ -36,6 +37,8 @@ export interface PlanHandoff {
   fittingDate?: string;
   /** The plan's first day, so phases and week numbers line up with the app. */
   startDate?: string;
+  /** Changes rest times between sets (see workouts.ts). */
+  sex?: Sex;
   exerciseSwaps?: Record<string, string>;
   /** The person's own week layout, if they rearranged it. */
   layout?: WeekTemplate;
@@ -72,6 +75,7 @@ export function handoffFromProfile(p: Profile, layout?: WeekTemplate | null): Pl
     weddingDate: p.weddingDate,
     ...(p.fittingDate ? { fittingDate: p.fittingDate } : {}),
     startDate: p.startDate,
+    ...(p.sex !== 'unspecified' ? { sex: p.sex } : {}),
     ...(p.exerciseSwaps && Object.keys(p.exerciseSwaps).length ? { exerciseSwaps: p.exerciseSwaps } : {}),
     goals: p.goals,
     strengthDays: p.strengthDays,
@@ -89,6 +93,7 @@ export function encodePlan(h: PlanHandoff): string {
     w: h.weddingDate,
     ...(h.fittingDate ? { f: h.fittingDate } : {}),
     ...(h.startDate ? { s: h.startDate } : {}),
+    ...(h.sex ? { sx: h.sex } : {}),
     ...(h.exerciseSwaps ? { sw: h.exerciseSwaps } : {}),
     ...(h.layout ? { l: encodeLayout(h.layout, h.activities) } : {}),
     ...(h.equipmentOverrides?.length ? { eo: h.equipmentOverrides.map((o) => ({ f: o.from, t: o.to, e: o.equipment })) } : {}),
@@ -124,6 +129,7 @@ export function decodePlan(code: string): PlanHandoff | null {
     weddingDate: c.w,
     ...(c.f ? { fittingDate: c.f } : {}),
     ...(c.s ? { startDate: c.s } : {}),
+    ...(c.sx ? { sex: c.sx } : {}),
     ...(c.sw ? { exerciseSwaps: c.sw } : {}),
     goals: c.g,
     strengthDays: c.d,

@@ -3,7 +3,7 @@ import { PROTOTYPE_USER } from '../lib/engine/fixtures';
 import { encodePlan, handoffFromProfile } from '../lib/handoff';
 import { SATURDAY, stored, watchConsole } from './helpers';
 
-async function basicsAndBody(page: Page) {
+async function basicsAndBody(page: Page, goalWeight?: string) {
   await page.getByLabel('First name or nickname (optional)').fill('Sam');
   await page.getByLabel('Wedding date').fill('2027-10-17');
   await page.getByRole('button', { name: /I don’t know yet/ }).click();
@@ -22,6 +22,7 @@ async function basicsAndBody(page: Page) {
   await page.getByRole('button', { name: /^Lose fat/ }).click();
   await expect(page.getByRole('button', { name: /Maintain and feel energized/ })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Shoulders', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  if (goalWeight) await page.getByLabel('Goal weight by your fitting (lb, optional)').fill(goalWeight);
   await page.getByRole('button', { name: 'Next' }).click();
 }
 
@@ -122,4 +123,33 @@ test('a plan link from an AI assistant fills in setup', async ({ page }) => {
   expect(page.url()).not.toContain('#plan=');
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(page.getByLabel('Wedding date')).toHaveValue(PROTOTYPE_USER.weddingDate);
+});
+
+test('a goal weight sizes the calories, and Choose for me picks the week', async ({ page }) => {
+  const con = watchConsole(page);
+  await page.clock.install({ time: SATURDAY });
+  await page.goto('/setup');
+  // A goal above the current weight is caught before moving on.
+  await basicsAndBody(page, '140');
+  await expect(page.getByText('Your goal weight needs to be below your current weight, or leave it blank.')).toBeVisible();
+  await page.getByLabel('Goal weight by your fitting (lb, optional)').fill('128');
+  await page.getByRole('button', { name: 'Next' }).click();
+
+  await page.getByRole('radio', { name: 'New to it' }).click();
+  await page.getByRole('button', { name: 'Choose for me' }).click();
+  await expect(page.getByText(/3 full-body strength days: the most reliable start/)).toBeVisible();
+  await expect(page.getByText(/3 easy cardio sessions of 35 minutes/)).toBeVisible();
+  await expect(page.getByRole('radio', { name: '3', exact: true })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('radio', { name: /Mostly sitting/ }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await foodAndHealth(page);
+
+  await expect(page.getByText(/Your goal:/)).toBeVisible();
+  await expect(page.getByText(/7 lb by/)).toBeVisible();
+  await page.getByRole('button', { name: /Start my plan on Monday/ }).click();
+  const s = await stored(page);
+  expect(s.profile?.goalWeightKg).toBeCloseTo(58.1, 1);
+  expect(s.profile?.strengthDays).toBe(3);
+  expect(s.profile?.activities.find((a: { id: string }) => a.id === 'easy-cardio')?.days).toHaveLength(3);
+  con.expectClean();
 });

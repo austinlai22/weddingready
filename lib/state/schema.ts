@@ -46,6 +46,8 @@ export const ProfileSchema = z
     safety: z.object({ pregnantOrPostpartum: z.boolean(), edHistory: z.boolean(), medicalCondition: z.boolean() }),
     startDate: ISODate,
     goalReachedAt: ISODate.optional(),
+    goalWeightKg: num.min(30).max(350).optional(),
+    goalSetOn: ISODate.optional(),
     exerciseSwaps: z.record(z.string().max(64), z.string().max(64)).optional(),
     equipmentOverrides: z
       .array(z.object({ from: ISODate, to: ISODate, equipment: z.enum(['home_db', 'gym', 'bodyweight']) }).refine((o) => o.from <= o.to, 'An equipment change must end after it starts'))

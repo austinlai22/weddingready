@@ -5,7 +5,7 @@ import { MONDAY, seed, stored, watchConsole } from './helpers';
 test('drag a session to another day, then undo', async ({ page }) => {
   const con = watchConsole(page);
   // No fake clock here: dnd-kit measures with requestAnimationFrame, which page.clock would freeze.
-  // The real date (before the Nov 16 start) gives the same week.
+  // Uses the real date: edits apply from the plan start or today, whichever is later.
   await seed(page);
   await page.goto('/plan');
   await expect(page.getByRole('img', { name: /Phase timeline: Foundation Nov 16 to Jan 10/ })).toBeVisible();
@@ -26,7 +26,9 @@ test('drag a session to another day, then undo', async ({ page }) => {
   await expect(wed.getByRole('button', { name: /^Str A\./ })).toBeVisible();
   let s = await stored(page);
   expect(s.scheduleOverrides?.days[2].some((x) => x.id === 'str-1')).toBe(true);
-  expect(s.scheduleOverrides?.effectiveFrom).toBe('2026-11-16');
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  expect(s.scheduleOverrides?.effectiveFrom).toBe(today > '2026-11-16' ? today : '2026-11-16');
 
   await page.getByRole('button', { name: 'Undo last change' }).click();
   await expect(page.getByLabel('Monday', { exact: true }).getByRole('button', { name: /^Str A\./ })).toBeVisible();

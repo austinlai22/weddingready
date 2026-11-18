@@ -1,5 +1,5 @@
 import exercisesData from '../../data/exercises.json';
-import type { Equipment, FocusArea, Goal, Experience, WorkoutKey } from '../types';
+import type { Equipment, FocusArea, Goal, Experience, Sex, WorkoutKey } from '../types';
 import type { PhaseName } from './phases';
 
 export type Pattern =
@@ -200,6 +200,8 @@ export interface RxContext {
   focusAreas: FocusArea[];
   recovery: boolean;
   taper: boolean;
+  /** Changes rest between sets (see sexAdjustedRest). Unspecified keeps the defaults. */
+  sex?: Sex;
 }
 
 export interface Prescribed {
@@ -263,6 +265,7 @@ export function prescribe(ex: Exercise, main: boolean, ctx: RxContext): Prescrib
     sets = Math.max(2, sets - 1);
   }
   if (ctx.recovery || ctx.taper) sets = 2;
+  [restMin, restMax] = sexAdjustedRest(restMin, restMax, main, ctx.sex);
 
   const side = ex.unit !== 'reps' && ex.sideLabel ? ` ${SIDE_TEXT[ex.sideLabel]}` : '';
   let rx: string;
@@ -302,6 +305,29 @@ export function trimToFit(list: Prescribed[], minutes: number): Prescribed[] {
   return out;
 }
 
+/**
+ * Training principles are the same for everyone; rest is where the evidence
+ * shows a reliable difference. Women typically recover faster between sets
+ * (more fatigue-resistant muscle), so accessory rest is 15 s shorter. Men
+ * typically lift heavier absolute loads on the main lifts, which need longer to
+ * recover from, so main-lift rest is 30 s longer.
+ */
+export function sexAdjustedRest(min: number, max: number, main: boolean, sex?: Sex): [number, number] {
+  if (sex === 'female' && !main) return [min - 15, max - 15];
+  if (sex === 'male' && main) return [min + 30, max + 30];
+  return [min, max];
+}
+
+/**
+ * New lifters start from where they are. Women typically have less upper-body
+ * strength relative to body weight, so a new lifter's push-up starts on an
+ * incline (hands on a bench or counter) and progresses from there.
+ */
+function startingVariant(id: string, ctx: RxContext): string {
+  if (ctx.experience === 'new' && ctx.sex === 'female' && id === 'pushup') return 'bw-incline-pushup';
+  return id;
+}
+
 export function buildWorkout(
   key: WorkoutKey,
   equipment: Equipment,
@@ -311,7 +337,7 @@ export function buildWorkout(
 ): Prescribed[] {
   const list = workoutSlots(key, equipment, ctx.focusAreas).map((s) => {
     const to = swaps[s.id];
-    const ex = to && BY_ID.has(to) ? exerciseById(to) : exerciseById(s.id);
+    const ex = to && BY_ID.has(to) ? exerciseById(to) : exerciseById(startingVariant(s.id, ctx));
     return prescribe(ex, s.main, ctx);
   });
   return trimToFit(list, sessionLength);

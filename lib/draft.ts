@@ -1,5 +1,5 @@
 import { addDays, isISODate, nextMonday } from './engine/dates';
-import { defaultNutritionMode, isAdult, loseFatBlockedReason, MIN_AGE } from './engine/guardrails';
+import { defaultNutritionMode, isAdult, loseFatBlockedReason, MIN_AGE, targetWeightAllowed } from './engine/guardrails';
 import { bmi } from './engine/nutrition';
 import type { PlanHandoff } from './handoff';
 import type { Activity, ActivityType, Diet, Equipment, Experience, FocusArea, Goal, Job, NutritionMode, Outfit, Profile, Sex, Units } from './types';
@@ -39,6 +39,9 @@ export interface Draft {
   safety: { pregnantOrPostpartum: boolean; edHistory: boolean; medicalCondition: boolean; none: boolean };
   startDate: string;
   goalReachedAt?: string;
+  /** Lose fat: optional goal weight, in the draft's units. */
+  goalWeight: string;
+  goalSetOn?: string;
 }
 
 export function defaultUnits(): Units {
@@ -79,6 +82,7 @@ export function emptyDraft(units: Units = defaultUnits()): Draft {
     treat: '',
     safety: { pregnantOrPostpartum: false, edHistory: false, medicalCondition: false, none: false },
     startDate: '',
+    goalWeight: '',
   };
 }
 
@@ -87,6 +91,17 @@ export const OUTFIT_FOCUS: Record<Outfit, FocusArea[]> = {
   suit: ['shoulders', 'chest', 'upper_back'],
   other: [],
 };
+
+/**
+ * Starting focus muscles: from the outfit, or, for "something else", the areas
+ * most people of that sex ask to work on. Always editable.
+ */
+export function defaultFocus(outfit: Outfit | '', sex: Sex | ''): FocusArea[] {
+  if (outfit === 'dress' || outfit === 'suit') return OUTFIT_FOCUS[outfit];
+  if (sex === 'female') return ['glutes', 'upper_back', 'shoulders'];
+  if (sex === 'male') return ['chest', 'upper_back', 'arms'];
+  return [];
+}
 
 const num = (s: string) => {
   const v = parseFloat(s.replace(',', '.'));
@@ -98,6 +113,12 @@ export function draftHeightCm(d: Draft): number {
   const ft = num(d.heightFt);
   const inch = d.heightIn.trim() === '' ? 0 : num(d.heightIn);
   return (ft * 12 + inch) * 2.54;
+}
+
+export function draftGoalWeightKg(d: Draft): number {
+  if (!d.goalWeight.trim()) return NaN;
+  const w = num(d.goalWeight);
+  return d.units === 'metric' ? w : w / 2.20462;
 }
 
 export function draftWeightKg(d: Draft): number {
@@ -120,6 +141,8 @@ export function switchUnits(d: Draft, units: Units): Draft {
     }
   }
   if (Number.isFinite(kg) && kg > 0) next.weight = String(units === 'metric' ? Math.round(kg * 10) / 10 : Math.round(kg * 2.20462));
+  const goal = draftGoalWeightKg(d);
+  if (Number.isFinite(goal) && goal > 0) next.goalWeight = String(units === 'metric' ? Math.round(goal * 10) / 10 : Math.round(goal * 2.20462));
   return next;
 }
 
@@ -176,6 +199,8 @@ export function draftFromProfile(p: Profile): Draft {
     safety: { ...p.safety, none: !p.safety.edHistory && !p.safety.medicalCondition && !p.safety.pregnantOrPostpartum },
     startDate: p.startDate,
     goalReachedAt: p.goalReachedAt,
+    goalWeight: p.goalWeightKg ? String(p.units === 'metric' ? Math.round(p.goalWeightKg * 10) / 10 : Math.round(p.goalWeightKg * 2.20462)) : '',
+    goalSetOn: p.goalSetOn,
   };
 }
 
@@ -229,6 +254,13 @@ export function validateStep(step: number, d: Draft, today: string): string | nu
     case 5:
       if (!d.goals.length) return 'Pick at least one goal.';
       if (d.goals.includes('lose_fat') && d.goals.includes('maintain')) return 'Lose fat and Maintain can’t both be on.';
+      if (d.goals.includes('lose_fat') && d.goalWeight.trim() && !d.safety.edHistory) {
+        const goal = draftGoalWeightKg(d);
+        const now = draftWeightKg(d);
+        if (!Number.isFinite(goal) || goal < 30) return 'Check your goal weight.';
+        if (Number.isFinite(now) && goal >= now) return 'Your goal weight needs to be below your current weight, or leave it blank.';
+        if (!targetWeightAllowed(goal, draftHeightCm(d))) return 'That goal is below a healthy weight for your height, so the plan can’t aim for it. Try a higher goal, or leave it blank.';
+      }
       return null;
     case 6:
       return d.focusAreas.length > 3 ? 'Pick up to 3 focus areas.' : null;
@@ -326,6 +358,8 @@ export function profileFromDraft(d: Draft, startDate: string): Profile {
     safety,
     startDate,
     ...(d.goalReachedAt ? { goalReachedAt: d.goalReachedAt } : {}),
+    ...(goals.includes('lose_fat') && !safety.edHistory && Number.isFinite(draftGoalWeightKg(d)) ? { goalWeightKg: Math.round(draftGoalWeightKg(d) * 10) / 10 } : {}),
+    goalSetOn: d.goalSetOn ?? startDate,
   };
 }
 

@@ -1,8 +1,11 @@
 'use client';
 
-import { addDays, DAY_ABBR, DAY_NAMES } from '@/lib/engine/dates';
+import { useState } from 'react';
+import { addDays, DAY_ABBR, DAY_NAMES, isISODate } from '@/lib/engine/dates';
+import { weeksToWedding } from '@/lib/engine/phases';
+import { EASY_CARDIO_ID, recommendWeek } from '@/lib/engine/recommend';
 import { ED_HELPLINE, loseFatBlockedReason, MIN_BMI } from '@/lib/engine/guardrails';
-import { ACTIVITY_DEFAULT_LABEL, draftHeightCm, draftWeightKg, MAX_PLAN_DAYS, maxFittingDate, OUTFIT_FOCUS, switchUnits, type Draft } from '@/lib/draft';
+import { ACTIVITY_DEFAULT_LABEL, defaultFocus, defaultStart, draftHeightCm, draftWeightKg, MAX_PLAN_DAYS, maxFittingDate, switchUnits, type Draft } from '@/lib/draft';
 import { ACTIVITY_TYPES, FOCUS_AREAS, type ActivityType, type FocusArea, type Goal } from '@/lib/types';
 import { CheckBox } from '../ui/icons';
 
@@ -110,7 +113,7 @@ export function BodyFields({ d, set }: F) {
 
 export function OutfitFields({ d, set }: F) {
   const pick = (o: Draft['outfit']) =>
-    set((cur) => ({ ...cur, outfit: o, focusAreas: cur.focusTouched || !o ? cur.focusAreas : OUTFIT_FOCUS[o] }));
+    set((cur) => ({ ...cur, outfit: o, focusAreas: cur.focusTouched || !o ? cur.focusAreas : defaultFocus(o, cur.sex) }));
   return (
     <div className="choice-grid" role="radiogroup" aria-label="What are you wearing?">
       <Choice role="radio" on={d.outfit === 'dress'} onClick={() => pick('dress')} title="Dress" />
@@ -141,6 +144,13 @@ export function GoalFields({ d, set }: F) {
         return <Choice key={g} on={d.goals.includes(g)} onClick={() => toggle(g)} title={title} sub={reason} disabled={disabled && !d.goals.includes(g)} />;
       })}
       <p className="small muted">Pick as many as you like. Lose fat and Maintain can’t both be on.</p>
+      {d.goals.includes('lose_fat') && !d.safety.edHistory && (
+        <label className="field">
+          <span>Goal weight by your fitting ({d.units === 'metric' ? 'kg' : 'lb'}, optional)</span>
+          <input className="input" type="number" inputMode="decimal" value={d.goalWeight} onChange={(e) => set({ goalWeight: e.target.value })} style={{ maxWidth: 160 }} />
+          <span className="small muted">Sets your calories to aim for it, never faster than a safe pace. Leave blank for a gentle, steady deficit.</span>
+        </label>
+      )}
     </div>
   );
 }
@@ -182,7 +192,6 @@ export function TrainingFields({ d, set }: F) {
           <Choice role="radio" on={d.equipment === 'bodyweight'} onClick={() => set({ equipment: 'bodyweight' })} title="Bodyweight only" />
         </div>
       </div>
-      <Pills label="Experience" value={d.experience} options={[{ v: 'new', label: 'New to it' }, { v: 'some', label: 'Some' }, { v: 'experienced', label: 'Experienced' }]} onChange={(v) => set({ experience: v })} />
       <Pills label="Session length" value={d.sessionMinutes} options={[30, 45, 60].map((n) => ({ v: n as 30 | 45 | 60, label: `${n} min` }))} onChange={(v) => set({ sessionMinutes: v })} />
     </div>
   );
@@ -367,3 +376,57 @@ export function SafetyFields({ d, set }: F) {
 }
 
 export { MIN_BMI };
+
+/**
+ * "Not sure? Choose for me": sets the strength days and adds easy cardio from
+ * the goals, experience and what the person already does (lib/engine/recommend).
+ */
+export function ExperienceFields({ d, set }: F) {
+  return (
+    <Pills
+      label="Experience with strength training"
+      value={d.experience}
+      options={[{ v: 'new', label: 'New to it' }, { v: 'some', label: 'Some' }, { v: 'experienced', label: 'Experienced' }]}
+      onChange={(v) => set({ experience: v })}
+    />
+  );
+}
+
+export function WeekChooser({ d, set, today }: F & { today: string }) {
+  const [reasons, setReasons] = useState<string[] | null>(null);
+  const choose = () => {
+    const weeks = isISODate(d.weddingDate) ? weeksToWedding(defaultStart(today, d.weddingDate), d.weddingDate) : 26;
+    const rec = recommendWeek({
+      goals: d.goals.length ? d.goals : ['tone'],
+      experience: d.experience,
+      weeksToWedding: weeks,
+      activities: d.activities,
+      dailyWalkMinutes: d.walkMinutes.trim() ? Number(d.walkMinutes) : undefined,
+      equipment: d.equipment,
+      focusAreas: d.focusAreas,
+    });
+    set((cur) => ({
+      ...cur,
+      strengthDays: rec.strengthDays,
+      activities: [...cur.activities.filter((a) => a.id !== EASY_CARDIO_ID), ...(rec.cardio ? [rec.cardio] : [])],
+    }));
+    setReasons(rec.reasons);
+  };
+  return (
+    <div className="stack-8">
+      <p className="small">Not sure how many days to train? Let the plan choose your strength days and any easy cardio from your goals, your experience and what you already do. It explains why, and you can change anything below.</p>
+      <div>
+        <button type="button" className="btn-dark" onClick={choose}>
+          {reasons ? 'Choose again' : 'Choose for me'}
+        </button>
+      </div>
+      {reasons && (
+        <ul className="banner" style={{ margin: 0, paddingLeft: 28 }} aria-live="polite">
+          {reasons.map((r) => (
+            <li key={r} className="small" style={{ marginTop: 4 }}>{r}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

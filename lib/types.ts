@@ -71,6 +71,10 @@ export interface Profile {
   safety: Safety;
   startDate: string;
   goalReachedAt?: string;
+  /** Lose fat only: the weight the person is aiming for by the fitting. Sizes the calorie deficit within the safety limits. */
+  goalWeightKg?: number;
+  /** When the current weight or goal weight was last set; the deficit is timed from here to Maintain. */
+  goalSetOn?: string;
   /** Exercises replaced by others (e.g. for a sore knee), by exercise id. */
   exerciseSwaps?: Record<string, string>;
   /** Different equipment for a stretch of dates (e.g. a hotel gym while travelling). */
