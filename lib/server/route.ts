@@ -11,6 +11,27 @@ export function ok(body: unknown) {
   return NextResponse.json(body, { headers: { 'Cache-Control': 'no-store' } });
 }
 
+/**
+ * True for a request a browser sent from another website (a page spending its
+ * visitors' requests on our free quota). Same-site pages, localhost and
+ * non-browser callers (no Origin header) pass; the daily limits cover those.
+ */
+export function fromOtherSite(request: Request): boolean {
+  const origin = request.headers.get('origin');
+  if (!origin) return false;
+  try {
+    const o = new URL(origin);
+    const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+    return !(o.host === host || o.hostname === 'localhost' || o.hostname === '127.0.0.1');
+  } catch {
+    return true;
+  }
+}
+
+export function otherSiteRefused() {
+  return fail(403, 'This only works from WeddingReady itself.', 'forbidden');
+}
+
 export async function readJson(request: Request, maxBytes = 8_000): Promise<unknown> {
   const text = await request.text();
   if (text.length > maxBytes) throw new RangeError('too large');

@@ -26,16 +26,27 @@ export function limitKey(scope: string, who: string, now: Date): string {
   return `rl:${scope}:${dayStamp(now)}:${digest}`;
 }
 
-/** Counts this request and returns false once any limit is exceeded. */
+/**
+ * Free-model calls a day across every AI route (the coach's steps, meal
+ * estimates, setup descriptions), so a busy day or a misbehaving client can't
+ * use up the free quota for everyone. GEMINI_DAILY_CALLS overrides it.
+ */
+export function freeModelCap(env: Record<string, string | undefined> = process.env): number {
+  const v = Number(env.GEMINI_DAILY_CALLS);
+  return Number.isFinite(v) && v > 0 ? Math.floor(v) : 2000;
+}
+
+/** Counts this request and returns false once any limit is exceeded. A 'global' limit is shared by every route. */
 export async function withinLimits(
   store: Store,
   scope: string,
-  limits: { kind: 'device' | 'ip'; who: string; max: number }[],
+  limits: { kind: 'device' | 'ip' | 'global'; who: string; max: number }[],
   now = new Date(),
 ): Promise<boolean> {
   let ok = true;
   for (const l of limits) {
-    const n = await store.incr(limitKey(`${scope}:${l.kind}`, l.who, now), DAY_SECONDS);
+    const key = l.kind === 'global' ? limitKey('free-models:global', 'all', now) : limitKey(`${scope}:${l.kind}`, l.who, now);
+    const n = await store.incr(key, DAY_SECONDS);
     if (n > l.max) ok = false;
   }
   return ok;

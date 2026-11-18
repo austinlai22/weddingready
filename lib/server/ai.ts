@@ -42,14 +42,8 @@ export function resetCooldowns() {
   thinkingRejected.clear();
 }
 
-/** Keeps user text inside its delimiters: no angle brackets, no control characters, capped length. */
-export function asData(text: string, max: number): string {
-  return text
-    .replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, ' ')
-    .replace(/[<>]/g, (c) => (c === '<' ? '‹' : '›'))
-    .slice(0, max)
-    .trim();
-}
+export { asData } from '../textData';
+import { asData } from '../textData';
 
 /**
  * Problems with the Anthropic account itself (bad key, no credits, no access)
@@ -76,7 +70,7 @@ export function geminiAccountProblem(e: unknown): AiUnavailable | null {
   return null;
 }
 
-interface CallResult<T> {
+export interface CallResult<T> {
   data: T;
   usd: number;
 }
@@ -114,6 +108,19 @@ function jsonSchemaFor(schema: z.ZodType): unknown {
   return json;
 }
 
+/**
+ * A deadline of our own around a model call: the SDK's timeout has been seen
+ * to leave a request hanging, which would hold the route open. A call past the
+ * deadline counts as busy, so the next free model is tried.
+ */
+export function withDeadline<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`timed out after ${ms} ms`)), ms);
+  });
+  return Promise.race([work, deadline]).finally(() => clearTimeout(timer));
+}
+
 /** Google's "model overloaded" and server errors: worth trying another free model. */
 export function geminiBusy(e: unknown): boolean {
   if (e instanceof GeminiApiError) return e.status === 503 || e.status === 500 || e.status === 504;
@@ -121,7 +128,8 @@ export function geminiBusy(e: unknown): boolean {
   return e instanceof Error && /abort|timed? ?out/i.test(`${e.name} ${e.message}`);
 }
 
-async function callGemini<S extends z.ZodType>(schema: S, system: string, user: string): Promise<CallResult<z.infer<S>>> {
+/** Free Gemini models only ($0), for features that should never use a paid model. */
+export async function callGemini<S extends z.ZodType>(schema: S, system: string, user: string): Promise<CallResult<z.infer<S>>> {
   const ready = GEMINI_MODELS.filter((m) => !coolingDown(m));
   let quota = false;
   for (const model of ready.length ? ready : GEMINI_MODELS) {
@@ -155,12 +163,14 @@ async function callGeminiModel<S extends z.ZodType>(model: string, schema: S, sy
   const responseJsonSchema = jsonSchemaFor(schema);
   for (let attempt = 0; attempt < 2; attempt++) {
     const thinkingConfig = thinkingRejected.has(model) ? undefined : { thinkingLevel: THINKING[model] ?? ThinkingLevel.MINIMAL };
-    const response = await gemini.models
-      .generateContent({
+    const response = await withDeadline(
+      gemini.models.generateContent({
         model,
         contents: user,
         config: { systemInstruction: system, responseMimeType: 'application/json', responseJsonSchema, maxOutputTokens: 2000, ...(thinkingConfig ? { thinkingConfig } : {}) },
-      })
+      }),
+      14_000,
+    )
       .catch((e: unknown) => {
         // A model that doesn't take this thinking level: remember, and retry this attempt without it.
         if (e instanceof GeminiApiError && e.status === 400 && /thinking/i.test(e.message) && thinkingConfig) {

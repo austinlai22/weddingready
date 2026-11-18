@@ -30,3 +30,28 @@ export function watchConsole(page: Page) {
 export async function stored(page: Page): Promise<AppState> {
   return page.evaluate(() => JSON.parse(localStorage.getItem('weddingready-v1') || '{}').state);
 }
+
+/** One scripted model step for the coach: tool calls the browser should run, and/or the reply text. */
+export interface FakeStep {
+  text?: string;
+  calls?: { name: string; args: Record<string, unknown> }[];
+}
+
+/**
+ * Stands in for Gemini behind /api/coach: each request gets the next scripted
+ * step, and the app runs the tools and the loop itself, as it does for real.
+ */
+export async function fakeCoach(page: Page, steps: FakeStep[], onRequest?: (body: { context: Record<string, unknown>; contents: { role: string; parts: Record<string, unknown>[] }[] }, index: number) => void) {
+  let i = 0;
+  await page.route('**/api/coach', async (route) => {
+    const body = route.request().postDataJSON();
+    onRequest?.(body, i);
+    const s = steps[Math.min(i, steps.length - 1)];
+    i++;
+    const calls = (s.calls ?? []).map((c, k) => ({ ...c, id: `call-${i}-${k}` }));
+    await route.fulfill({
+      json: { model: 'test-model', text: s.text ?? '', calls, turn: { role: 'model', parts: [...calls.map((c) => ({ functionCall: c })), ...(s.text ? [{ text: s.text }] : [])] } },
+    });
+  });
+  return { requests: () => i };
+}

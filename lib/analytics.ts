@@ -22,7 +22,8 @@ export type AnalyticsEvent =
   | 'settings_changed'
   | 'calendar_exported'
   | 'plan_code_copied'
-  | 'coach';
+  | 'coach'
+  | 'setup_describe';
 
 type Props = Record<string, string | number | boolean | string[]>;
 

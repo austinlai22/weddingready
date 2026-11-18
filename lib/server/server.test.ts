@@ -238,3 +238,13 @@ describe('Gemini free tier', () => {
     warn.mockRestore();
   });
 });
+
+describe('a model call that never answers', () => {
+  it('is cut off and treated as busy, so the next free model is tried', async () => {
+    const { withDeadline, geminiBusy } = await import('./ai');
+    const err = await withDeadline(new Promise(() => undefined), 20).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(geminiBusy(err)).toBe(true);
+    expect(await withDeadline(Promise.resolve('ok'), 20)).toBe('ok');
+  });
+});

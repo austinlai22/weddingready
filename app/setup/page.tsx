@@ -19,6 +19,7 @@ import {
   TrainingFields,
   type SetDraft,
 } from '@/components/setup/Fields';
+import { DescribeYourself } from '@/components/setup/DescribeYourself';
 import { ExpectationLine } from '@/components/setup/ExpectationLine';
 import { track } from '@/lib/analytics';
 import { defaultStart, draftFromHandoff, emptyDraft, profileFromDraft, SETUP_SCREENS, STEP_COUNT, validateScreen, type Draft } from '@/lib/draft';
@@ -183,6 +184,7 @@ function Setup() {
           >
             {step === 1 && (
               <>
+                <DescribeYourself d={d} set={set} today={today} />
                 <NameFields d={d} set={set} />
                 <DateFields d={d} set={set} today={today} />
               </>

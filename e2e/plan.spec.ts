@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { MONDAY, seed, stored, watchConsole } from './helpers';
+import { fakeCoach, MONDAY, seed, stored, watchConsole } from './helpers';
 
 test('drag a session to another day, then undo', async ({ page }) => {
   const con = watchConsole(page);
@@ -55,20 +55,15 @@ test('warns when full-body days land back to back, including Sunday into Monday'
 test('the coach proposes, previews, and applies only on Apply', async ({ page }) => {
   await page.clock.install({ time: MONDAY });
   await seed(page);
-  await page.route('**/api/coach', async (route) => {
-    const body = route.request().postDataJSON();
-    // What the coach sees: a plan code and the week, never body measurements or health answers.
-    expect(body.message).toBe('Move strength A to Tuesday and add yoga on Sunday');
-    expect(body.plan).toMatch(/^wr1\./);
-    expect(JSON.stringify(body)).not.toMatch(/weightKg|heightCm|edHistory|"age"/);
-    await route.fulfill({
-      json: {
-        reply: 'I suggest moving Strength A to Tuesday and adding yoga on Sunday.',
-        // A lasting change: the usual week from next Monday, and the same change for the rest of this week.
-        proposals: [{ kind: 'schedule', scope: 'from_now_on', ops: [{ op: 'move', sessionId: 'str-1', toDay: 'tue' }, { op: 'add', activity: 'yoga', day: 'sun' }], thisWeekOps: [{ op: 'move', sessionId: 'str-1', toDay: 'tue' }, { op: 'add', activity: 'yoga', day: 'sun' }], summary: 'Strength A moves to Tuesday; yoga on Sunday.' }],
-      },
-    });
-  });
+  const seen: string[] = [];
+  await fakeCoach(
+    page,
+    [
+      { calls: [{ name: 'propose_schedule_change', args: { based_on: 'asked to move A and add yoga', scope: 'from_now_on', changes: [{ op: 'move', session_id: 'str-1', to_day: 'tue' }, { op: 'add', activity: 'yoga', day: 'sun' }], summary: 'Strength A moves to Tuesday; yoga on Sunday.' } }] },
+      { text: 'I suggest moving Strength A to Tuesday and adding yoga on Sunday.' },
+    ],
+    (body) => seen.push(JSON.stringify(body)),
+  );
   await page.goto('/plan');
   await page.getByLabel('Message to your coach').fill('Move strength A to Tuesday and add yoga on Sunday');
   await page.getByRole('button', { name: 'Ask', exact: true }).click();
@@ -76,6 +71,13 @@ test('the coach proposes, previews, and applies only on Apply', async ({ page })
   await expect(page.getByText('Strength A moves to Tuesday; yoga on Sunday.')).toBeVisible();
   await expect(page.getByText('Every week from Nov 23')).toBeVisible();
   await expect(page.getByText('The rest of this week')).toBeVisible();
+  // What reaches the server: the message, a few plain facts, and tool results the app worked out
+  // on this device. No plan code, body measurements or health answers.
+  expect(seen).toHaveLength(2);
+  expect(seen[0]).toContain('Move strength A to Tuesday and add yoga on Sunday');
+  expect(JSON.parse(seen[0]).context).toEqual({ today: '2026-11-16', weddingDate: '2027-10-17', strengthDays: 2, equipment: 'home_db', numbers: 'habits_numbers' });
+  expect(seen[1]).toContain('"proposed":true');
+  for (const body of seen) expect(body).not.toMatch(/wr1\.|weightKg|heightCm|edHistory|"age"|61\.2/);
   let s = await stored(page);
   expect(s.scheduleOverrides).toBeNull();
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
@@ -87,18 +89,23 @@ test('the coach proposes, previews, and applies only on Apply', async ({ page })
   expect(s.scheduleHistory?.at(-1)?.until).toBe('2026-11-23');
   expect(s.scheduleHistory?.at(-1)?.template.days[1].some((x) => x.id === 'str-1')).toBe(true);
 });
-
 test('a “this week only” change from the coach keeps past days and ends on Sunday', async ({ page }) => {
-  // Wednesday of week 1: Strength A was done on Monday; Thursday's Strength B moves to Saturday, this week only.
+  // Wednesday of week 1: Strength A was done on Monday. Thursday is out; the coach asks which day,
+  // then the app's planner moves Strength B to Saturday, this week only.
   await page.clock.install({ time: new Date('2026-11-18T09:00:00') });
   await seed(page, undefined, {
     logs: { sets: {}, weights: {}, sessionsDone: { '2026-11-16': ['str-1'] }, warmups: {}, meals: {}, extras: {} },
   });
-  await page.route('**/api/coach', (route) =>
-    route.fulfill({ json: { reply: 'I suggest Saturday instead, this week only.', proposals: [{ kind: 'schedule', scope: 'this_week', ops: [{ op: 'move', sessionId: 'str-2', toDay: 'sat' }], summary: 'Thursday to Saturday.' }] } }),
-  );
+  await fakeCoach(page, [
+    { calls: [{ name: 'ask_question', args: { question: 'Which day works instead this week?', options: ['Friday', 'Saturday', 'Skip it this week'] } }] },
+    { calls: [{ name: 'find_best_week', args: { scope: 'this_week', unavailable_days: ['thu'], preferred_days: ['sat'], based_on: 'Saturday works' } }] },
+    { text: 'I suggest Saturday instead, this week only.' },
+  ]);
   await page.goto('/plan');
   await page.getByRole('button', { name: 'I can’t train tomorrow. Fit it in later this week?' }).click();
+  await expect(page.getByText('Which day works instead this week?')).toBeVisible();
+  await page.getByRole('button', { name: 'Saturday', exact: true }).click();
+  await expect(page.getByText('Strength B Thursday → Saturday.')).toBeVisible();
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
   const s = await stored(page);
   expect(s.scheduleOverrides).toBeNull();
@@ -109,28 +116,19 @@ test('a “this week only” change from the coach keeps past days and ends on S
   await page.getByRole('button', { name: /^Saturday/ }).click();
   await expect(page.getByRole('region', { name: 'Strength B' })).toBeVisible();
 });
-
 test('the coach asks when it needs more, and proposes only after the answer', async ({ page }) => {
   await page.clock.install({ time: MONDAY });
   await seed(page);
-  let calls = 0;
-  await page.route('**/api/coach', async (route) => {
-    const body = route.request().postDataJSON();
-    calls++;
-    if (calls === 1) {
-      await route.fulfill({ json: { reply: 'What will you have to train with at the hotel?', proposals: [], options: ['Dumbbells only', 'Full gym', 'Nothing'] } });
-      return;
-    }
-    // The answer goes back with the conversation so far.
-    expect(body.message).toBe('Dumbbells only');
-    expect(body.history.map((h: { role: string }) => h.role)).toEqual(['user', 'coach']);
-    await route.fulfill({
-      json: {
-        reply: 'I suggest dumbbell versions for your trip.',
-        proposals: [{ kind: 'equipment', from: '2026-11-23', to: '2026-11-29', equipment: 'home_db', reason: 'Hotel stay.', basedOn: 'hotel gym has dumbbells only' }],
-      },
-    });
-  });
+  const bodies: { contents: { role: string; parts: Record<string, unknown>[] }[] }[] = [];
+  await fakeCoach(
+    page,
+    [
+      { calls: [{ name: 'ask_question', args: { question: 'What will you have to train with at the hotel?', options: ['Dumbbells only', 'Full gym', 'Nothing'] } }] },
+      { calls: [{ name: 'propose_equipment_change', args: { from_date: '2026-11-23', to_date: '2026-11-29', equipment: 'home_dumbbells', reason: 'Hotel stay.', based_on: 'hotel gym has dumbbells only' } }] },
+      { text: 'I suggest dumbbell versions for your trip.' },
+    ],
+    (body) => bodies.push(body),
+  );
   await page.goto('/plan');
   await page.getByLabel('Message to your coach').fill('I’m travelling next week');
   await page.getByRole('button', { name: 'Ask', exact: true }).click();
@@ -138,27 +136,26 @@ test('the coach asks when it needs more, and proposes only after the answer', as
   await expect(page.getByRole('button', { name: 'Apply', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Dumbbells only' }).click();
   await expect(page.getByText('Based on: hotel gym has dumbbells only')).toBeVisible();
+  // The answer goes back with the conversation so far.
+  expect(bodies[1].contents.map((c) => c.role)).toEqual(['user', 'model', 'user']);
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
   const s = await stored(page);
   expect(s.profile?.equipmentOverrides).toEqual([{ from: '2026-11-23', to: '2026-11-29', equipment: 'home_db' }]);
 });
-
 test('coach swaps and equipment changes show in Settings and can be undone', async ({ page }) => {
   await page.clock.install({ time: MONDAY });
   await seed(page);
-  await page.route('**/api/coach', (route) =>
-    route.fulfill({
-      json: {
-        reply: 'I suggest a gentler swap, and gym versions for your trip.',
-        proposals: [
-          { kind: 'swap', from: 'reverse-lunge', to: 'db-glute-bridge', fromName: 'Reverse lunge', toName: 'Dumbbell glute bridge', reason: 'Sore knee.' },
-          { kind: 'equipment', from: '2026-11-23', to: '2026-11-29', equipment: 'gym', reason: 'Hotel gym.' },
-        ],
-      },
-    }),
-  );
+  await fakeCoach(page, [
+    {
+      calls: [
+        { name: 'propose_exercise_swap', args: { from_exercise_id: 'reverse-lunge', to_exercise_id: 'db-glute-bridge', reason: 'Sore knee.', based_on: 'lunges hurt my knee' } },
+        { name: 'propose_equipment_change', args: { from_date: '2026-11-23', to_date: '2026-11-29', equipment: 'gym', reason: 'Hotel gym.', based_on: 'a hotel with a full gym' } },
+      ],
+    },
+    { text: 'I suggest a gentler swap, and gym versions for your trip.' },
+  ]);
   await page.goto('/plan');
-  await page.getByLabel('Message to your coach').fill('My knee hurts, and I’m at a hotel next week');
+  await page.getByLabel('Message to your coach').fill('Lunges hurt my knee, and next week I’m at a hotel with a full gym');
   await page.getByRole('button', { name: 'Ask', exact: true }).click();
   await expect(page.getByText('Reverse lunge → Dumbbell glute bridge')).toBeVisible();
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
@@ -172,7 +169,6 @@ test('coach swaps and equipment changes show in Settings and can be undone', asy
   s = await stored(page);
   expect(s.profile?.exerciseSwaps).toEqual({});
 });
-
 test('take your plan along: Apple, Google, Outlook or a file, and a plan code', async ({ page }) => {
   await page.clock.install({ time: MONDAY });
   await seed(page);

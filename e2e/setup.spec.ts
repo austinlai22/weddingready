@@ -153,3 +153,51 @@ test('a goal weight sizes the calories, and Choose for me picks the week', async
   expect(s.profile?.activities.find((a: { id: string }) => a.id === 'easy-cardio')?.days).toHaveLength(3);
   con.expectClean();
 });
+
+test('describe your plans fills in setup and says what it filled', async ({ page }) => {
+  const con = watchConsole(page);
+  await page.clock.install({ time: SATURDAY });
+  let sent: Record<string, unknown> = {};
+  await page.route('**/api/describe-setup', async (route) => {
+    sent = route.request().postDataJSON();
+    await route.fulfill({
+      json: {
+        weddingDate: '2027-10-16',
+        fittingDate: '2027-10-02',
+        outfit: 'dress',
+        goals: ['tone'],
+        strengthDays: 3,
+        equipment: 'home_db',
+        activities: [{ type: 'run', label: 'Run', days: [1] }, { type: 'pilates', label: 'Pilates', days: [5], minutes: 45 }],
+        diet: 'vegetarian',
+        skipped: ['Maintain (it can’t be on with Lose fat)'],
+      },
+    });
+  });
+  await page.goto('/setup');
+  await page.getByLabel('Describe your plans', { exact: true }).fill('Wedding Oct 16 next year, fitting Oct 2. I run Tuesdays and do Pilates Saturdays. Dumbbells at home, 3 days. Vegetarian.');
+  await page.getByRole('button', { name: 'Fill in for me' }).click();
+  await expect(page.getByText('Filled in.')).toBeVisible();
+  await expect(page.getByText('Pilates: Sat, 45 min')).toBeVisible();
+  await expect(page.getByText(/Couldn’t use: Maintain/)).toBeVisible();
+  // Only the sentence and today's date go to the server.
+  expect(Object.keys(sent).sort()).toEqual(['deviceId', 'text', 'today']);
+  await expect(page.getByLabel('Wedding date')).toHaveValue('2027-10-16');
+  await expect(page.getByLabel('Outfit fitting date (optional)')).toHaveValue('2027-10-02');
+  await page.getByRole('button', { name: 'Next' }).click();
+
+  // Body details are never filled in: the person adds them.
+  await expect(page.getByLabel('Age', { exact: true })).toHaveValue('');
+  await page.getByRole('radio', { name: 'lb, ft/in' }).click();
+  await page.getByLabel('Age', { exact: true }).fill('29');
+  await page.getByRole('radio', { name: 'Female' }).click();
+  await page.getByLabel('Feet').fill('5');
+  await page.getByLabel('Inches').fill('6');
+  await page.getByLabel('Current weight (lb)').fill('140');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByRole('radio', { name: 'Dress' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('button', { name: /Tone and sculpt/ })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByRole('group', { name: 'Days for Pilates' }).getByRole('button', { name: 'Saturday' })).toHaveAttribute('aria-pressed', 'true');
+  con.expectClean();
+});

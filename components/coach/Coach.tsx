@@ -7,7 +7,8 @@ import { DAY_NAMES, dayIndex, fmtShort, mondayOf, addDays } from '@/lib/engine/d
 import { targetsFor, type Plan } from '@/lib/engine/plan';
 import { applyOps, OpError, templateForDate, usualTemplate, validateTemplate } from '@/lib/engine/schedule';
 import { encodePlan, handoffFromProfile } from '@/lib/handoff';
-import type { Proposal } from '@/lib/server/coach';
+import { coachContext, CoachSession, runCoachLoop, type CoachRequest, type Proposal, type StepResult } from '@/lib/coach/session';
+import { profileFromCode } from '@/lib/server/mcp/tools';
 import { useApp } from '@/lib/state/store';
 import type { MealEntry, NutritionMode, SlotId, WeekTemplate } from '@/lib/types';
 import type { ScheduleOp } from '@/lib/engine/schedule';
@@ -31,6 +32,16 @@ const EXAMPLES = [
 
 const EQUIPMENT_NAMES = { home_db: 'home dumbbells', gym: 'a gym', bodyweight: 'no equipment' } as const;
 const SLOT_NAMES: Record<SlotId, string> = { b: 'breakfast', l: 'lunch', d: 'dinner', s: 'snack', x: 'dessert', e: 'extras' };
+
+/** A coach step the server turned down (limits, busy, off); the message is shown as is. */
+class StepFailed extends Error {
+  constructor(
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
 
 function macros(e: MealEntry, mode: NutritionMode): string {
   if (mode === 'portions_only') return '';
@@ -65,8 +76,8 @@ export function Coach({ plan, today }: { plan: Plan; today: string }) {
     setText('');
     const history = messages.slice(-8).map(({ role, text: t }) => ({ role, text: t }));
     setMessages((cur) => [...cur, { role: 'user', text: m }]);
-    // What the coach sees: training details, this week's layout and ticks, and today's food
-    // as the person has chosen to see it. No body measurements or health answers.
+    // What the coach's tools can read: training details, this week's layout and ticks, and
+    // today's food as the person has chosen to see it. No body measurements or health answers.
     const monday = mondayOf(from);
     const done = Object.fromEntries(Array.from({ length: 7 }, (_, i) => addDays(monday, i)).map((d) => [d, logs.sessionsDone[d] ?? []]));
     const meals = logs.meals[today] ?? {};
@@ -74,38 +85,44 @@ export function Coach({ plan, today }: { plan: Plan; today: string }) {
     const eaten = all.reduce((t, e) => ({ p: t.p + e.p, c: t.c + e.c, f: t.f + e.f, k: t.k + e.k }), { p: 0, c: 0, f: 0, k: 0 });
     const t = targetsFor(plan, today);
     const numbers = p.nutritionMode !== 'portions_only';
+    const req: CoachRequest = {
+      deviceId,
+      today,
+      message: m,
+      history,
+      plan: encodePlan(handoffFromProfile(p)),
+      equipmentOverrides: p.equipmentOverrides ?? [],
+      schedule: { overrides: schedule.overrides, history: schedule.history },
+      done,
+      nutrition: {
+        mode: p.nutritionMode,
+        diet: p.diet,
+        ...(numbers ? { targets: { kcal: t.kcalRange, protein: t.protein, carbs: t.carbs, fat: t.fat }, eaten } : {}),
+        logged: (Object.keys(meals) as SlotId[]).filter((k) => meals[k as Exclude<SlotId, 'e'>]),
+      },
+    };
     try {
-      const res = await fetch('/api/coach', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          deviceId,
-          today,
-          message: m,
-          history,
-          plan: encodePlan(handoffFromProfile(p)),
-          equipmentOverrides: p.equipmentOverrides ?? [],
-          schedule: { overrides: schedule.overrides, history: schedule.history },
-          done,
-          nutrition: {
-            mode: p.nutritionMode,
-            diet: p.diet,
-            ...(numbers ? { targets: { kcal: t.kcalRange, protein: t.protein, carbs: t.carbs, fat: t.fat }, eaten } : {}),
-            logged: (Object.keys(meals) as SlotId[]).filter((k) => meals[k as Exclude<SlotId, 'e'>]),
-          },
-        }),
+      // The tools run here, on a training-only copy of the plan; each model step goes
+      // through the server with only what the coach has looked up so far.
+      const session = new CoachSession(req, profileFromCode(req.plan, req.today, { equipmentOverrides: req.equipmentOverrides }));
+      const context = coachContext(req, session.plan);
+      const reply = await runCoachLoop(req, session, async (contents, model) => {
+        const res = await fetch('/api/coach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceId, context, contents, model }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new StepFailed(String(body.code ?? res.status), body.error ?? 'The coach couldn’t answer. Try again in a minute.');
+        return body as StepResult;
       });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        track('coach', { status: String(body.code ?? res.status) });
-        setErr(body.error ?? 'The coach couldn’t answer. Try again in a minute.');
-        return;
-      }
-      const reply = body as { reply: string; proposals: Proposal[]; options?: string[] };
       track('coach', { status: reply.options ? 'asked' : 'ok', proposals: reply.proposals.length });
       setMessages((cur) => [...cur, { role: 'coach', text: reply.reply, proposals: reply.proposals, options: reply.options }]);
-    } catch {
-      setErr('Couldn’t reach the coach. Check your connection.');
+    } catch (e) {
+      if (e instanceof StepFailed) {
+        track('coach', { status: e.code });
+        setErr(e.message);
+      } else setErr('Couldn’t reach the coach. Check your connection.');
     } finally {
       setBusy(false);
     }
@@ -139,8 +156,8 @@ export function Coach({ plan, today }: { plan: Plan; today: string }) {
     <section id="coach" className="card-lg scroll-mt-4" aria-labelledby="coach-heading">
       <h2 id="coach-heading" className="h3">Ask your coach</h2>
       <p className="small muted">
-        Tell it what came up. It looks at your plan and suggests changes; nothing changes until you tap Apply. It sees your training plan, this week and today’s food,
-        never your weight or health answers.
+        Tell it what came up. It looks at your plan on this device and suggests changes; nothing changes until you tap Apply. Only your messages and what it looks up
+        to answer them go to the AI, never your weight or health answers.
       </p>
 
       {messages.length > 0 && (

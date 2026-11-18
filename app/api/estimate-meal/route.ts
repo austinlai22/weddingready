@@ -1,10 +1,12 @@
 import { estimateMeal, MealRequestSchema } from '@/lib/server/ai';
-import { clientAddress } from '@/lib/server/limits';
-import { checkLimits, fail, ok, readJson, runAi } from '@/lib/server/route';
+import { clientAddress, freeModelCap } from '@/lib/server/limits';
+import { checkLimits, fail, fromOtherSite, ok, otherSiteRefused, readJson, runAi } from '@/lib/server/route';
 import { getStore } from '@/lib/server/store';
 
-// SPEC §10.1. Limits: 30 per device and 60 per IP per day.
+// SPEC §10.1. Limits: 30 per device and 60 per IP per day, plus the daily cap
+// on free-model calls for everyone. Refused when another website sends it.
 export async function POST(request: Request) {
+  if (fromOtherSite(request)) return otherSiteRefused();
   let body: unknown;
   try {
     body = await readJson(request);
@@ -20,6 +22,7 @@ export async function POST(request: Request) {
     [
       { kind: 'device', who: parsed.data.deviceId, max: 30 },
       { kind: 'ip', who: clientAddress(request), max: 60 },
+      { kind: 'global', who: 'all', max: freeModelCap() },
     ],
     'That’s the daily limit for AI estimates. You can still enter the numbers yourself.',
   );

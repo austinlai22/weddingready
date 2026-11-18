@@ -74,6 +74,14 @@ describe('coach tools', () => {
     expect(week.move_options.some((o) => o.session_id === 'str-1')).toBe(false); // already done on Monday
   });
 
+  it('sharp pain or swelling always gets the stop-and-see-someone advice', async () => {
+    const { withPainSafety } = await import('./coach');
+    const req = { ...request, message: 'I get a sharp pain in my knee when I squat, and it’s swollen.' };
+    expect(withPainSafety(req, 'How is the knee feeling today?')).toMatch(/see a doctor or physio/);
+    expect(withPainSafety(req, 'Please see a physio.')).toBe('Please see a physio.');
+    expect(withPainSafety({ ...request, message: 'Lunges give me a dull ache.' }, 'Let’s swap lunges.')).toBe('Let’s swap lunges.');
+  });
+
   it('only uses days the person actually named as the ones that suit', async () => {
     const { daysTheySaid } = await import('./coach');
     expect(daysTheySaid('I can’t train tomorrow', 2)).toEqual(new Set([3]));
