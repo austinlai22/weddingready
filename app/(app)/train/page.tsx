@@ -14,6 +14,7 @@ import { dayPlan, weekDates, type ActivitySession, type DayPlan, type Plan, type
 import { doneTargets, isDayDone, latestWeight, REST_ID, weekSessions } from '@/lib/progress';
 import { useApp } from '@/lib/state/store';
 import { usePlan, useSchedule, useToday, useUi, useViewDate } from '@/lib/ui';
+import { EASY_CARDIO_ID } from '@/lib/types';
 
 const ACTIVITY_TAG = { walk: 'Walk', run: 'Run', pilates: 'Pilates', yoga: 'Yoga', cycling: 'Cycle', classes: 'Class', sports: 'Sport', other: '' } as const;
 
@@ -22,7 +23,7 @@ function stripTag(d: DayPlan): string {
   if (d.status === 'after') return '';
   const first = d.mainSessions[0];
   if (first?.kind === 'strength') return first.meta.tag;
-  if (first?.kind === 'activity') return first.ref.type === 'other' ? first.title.split(' ')[0] : ACTIVITY_TAG[first.ref.type];
+  if (first?.kind === 'activity') return first.ref.activityId === EASY_CARDIO_ID ? 'Cardio' : first.ref.type === 'other' ? first.title.split(' ')[0] : ACTIVITY_TAG[first.ref.type];
   return d.walk ? 'Walk' : 'Rest';
 }
 

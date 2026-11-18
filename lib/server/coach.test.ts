@@ -27,7 +27,7 @@ const plan = encodePlan(handoffFromProfile(PROTOTYPE_USER));
 const request = {
   deviceId: 'test-device-1',
   today: '2026-11-18',
-  message: 'I can’t train tomorrow',
+  message: 'I can’t train tomorrow. Saturday works instead.',
   history: [],
   plan,
   schedule: { overrides: null, history: [] },
@@ -40,7 +40,7 @@ const request = {
     logged: ['b' as const, 'l' as const],
   },
 };
-const session = (overrides: Partial<typeof request> = {}) => {
+const session = (overrides: Partial<Omit<typeof request, 'schedule'>> & { schedule?: import('../engine/schedule').Schedule } = {}) => {
   const req = { ...request, ...overrides };
   return new CoachSession(req, profileFromCode(req.plan, req.today));
 };
@@ -74,8 +74,28 @@ describe('coach tools', () => {
     expect(week.move_options.some((o) => o.session_id === 'str-1')).toBe(false); // already done on Monday
   });
 
+  it('only uses days the person actually named as the ones that suit', async () => {
+    const { daysTheySaid } = await import('./coach');
+    expect(daysTheySaid('I can’t train tomorrow', 2)).toEqual(new Set([3]));
+    expect(daysTheySaid('Saturday works, or the weekend', 2)).toEqual(new Set([5, 6]));
+    expect(daysTheySaid('any day is fine', 2)).toBe('any');
+    expect(daysTheySaid('I can’t do either Thursday or Friday', 2)).toEqual(new Set([3, 4]));
+    expect(daysTheySaid('Our wedding is in a month', 2)).toEqual(new Set());
+    // The model guessing Friday when the person only said "tomorrow" doesn't count as their answer.
+    expect(session().run('find_best_week', { scope: 'this_week', unavailable_days: ['thu'], preferred_days: ['fri'], based_on: 'can’t train tomorrow' })).toHaveProperty('error');
+  });
+
+  it('never moves a one-off session to a day the person didn’t name', () => {
+    // They asked for Sunday, which breaks the recovery rules; the best fit is another day, so the coach must ask.
+    const s = session({ message: 'I can’t train tomorrow. Can I do it on Sunday instead, just this week?' });
+    const r = s.run('find_best_week', { scope: 'this_week', unavailable_days: ['thu'], preferred_days: ['sun'], based_on: 'wants Sunday' }) as { error?: string };
+    expect(r.error).toMatch(/haven’t said works. Ask/);
+    expect(s.run('propose_schedule_change', { based_on: 'x', scope: 'this_week', changes: [{ op: 'move', session_id: 'str-2', to_day: 'fri' }], summary: 'x' })).toHaveProperty('error');
+    expect(s.proposals).toHaveLength(0);
+  });
+
   it('find the best week with the engine, not the model', () => {
-    const s = session();
+    const s = session({ message: 'I can’t train tomorrow. Friday or Saturday would work.' });
     // Without a day the person said works, it asks rather than guessing.
     expect(s.run('find_best_week', { scope: 'this_week', unavailable_days: ['thu'], based_on: 'busy Thursday' })).toHaveProperty('error');
     const r = s.run('find_best_week', { scope: 'this_week', unavailable_days: ['thu'], preferred_days: ['fri', 'sat'], based_on: 'busy Thursday, free at the weekend' }) as { changes: string[]; rule_problems: string[] };
@@ -85,6 +105,40 @@ describe('coach tools', () => {
     // Monday's done session never moves.
     expect(JSON.stringify(s.proposals[0])).not.toContain('str-1');
     expect(session().run('find_best_week', { scope: 'this_week', unavailable_days: ['sun'], preferred_days: ['thu'], based_on: 'busy Sunday' })).toHaveProperty('no_change_needed', true);
+  });
+
+  it('a lasting change goes on the usual week from next Monday, never repeating or undoing this week', async () => {
+    const { lastingChange, templateForDate, thisWeekOnly, applyOps } = await import('../engine/schedule');
+    const p = profileFromCode(request.plan, request.today);
+    // Wednesday, Monday's Strength A done: "from now on I can't train Mondays".
+    const s = session();
+    s.run('find_best_week', { scope: 'from_now_on', unavailable_days: ['mon'], based_on: 'a new Monday class' });
+    const pr = s.proposals[0] as Extract<(typeof s.proposals)[number], { kind: 'schedule' }>;
+    expect(pr.scope).toBe('from_now_on');
+    expect(pr.ops).toContainEqual(expect.objectContaining({ op: 'move', sessionId: 'str-1' }));
+    expect(pr.thisWeekOps).toBeUndefined(); // nothing left this week is on a Monday
+    expect(pr.summary).toMatch(/Every week from Monday 2026-11-23/);
+    const empty = { overrides: null, history: [] };
+    const after = lastingChange(p, empty, applyOps(templateForDate(p, empty, '2026-11-23'), pr.ops, p), '2026-11-18');
+    const hasA = (date: string, day: number) => templateForDate(p, after, date).days[day].some((x) => x.id === 'str-1');
+    // This week keeps its layout: Strength A stays on (done) Monday and doesn't come back later in the week.
+    expect(hasA('2026-11-16', 0)).toBe(true);
+    for (let d = 2; d < 7; d++) expect(hasA('2026-11-18', d)).toBe(false);
+    // From next Monday, no Monday strength.
+    expect(hasA('2026-11-23', 0)).toBe(false);
+
+    // A one-off this week (Strength B moved to Saturday) survives a lasting change, and isn't made permanent.
+    const base = templateForDate(p, empty, '2026-11-18');
+    const oneOff = thisWeekOnly(p, empty, applyOps(base, [{ op: 'move', sessionId: 'str-2', toDay: 'sat' }], p), '2026-11-18');
+    const s2 = session({ schedule: oneOff });
+    s2.run('find_best_week', { scope: 'from_now_on', unavailable_days: ['tue'], based_on: 'busy Tuesdays' });
+    const pr2 = s2.proposals[0] as typeof pr | undefined;
+    // Nothing is on a Tuesday in the usual week or this week, so there's nothing to change.
+    expect(pr2).toBeUndefined();
+    const lasting = lastingChange(p, oneOff, applyOps(templateForDate(p, oneOff, '2026-11-23'), [{ op: 'move', sessionId: 'str-2', toDay: 'fri' }], p), '2026-11-18');
+    expect(templateForDate(p, lasting, '2026-11-21').days[5].some((x) => x.id === 'str-2')).toBe(true); // still Saturday this week
+    expect(templateForDate(p, lasting, '2026-11-23').days[4].some((x) => x.id === 'str-2')).toBe(true); // Friday from next week
+    expect(templateForDate(p, lasting, '2026-11-23').days[5].some((x) => x.id === 'str-2')).toBe(false);
   });
 
   it('check every schedule proposal against the recovery rules', () => {

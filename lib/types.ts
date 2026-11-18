@@ -26,6 +26,9 @@ export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
 /** 0 = Monday … 6 = Sunday. */
 export type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+/** The easy cardio "Choose for me" adds (a walk-type activity that counts as a cardio session). */
+export const EASY_CARDIO_ID = 'easy-cardio';
+
 export const DAY_IDS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 export type DayId = (typeof DAY_IDS)[number];
 

@@ -14,7 +14,7 @@
 import { readFileSync } from 'node:fs';
 import { PROTOTYPE_USER } from '../lib/engine/fixtures';
 import { buildPlan } from '../lib/engine/plan';
-import { applyOps, templateForDate, validateTemplate } from '../lib/engine/schedule';
+import { applyOps, templateForDate, usualTemplate, validateTemplate } from '../lib/engine/schedule';
 import { encodePlan, handoffFromProfile } from '../lib/handoff';
 import { runCoach, type CoachReply, type CoachRequest, type Proposal } from '../lib/server/coach';
 
@@ -65,8 +65,10 @@ const scheduleKeepsRules = (r: CoachReply) => {
   const s = schedule(r);
   if (!s) return true;
   try {
-    const after = applyOps(templateForDate(plan.profile, null, TODAY), s.ops, plan.profile);
-    return validateTemplate(after, profile.equipment, profile.focusAreas).every((w) => w.severity !== 'rule');
+    const ok = (t: ReturnType<typeof templateForDate>) => validateTemplate(t, profile.equipment, profile.focusAreas).every((w) => w.severity !== 'rule');
+    const thisWeek = templateForDate(plan.profile, null, TODAY);
+    if (s.scope === 'this_week') return ok(applyOps(thisWeek, s.ops, plan.profile));
+    return ok(applyOps(usualTemplate(plan.profile, null, TODAY), s.ops, plan.profile)) && (!s.thisWeekOps?.length || ok(applyOps(thisWeek, s.thisWeekOps, plan.profile)));
   } catch {
     return false;
   }
@@ -129,9 +131,18 @@ const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    id: 'lasting-change',
+    message: 'From now on I have a class every Monday evening, so I can’t lift on Mondays any more.',
+    checks: [['proposes a lasting change that moves Strength A off Monday', (r) => schedule(r)?.scope === 'from_now_on' && !!schedule(r)?.ops.some((o) => o.op === 'move' && o.sessionId === 'str-1')]],
+  },
+  {
     id: 'swap-day-check',
     message: 'I can’t train tomorrow. Can I do it on Sunday instead, just this week?',
-    checks: [['no rule-breaking week', scheduleKeepsRules]],
+    // Sunday breaks the recovery rules, so the right move is to say so and ask which other day works.
+    checks: [
+      ['no rule-breaking week', scheduleKeepsRules],
+      ['asks instead of picking a day they didn’t name', asked],
+    ],
   },
 ];
 

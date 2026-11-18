@@ -75,8 +75,9 @@ export function BodyFields({ d, set }: F) {
         <input className="input" type="number" inputMode="numeric" min={1} max={110} value={d.age} onChange={(e) => set({ age: e.target.value })} style={{ maxWidth: 160 }} />
       </label>
       <div className="field">
-        <span>Sex for the calorie math</span>
-        <div className="choice-grid" role="radiogroup" aria-label="Sex for the calorie math">
+        <span>Sex</span>
+        <span className="small muted">Sets your calorie needs and a little of your rest between sets. Training is otherwise the same.</span>
+        <div className="choice-grid" role="radiogroup" aria-label="Sex">
           <Choice role="radio" on={d.sex === 'female'} onClick={() => set({ sex: 'female' })} title="Female" />
           <Choice role="radio" on={d.sex === 'male'} onClick={() => set({ sex: 'male' })} title="Male" />
           <Choice role="radio" on={d.sex === 'unspecified'} onClick={() => set({ sex: 'unspecified' })} title="Prefer not to say" sub="We’ll use an average of both formulas." />
@@ -402,6 +403,7 @@ export function WeekChooser({ d, set, today }: F & { today: string }) {
       weeksToWedding: weeks,
       activities: d.activities,
       dailyWalkMinutes: d.walkMinutes.trim() ? Number(d.walkMinutes) : undefined,
+      age: Number.isFinite(Number(d.age)) && d.age.trim() ? Number(d.age) : undefined,
       equipment: d.equipment,
       focusAreas: d.focusAreas,
     });

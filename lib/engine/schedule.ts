@@ -70,6 +70,23 @@ export function thisWeekOnly(p: Profile, schedule: Schedule, next: WeekTemplate,
   return { overrides: schedule.overrides, history: [...history, { until: nextMonday, template: { days: cloneTemplate(next).days } }] };
 }
 
+/** The usual layout: what's in force once any "this week only" change has ended. */
+export function usualTemplate(p: Profile, schedule: Schedule | WeekTemplate | null, from: string): WeekTemplate {
+  return templateForDate(p, schedule, addDays(mondayOf(from), 7));
+}
+
+/**
+ * A lasting change: the usual week becomes `usual` from next Monday, and the
+ * rest of this week becomes `thisWeek` if given (otherwise it keeps its
+ * layout). Starting next Monday means a "this week only" change and sessions
+ * already done this week are never rewritten or repeated.
+ */
+export function lastingChange(p: Profile, schedule: Schedule, usual: WeekTemplate, from: string, thisWeek?: WeekTemplate | null, max = 30): Schedule {
+  const nextMonday = addDays(mondayOf(from), 7);
+  const next: Schedule = { overrides: { days: cloneTemplate(usual).days, effectiveFrom: nextMonday }, history: freezeBefore(p, schedule, nextMonday, max - 1) };
+  return thisWeek ? thisWeekOnly(p, next, thisWeek, from, max) : next;
+}
+
 export interface ScheduleWarning {
   day: number;
   text: string;

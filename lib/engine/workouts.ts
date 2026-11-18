@@ -215,6 +215,8 @@ export interface Prescribed {
   changed: boolean;
   restMin: number;
   restMax: number;
+  /** Seconds added to (or taken from) the default rest by sexAdjustedRest; counted in sessionMinutes. */
+  restShift?: number;
 }
 
 const SIDE_TEXT = { leg: 'per leg', side: 'per side', arm: 'per arm' } as const;
@@ -265,7 +267,9 @@ export function prescribe(ex: Exercise, main: boolean, ctx: RxContext): Prescrib
     sets = Math.max(2, sets - 1);
   }
   if (ctx.recovery || ctx.taper) sets = 2;
+  const defaultRest = restMin;
   [restMin, restMax] = sexAdjustedRest(restMin, restMax, main, ctx.sex);
+  const restShift = restMin - defaultRest;
 
   const side = ex.unit !== 'reps' && ex.sideLabel ? ` ${SIDE_TEXT[ex.sideLabel]}` : '';
   let rx: string;
@@ -280,12 +284,25 @@ export function prescribe(ex: Exercise, main: boolean, ctx: RxContext): Prescrib
     rx = `${sets} × ${reps}${side}`;
   }
   const changed = sets !== 3 || (!ex.fixedReps && !ex.rirOnly && reps !== baseReps);
-  return { exercise: ex, main, focus, sets, reps: shownReps, rx, changed, restMin, restMax };
+  return { exercise: ex, main, focus, sets, reps: shownReps, rx, changed, restMin, restMax, ...(restShift ? { restShift } : {}) };
 }
 
-/** Minutes for a list of prescriptions: 5 min warm-up + 2.5 min per main set + 1.75 min per accessory set. */
+/** Rest for a phase as people see it on the plan, from the same rules as the workouts (so it includes sex differences). */
+export function phaseRest(phase: PhaseName, sex?: Sex): string {
+  const ctx: RxContext = { phase, goals: ['tone'], experience: 'some', focusAreas: [], recovery: false, taper: false, sex };
+  const main = prescribe(EXERCISES[0], true, ctx);
+  const other = prescribe(EXERCISES[0], false, ctx);
+  const f = (x: Prescribed) => `${x.restMin}–${x.restMax} sec`;
+  return main.restMin === other.restMin && main.restMax === other.restMax ? f(main) : `${f(main)} main lifts · ${f(other)} others`;
+}
+
+/**
+ * Minutes for a list of prescriptions: 5 min warm-up + 2.5 min per main set +
+ * 1.75 min per accessory set (a set plus the default rest), adjusted for any
+ * longer or shorter rest.
+ */
 export function sessionMinutes(list: Prescribed[]): number {
-  return 5 + list.reduce((t, p) => t + p.sets * (p.main ? 2.5 : 1.75), 0);
+  return 5 + list.reduce((t, p) => t + p.sets * ((p.main ? 2.5 : 1.75) + (p.restShift ?? 0) / 60), 0);
 }
 
 /** Drops accessories from the end until the session fits. Main lifts are never trimmed. */
@@ -321,11 +338,35 @@ export function sexAdjustedRest(min: number, max: number, main: boolean, sex?: S
 /**
  * New lifters start from where they are. Women typically have less upper-body
  * strength relative to body weight, so a new lifter's push-up starts on an
- * incline (hands on a bench or counter) and progresses from there.
+ * incline (hands on a counter) during Foundation, then moves to the floor
+ * (the push-up keeps "hands on a counter if needed"). Never when the workout
+ * already has an incline push-up.
  */
-function startingVariant(id: string, ctx: RxContext): string {
-  if (ctx.experience === 'new' && ctx.sex === 'female' && id === 'pushup') return 'bw-incline-pushup';
+function startingVariant(id: string, ctx: { experience: Experience; sex?: Sex }, slotIds: string[]): string {
+  if (ctx.experience === 'new' && ctx.sex === 'female' && id === 'pushup' && !slotIds.includes('bw-incline-pushup')) return 'bw-incline-pushup';
   return id;
+}
+
+/**
+ * The exercise a slot shows: the person's swap if they made one (saved under
+ * the slot's exercise or the starting variant they were shown), otherwise the
+ * starting variant during Foundation, otherwise the slot's exercise.
+ */
+function resolveSlot(slotId: string, slotIds: string[], ctx: RxContext, swaps: Record<string, string>): string {
+  const variant = startingVariant(slotId, ctx, slotIds);
+  const to = swaps[slotId] ?? (variant !== slotId ? swaps[variant] : undefined);
+  if (to && BY_ID.has(to)) return to;
+  return ctx.phase === 'foundation' ? variant : slotId;
+}
+
+/** Every exercise id each workout can show (slot, starting variant, swap), for checking what's already in a session. */
+export function possibleExerciseIds(key: WorkoutKey, equipment: Equipment, focusAreas: FocusArea[], ctx: { experience: Experience; sex?: Sex }, swaps: Record<string, string> = {}): string[] {
+  const slots = workoutSlots(key, equipment, focusAreas);
+  const ids = slots.map((s) => s.id);
+  return slots.flatMap((s) => {
+    const variant = startingVariant(s.id, ctx, ids);
+    return [s.id, variant, swaps[s.id], swaps[variant]].filter((x): x is string => !!x);
+  });
 }
 
 export function buildWorkout(
@@ -335,11 +376,9 @@ export function buildWorkout(
   ctx: RxContext,
   swaps: Record<string, string> = {},
 ): Prescribed[] {
-  const list = workoutSlots(key, equipment, ctx.focusAreas).map((s) => {
-    const to = swaps[s.id];
-    const ex = to && BY_ID.has(to) ? exerciseById(to) : exerciseById(startingVariant(s.id, ctx));
-    return prescribe(ex, s.main, ctx);
-  });
+  const slots = workoutSlots(key, equipment, ctx.focusAreas);
+  const ids = slots.map((s) => s.id);
+  const list = slots.map((s) => prescribe(exerciseById(resolveSlot(s.id, ids, ctx, swaps)), s.main, ctx));
   return trimToFit(list, sessionLength);
 }
 

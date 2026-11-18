@@ -79,7 +79,7 @@ export interface SafetyNote {
 export function safetyNotes(safety: Safety): SafetyNote[] {
   const notes: SafetyNote[] = [];
   if (safety.pregnantOrPostpartum) {
-    notes.push({ kind: 'pregnancy', text: 'Check with your doctor or midwife before changing your training. This plan has no calorie deficit.' });
+    notes.push({ kind: 'pregnancy', text: 'Check with your doctor or midwife before changing your training. This plan has no calorie deficit. While pregnant, from the second trimester do moves that have you lying on your back (floor press, dead bug, bridges) propped up on an incline, breathe out on the effort instead of holding your breath, and stop if anything feels wrong. After the birth, start again lighter once you’re cleared.' });
   }
   if (safety.edHistory) {
     notes.push({

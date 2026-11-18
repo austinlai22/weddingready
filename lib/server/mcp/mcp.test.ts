@@ -77,6 +77,26 @@ describe('agent tools match the web app', () => {
     expect(low.goal).toBe('maintain');
   });
 
+  it('sizes the deficit to a goal weight within the same caps, and checks the inputs', async () => {
+    const { addDays, todayISO } = await import('../../engine/dates');
+    const base = { age: 26, sex: 'female' as const, height_cm: 162.6, weight_kg: 61.2, job: 'sitting' as const, goal: 'lose_fat' as const };
+    const plain = nutritionTargets(base).calories_per_day!.deficit;
+    const later = addDays(todayISO(), 270);
+    // A small goal over nine months: a smaller deficit than the default.
+    expect(nutritionTargets({ ...base, goal_weight_kg: 58, goal_date: later }).calories_per_day!.deficit).toBeLessThan(plain);
+    // Below a healthy weight: ignored, with a note.
+    const low = nutritionTargets({ ...base, goal_weight_kg: 47, goal_date: later });
+    expect(low.goal_weight_note).toMatch(/healthy weight/);
+    expect(low.calories_per_day!.deficit).toBe(plain);
+    // Needs a date, below the current weight, and at least two weeks away.
+    expect(() => nutritionTargets({ ...base, goal_weight_kg: 58 })).toThrow(/goal_date/);
+    expect(() => nutritionTargets({ ...base, goal_weight_kg: 62, goal_date: later })).toThrow(/below/);
+    expect(() => nutritionTargets({ ...base, goal_weight_kg: 58, goal_date: addDays(todayISO(), 5) })).toThrow(/two weeks/);
+    // From 65, never faster than 0.5% of body weight a week.
+    const older = nutritionTargets({ ...base, age: 70, weight_kg: 90, height_cm: 170, goal_weight_kg: 75, goal_date: addDays(todayISO(), 60) });
+    expect(older.calories_per_day!.deficit).toBeLessThanOrEqual(Math.round((0.005 * 90 * 7700) / 7) + 10);
+  });
+
   it('looks foods up with their source, diet-fitting ones first', () => {
     const r = searchFoodList({ query: 'egg', diet: 'vegan' });
     expect(r.foods.length).toBeGreaterThan(0);

@@ -1,5 +1,6 @@
 import type { Activity, Equipment, Experience, FocusArea, Goal } from '../types';
 import { DAY_NAMES } from './dates';
+import { OLDER_ADULT_AGE } from './nutrition';
 import { isHardActivity, placeStrengthDays } from './split';
 
 // "Choose for me": a week for someone who doesn't know how many days to train.
@@ -12,8 +13,13 @@ import { isHardActivity, placeStrengthDays } from './split';
 //   alongside strength training; easy cardio fills the gap without hurting
 //   recovery, a little more of it when the goal is losing fat.
 // - A week already full of hard sessions gets one fewer strength day.
+// - From 65, recovery between hard sessions takes longer, so no 5-day split;
+//   WHO advises balance work alongside strength, which goes in the warm-up.
+// - Men and women: the same rules. Sex changes rest times and calories, not
+//   how many days to train.
 
-export const EASY_CARDIO_ID = 'easy-cardio';
+export { EASY_CARDIO_ID } from '../types';
+import { EASY_CARDIO_ID } from '../types';
 export const EASY_CARDIO_LABEL = 'Easy cardio';
 
 export interface WeekRecommendation {
@@ -30,6 +36,8 @@ interface Inputs {
   /** What they already do (any earlier easy-cardio suggestion is ignored). */
   activities: Activity[];
   dailyWalkMinutes?: number;
+  /** Years; changes the advice from 65. */
+  age?: number;
   equipment: Equipment;
   focusAreas: FocusArea[];
 }
@@ -44,6 +52,10 @@ function strengthDaysFor(i: Inputs): { days: 2 | 3 | 4 | 5; why: string } {
     return i.weeksToWedding >= 8 && !(i.goals.length === 1 && i.goals[0] === 'maintain')
       ? { days: 3, why: '3 full-body strength days: the most reliable start for someone new. Each muscle gets worked three times a week while you learn the moves, with a rest day between sessions.' }
       : { days: 2, why: '2 full-body strength days: enough to build the habit and get stronger, with plenty of recovery.' };
+  }
+  const older = (i.age ?? 0) >= OLDER_ADULT_AGE;
+  if (i.experience === 'experienced' && wantsStrength && i.weeksToWedding >= 12 && older) {
+    return { days: 4, why: '4 days, upper and lower body: every muscle twice a week. From 65, recovery takes a little longer, so the plan stops short of 5 days.' };
   }
   if (i.experience === 'experienced' && wantsStrength && i.weeksToWedding >= 12) {
     return { days: 5, why: '5 days (upper, lower, push, pull, legs): every muscle twice a week, the volume an experienced lifter needs to keep progressing.' };
@@ -60,6 +72,7 @@ export function recommendWeek(i: Inputs): WeekRecommendation {
   const first = strengthDaysFor(i);
   let days = first.days;
   const reasons = [first.why];
+  if ((i.age ?? 0) >= OLDER_ADULT_AGE) reasons.push('Each warm-up includes a short balance drill, which the WHO advises from 65 alongside strength training.');
   if (hardSessions >= 4 && days > 2) {
     days = (days - 1) as 2 | 3 | 4;
     reasons.push(`One fewer strength day because you already do ${hardSessions} hard sessions a week; recovery matters as much as the training.`);

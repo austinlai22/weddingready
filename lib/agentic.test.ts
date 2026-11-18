@@ -106,3 +106,15 @@ describe('calendar', () => {
     expect(events.map((e) => e.title)).toEqual(['Strength A: Legs & push', 'Easy run', 'Strength B: Glutes & pull', 'Pilates']);
   });
 });
+
+describe('easy cardio through a plan code', () => {
+  it('keeps the chosen easy cardio as easy cardio', async () => {
+    const { PROTOTYPE_USER } = await import('./engine/fixtures');
+    const { encodePlan, decodePlan, handoffFromProfile } = await import('./handoff');
+    const { EASY_CARDIO_ID } = await import('./types');
+    const p = { ...PROTOTYPE_USER, activities: [...PROTOTYPE_USER.activities, { id: EASY_CARDIO_ID, type: 'walk' as const, label: 'Easy cardio', days: [2, 4], minutes: 30 }] };
+    const back = decodePlan(encodePlan(handoffFromProfile(p)));
+    expect(back?.activities.find((a) => a.label === 'Easy cardio')?.id).toBe(EASY_CARDIO_ID);
+    expect(back?.activities.filter((a) => a.id === EASY_CARDIO_ID)).toHaveLength(1);
+  });
+});

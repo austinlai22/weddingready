@@ -5,7 +5,7 @@ import { PHASE_COPY } from '@/lib/engine/copy';
 import { fmtShort } from '@/lib/engine/dates';
 import type { Plan } from '@/lib/engine/plan';
 import type { Phase } from '@/lib/engine/phases';
-import { weightTip } from '@/lib/engine/workouts';
+import { phaseRest, weightTip } from '@/lib/engine/workouts';
 
 function notesFor(plan: Plan, phase: Phase): { k: string; v: string }[] {
   const p = plan.profile;
@@ -61,7 +61,7 @@ export function PhaseSection({ plan, currentWeek, heading = 'The plan' }: { plan
         <p style={{ fontSize: 16, lineHeight: 1.5 }}>{copy.focus}</p>
         <div className="tiles-2">
           <div className="tile"><span className="k">Sets × reps</span><span className="v">{copy.sets}</span></div>
-          <div className="tile"><span className="k">Rest</span><span className="v">{copy.rest}</span></div>
+          <div className="tile"><span className="k">Rest</span><span className="v">{phaseRest(ph.name, plan.profile.sex)}</span></div>
         </div>
         {notesFor(plan, ph).map((n) => (
           <p key={n.k} className="note-line"><strong>{n.k}</strong> {n.v}</p>

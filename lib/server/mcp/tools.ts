@@ -10,7 +10,7 @@ import { targets } from '../../engine/nutrition';
 import { buildPlan, dayPlan, type Plan } from '../../engine/plan';
 import { defaultWeekTemplate, shapeOf, weekIssues } from '../../engine/split';
 import { suggestWeekFix } from '../../engine/suggest';
-import { sessionMinutes, workoutMeta } from '../../engine/workouts';
+import { phaseRest, sessionMinutes, workoutMeta } from '../../engine/workouts';
 import { MAX_PLAN_DAYS, OUTFIT_FOCUS } from '../../draft';
 import { calendarEvents, isTimeZone, MAX_CALENDAR_WEEKS, toICS } from '../../calendar';
 import { decodePlan, encodePlan, handoffFromProfile, setupLink } from '../../handoff';
@@ -243,7 +243,7 @@ export function buildWeddingPlan(input: TrainingInput, today: string) {
       to: p.endDate,
       focus: PHASE_COPY[p.name].focus,
       sets_and_reps: PHASE_COPY[p.name].sets,
-      rest: PHASE_COPY[p.name].rest,
+      rest: phaseRest(p.name, profile.sex),
     })),
     recovery_weeks: t.recoveryWeeks.map((w) => ({ week: w, from: weekStart(w), to: addDays(weekStart(w), 6), what: '2 sets per exercise, same weights.' })),
     final_taper: { from: t.taperStart, to: t.weddingDate, what: '2 sets per exercise; keep usual easy activities; nothing new.' },
@@ -419,6 +419,8 @@ export function nutritionTargets(input: NutritionInput) {
   if (wantsLoss && !blocked && input.goal_weight_kg !== undefined) {
     if (!input.goal_date || !isISODate(input.goal_date)) throw new ToolInputError('With goal_weight_kg, give goal_date (YYYY-MM-DD): when to reach it, e.g. two weeks before the fitting.');
     if (input.goal_weight_kg >= input.weight_kg) throw new ToolInputError('goal_weight_kg must be below weight_kg.');
+    // The server's date can be a day off the person's, so allow a little slack; a goal that's due now can't size a safe deficit.
+    if (daysBetween(todayISO(), input.goal_date) < 14) throw new ToolInputError('goal_date must be at least two weeks from today. For anything sooner, leave out the goal weight: the targets use the standard gentle deficit.');
     if (!targetWeightAllowed(input.goal_weight_kg, input.height_cm)) {
       goalNote = 'That goal weight is below a healthy weight for this height, so it isn’t used; the targets use the standard gentle deficit.';
     } else {
@@ -446,7 +448,7 @@ export function nutritionTargets(input: NutritionInput) {
     method: [
       'Resting needs: Mifflin-St Jeor (the mean of the female and male equations when sex is unspecified).',
       'Activity factor from job, daily walking and weekly sessions, capped at 1.75. Shown as a ±7.5% range because estimates can be off by 10% or more.',
-      'Fat loss: 15% below maintenance; with a goal weight and date, sized to reach it allowing for adaptation, up to 20%. Always capped at 0.75% of body weight a week and never below resting needs (or 1,200 kcal; 1,500 for men).',
+      'Fat loss: 15% below maintenance; with a goal weight and date, sized to reach it allowing for adaptation, up to 20%. Always capped at 0.75% of body weight a week (0.5% from age 65, to protect muscle and bone) and never below resting needs (or 1,200 kcal; 1,500 for men).',
       'Protein 1.6–2.0 g per kg (at BMI 30+, per kg of the weight at BMI 27). Fat 25–30% of calories, at least 0.6 g/kg. Carbs are the rest.',
       'Calories go back to maintenance once the Maintain phase starts (two weeks before the fitting).',
     ],

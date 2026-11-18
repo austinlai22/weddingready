@@ -6,7 +6,7 @@
 
 import { z } from 'zod';
 import { isISODate } from './engine/dates';
-import { ACTIVITY_TYPES, FOCUS_AREAS, type Activity, type ActivityType, type Equipment, type EquipmentOverride, type Experience, type FocusArea, type Goal, type Outfit, type Profile, type SessionRef, type Sex, type WeekTemplate } from './types';
+import { ACTIVITY_TYPES, EASY_CARDIO_ID, FOCUS_AREAS, type Activity, type ActivityType, type Equipment, type EquipmentOverride, type Experience, type FocusArea, type Goal, type Outfit, type Profile, type SessionRef, type Sex, type WeekTemplate } from './types';
 
 const PREFIX = 'wr1.';
 const isoDate = z.string().refine(isISODate);
@@ -28,7 +28,7 @@ const HandoffSchema = z.object({
   o: z.enum(['dress', 'suit', 'other']),
   a: z.array(z.enum(FOCUS_AREAS)).max(3),
   t: z
-    .array(z.object({ y: z.enum(ACTIVITY_TYPES), l: z.string().max(40), d: z.array(z.number().int().min(0).max(6)).max(7), n: z.number().int().min(5).max(300).optional() }))
+    .array(z.object({ y: z.enum(ACTIVITY_TYPES), l: z.string().max(40), d: z.array(z.number().int().min(0).max(6)).max(7), n: z.number().int().min(5).max(300).optional(), c: z.literal(1).optional() }))
     .max(10),
 });
 
@@ -104,7 +104,7 @@ export function encodePlan(h: PlanHandoff): string {
     m: h.sessionMinutes,
     o: h.outfit,
     a: h.focusAreas.slice(0, 3),
-    t: h.activities.slice(0, 10).map((a) => ({ y: a.type, l: a.label.slice(0, 40), d: [...new Set(a.days)].sort(), ...(a.minutes ? { n: a.minutes } : {}) })),
+    t: h.activities.slice(0, 10).map((a) => ({ y: a.type, l: a.label.slice(0, 40), d: [...new Set(a.days)].sort(), ...(a.minutes ? { n: a.minutes } : {}), ...(a.id === EASY_CARDIO_ID ? { c: 1 as const } : {}) })),
   };
   return PREFIX + toBase64Url(JSON.stringify(compact));
 }
@@ -122,7 +122,7 @@ export function decodePlan(code: string): PlanHandoff | null {
   const r = HandoffSchema.safeParse(raw);
   if (!r.success) return null;
   const c = r.data;
-  const activities: Activity[] = c.t.map((a, i) => ({ id: `a${i + 1}`, type: a.y, label: a.l || a.y, days: a.d, ...(a.n ? { minutes: a.n } : {}) }));
+  const activities: Activity[] = c.t.map((a, i) => ({ id: a.c ? EASY_CARDIO_ID : `a${i + 1}`, type: a.y, label: a.l || a.y, days: a.d, ...(a.n ? { minutes: a.n } : {}) }));
   return {
     ...(c.l ? { layout: decodeLayout(c.l, activities) } : {}),
     ...(c.eo ? { equipmentOverrides: c.eo.map((o) => ({ from: o.f, to: o.t, equipment: o.e })) } : {}),

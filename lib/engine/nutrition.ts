@@ -1,3 +1,4 @@
+import { EASY_CARDIO_ID } from '../types';
 import type { Profile } from '../types';
 
 // SPEC §6.6. These are starting heuristics and must be reviewed by a registered
@@ -14,7 +15,8 @@ export function bmr(p: Pick<Profile, 'sex' | 'weightKg' | 'heightCm' | 'age'>): 
 
 /** Weekly training sessions that count toward the activity factor: strength + non-walk activities. */
 export function weeklySessions(p: Pick<Profile, 'strengthDays' | 'activities'>): number {
-  return p.strengthDays + p.activities.filter((a) => a.type !== 'walk').reduce((t, a) => t + new Set(a.days).size, 0);
+  // Everyday walks count through daily walking; planned easy cardio counts as sessions.
+  return p.strengthDays + p.activities.filter((a) => a.type !== 'walk' || a.id === EASY_CARDIO_ID).reduce((t, a) => t + new Set(a.days).size, 0);
 }
 
 export function activityFactor(p: Pick<Profile, 'job' | 'strengthDays' | 'activities' | 'dailyWalkMinutes' | 'dailySteps'>): number {
@@ -62,16 +64,27 @@ const round10 = (n: number) => Math.round(n / 10) * 10;
  * guardrails, "I've reached my goal"); this function only does the math.
  */
 /** Share of the straight-line weight-loss maths people actually see (adaptation, real life); also used for expectations. */
-const REALISTIC_SHARE = 0.7;
+export const REALISTIC_SHARE = 0.7;
+
+/** Older adults lose muscle and bone more easily while dieting, so their weekly pace is gentler. */
+export const OLDER_ADULT_AGE = 65;
+/** Larger deficits blunt muscle and strength gains, so a strength goal keeps the deficit at or under this. */
+export const STRENGTH_DEFICIT_CAP = 500;
+
+/** The most body weight a week the plan will aim to lose: 0.75%, or 0.5% from 65. */
+export function weeklyLossCap(age?: number): number {
+  return age !== undefined && age >= OLDER_ADULT_AGE ? 0.005 : 0.0075;
+}
 
 /**
  * Daily deficit for Lose fat. With a goal weight and the days left until
  * Maintain, it's sized to reach the goal (allowing for adaptation), up to 20%
- * of needs; without one, a gentle 15%. Either way never more than 0.75% of
- * body weight a week.
+ * of needs; without one, a gentle 15%. Never more than 0.75% of body weight a
+ * week (0.5% from 65), and at most 500 kcal alongside a strength goal.
  */
-export function plannedDeficit(p: Pick<Profile, 'weightKg' | 'goalWeightKg'>, tdee: number, deficitDays?: number): number {
-  const cap = (0.0075 * p.weightKg * KCAL_PER_KG) / 7; // ≤ 0.75% of body weight per week
+export function plannedDeficit(p: Pick<Profile, 'weightKg' | 'goalWeightKg'> & Partial<Pick<Profile, 'age' | 'goals'>>, tdee: number, deficitDays?: number): number {
+  let cap = (weeklyLossCap(p.age) * p.weightKg * KCAL_PER_KG) / 7;
+  if (p.goals?.includes('strength')) cap = Math.min(cap, STRENGTH_DEFICIT_CAP);
   if (p.goalWeightKg && deficitDays && deficitDays > 0) {
     const toLose = p.weightKg - p.goalWeightKg;
     if (toLose <= 0) return 0;

@@ -49,7 +49,20 @@ function combinations(pool: number[], k: number): number[][] {
   return out;
 }
 
+function permutations<T>(xs: T[]): T[][] {
+  if (xs.length <= 1) return [xs];
+  return xs.flatMap((x, i) => permutations([...xs.slice(0, i), ...xs.slice(i + 1)]).map((rest) => [x, ...rest]));
+}
+
 const MOVE_COST = 4;
+/** Sessions may swap order (A after B) when that makes a better week; the training rules still check splits. */
+const REORDER_COST = 2;
+/**
+ * Moving a session the person didn't ask about (it isn't on a day they can't
+ * train) costs more than any compromise note, so it only happens to fix a
+ * rule break, never to tidy up the week.
+ */
+const UNASKED_MOVE_COST = 100;
 
 export function replanWeek(input: ReplanInput): ReplanResult {
   const t = cloneTemplate(input.template);
@@ -58,7 +71,7 @@ export function replanWeek(input: ReplanInput): ReplanResult {
   const preferred = new Set(input.preferred ?? []);
   const first = input.scope === 'this_week' ? input.fromDay : 0;
 
-  // Strength sessions that may move, in their current order (keeps A → B → C).
+  // Strength sessions that may move, in their current order.
   const movable: { s: SessionRef; day: number }[] = [];
   t.days.forEach((d, day) => {
     for (const s of d) if (s.kind === 'strength' && day >= first && !done.has(s.id)) movable.push({ s, day });
@@ -71,17 +84,22 @@ export function replanWeek(input: ReplanInput): ReplanResult {
   const evaluate = (keep: typeof movable, days: number[]) => {
     const next = cloneTemplate(base);
     keep.forEach((m, i) => next.days[days[i]].push({ ...m.s }));
-    const moves = keep.filter((m, i) => m.day !== days[i]).length;
+    const reordered = keep.some((m, i) => i > 0 && keep[i - 1].day > m.day) ? REORDER_COST : 0;
+    const moves = keep.reduce((t, m, i) => t + (m.day === days[i] ? 0 : blocked.has(m.day) ? MOVE_COST : UNASKED_MOVE_COST), 0);
     // A moved session landing on a day they didn't say suits them costs a little more.
     const off = preferred.size ? keep.filter((m, i) => m.day !== days[i] && !preferred.has(days[i])).length : 0;
-    return { next, days, score: scoreWeek(next, input.equipment, input.focusAreas) + moves * MOVE_COST + off * MOVE_COST };
+    return { next, days, score: scoreWeek(next, input.equipment, input.focusAreas) + moves + off * MOVE_COST + reordered };
   };
 
   const search = (keep: typeof movable) => {
-    let best: ReturnType<typeof evaluate> | null = null;
+    let best: (ReturnType<typeof evaluate> & { order: typeof movable }) | null = null;
+    // Every choice of days, and every order of the sessions on them (at most 21 × 120).
+    const orders = permutations(keep);
     for (const days of combinations(pool, keep.length)) {
-      const r = evaluate(keep, days);
-      if (!best || r.score < best.score) best = r;
+      for (const order of orders) {
+        const r = evaluate(order, days);
+        if (!best || r.score < best.score) best = { ...r, order };
+      }
     }
     return best;
   };
@@ -112,7 +130,7 @@ export function replanWeek(input: ReplanInput): ReplanResult {
   const moved: ReplanResult['moved'] = [];
   const skipped = movable.filter((m) => !keep.includes(m)).map((m) => m.s.id);
   for (const id of skipped) ops.push({ op: 'remove', sessionId: id });
-  keep.forEach((m, i) => {
+  best.order.forEach((m, i) => {
     if (m.day !== best!.days[i]) {
       ops.push({ op: 'move', sessionId: m.s.id, toDay: DAY_IDS[best!.days[i]] });
       moved.push({ id: m.s.id, from: m.day, to: best!.days[i] });

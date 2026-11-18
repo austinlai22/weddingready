@@ -64,7 +64,8 @@ test('the coach proposes, previews, and applies only on Apply', async ({ page })
     await route.fulfill({
       json: {
         reply: 'I suggest moving Strength A to Tuesday and adding yoga on Sunday.',
-        proposals: [{ kind: 'schedule', scope: 'from_now_on', ops: [{ op: 'move', sessionId: 'str-1', toDay: 'tue' }, { op: 'add', activity: 'yoga', day: 'sun' }], summary: 'Strength A moves to Tuesday; yoga on Sunday.' }],
+        // A lasting change: the usual week from next Monday, and the same change for the rest of this week.
+        proposals: [{ kind: 'schedule', scope: 'from_now_on', ops: [{ op: 'move', sessionId: 'str-1', toDay: 'tue' }, { op: 'add', activity: 'yoga', day: 'sun' }], thisWeekOps: [{ op: 'move', sessionId: 'str-1', toDay: 'tue' }, { op: 'add', activity: 'yoga', day: 'sun' }], summary: 'Strength A moves to Tuesday; yoga on Sunday.' }],
       },
     });
   });
@@ -73,12 +74,18 @@ test('the coach proposes, previews, and applies only on Apply', async ({ page })
   await page.getByRole('button', { name: 'Ask', exact: true }).click();
   await expect(page.getByText('I suggest moving Strength A to Tuesday')).toBeVisible();
   await expect(page.getByText('Strength A moves to Tuesday; yoga on Sunday.')).toBeVisible();
+  await expect(page.getByText('Every week from Nov 23')).toBeVisible();
+  await expect(page.getByText('The rest of this week')).toBeVisible();
   let s = await stored(page);
   expect(s.scheduleOverrides).toBeNull();
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(page.getByLabel('Sunday', { exact: true }).getByRole('button', { name: /^Yoga\./ })).toBeVisible();
   s = await stored(page);
   expect(s.scheduleOverrides?.days[1].some((x) => x.id === 'str-1')).toBe(true);
+  expect(s.scheduleOverrides?.effectiveFrom).toBe('2026-11-23');
+  // This week has the same change, until Sunday.
+  expect(s.scheduleHistory?.at(-1)?.until).toBe('2026-11-23');
+  expect(s.scheduleHistory?.at(-1)?.template.days[1].some((x) => x.id === 'str-1')).toBe(true);
 });
 
 test('a “this week only” change from the coach keeps past days and ends on Sunday', async ({ page }) => {

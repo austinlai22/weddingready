@@ -20,7 +20,7 @@ import type { Plan } from '@/lib/engine/plan';
 import { applyOps, duplicateSession, OpError, templateForDate, validateTemplate, type Schedule, type ScheduleOp } from '@/lib/engine/schedule';
 import { workoutMeta } from '@/lib/engine/workouts';
 import { useApp } from '@/lib/state/store';
-import { DAY_IDS, type SessionRef, type WeekTemplate } from '@/lib/types';
+import { DAY_IDS, EASY_CARDIO_ID, type SessionRef, type WeekTemplate } from '@/lib/types';
 import { useSchedule } from '@/lib/ui';
 import { Grip } from '../ui/icons';
 import { WeekAdvice } from './WeekAdvice';
@@ -33,7 +33,8 @@ export function chipLabel(s: SessionRef, strengthDays: number): string {
 
 function chipClass(s: SessionRef): string {
   if (s.kind === 'strength') return 'sched-chip strength';
-  return s.type === 'walk' ? 'sched-chip walk' : 'sched-chip';
+  // Planned easy cardio is one of their sessions, not an everyday walk.
+  return s.type === 'walk' && s.activityId !== EASY_CARDIO_ID ? 'sched-chip walk' : 'sched-chip';
 }
 
 function Chip({ s, strengthDays, onOpen, dragging }: { s: SessionRef; strengthDays: number; onOpen: () => void; dragging: boolean }) {

@@ -1,9 +1,9 @@
-import type { ActivityType, Profile, SessionRef, WeekTemplate, WorkoutKey } from '../types';
+import { EASY_CARDIO_ID, type ActivityType, type Profile, type SessionRef, type WeekTemplate, type WorkoutKey } from '../types';
 import { ACTIVITY_PEP, activityHow, PHASE_COPY, REST_PEP, rotateLine, STRENGTH_PEP } from './copy';
 import { addDays, daysBetween, mondayOf } from './dates';
 import { effectiveProfile, safetyNotes, type SafetyNote } from './guardrails';
 import { menuForDate, type DayMenu } from './meals';
-import { expectedLoss, targets, type Expectation, type Targets } from './nutrition';
+import { expectedLoss, KCAL_PER_KG, OLDER_ADULT_AGE, REALISTIC_SHARE, targets, type Expectation, type Targets } from './nutrition';
 import { buildTimeline, phaseForWeek, weekOf, type Phase, type PhaseName, type Timeline } from './phases';
 import { templateForDate, type Schedule } from './schedule';
 import { buildWorkout, equipmentOn, WARMUP, weightTip, workoutMeta, type Prescribed, type WorkoutMeta } from './workouts';
@@ -18,18 +18,38 @@ export interface Plan {
   expectationUntil: string;
   /** Days the deficit runs: from when the weight or goal was set (or the start) to Maintain. */
   deficitDays: number;
-  /** With a goal weight: how far it is, and whether the plan can safely reach it. */
-  goal: { kg: number; toLoseKg: number; reachable: boolean } | null;
+  /** With a goal weight: how far it is, a realistic range toward it, and whether the plan can safely reach it. */
+  goal: GoalOutlook | null;
   shortTimeline: boolean;
 }
 
 const CARDIO: ActivityType[] = ['run', 'cycling', 'classes', 'sports'];
 
+export interface GoalOutlook {
+  kg: number;
+  toLoseKg: number;
+  /** Realistic loss by Maintain, never past the goal itself. */
+  lowKg: number;
+  highKg: number;
+  reachable: boolean;
+}
+
+/**
+ * The goal is checked against the deficit actually set (after every cap and
+ * floor), not the general BMI-22 expectation, so the line tells people the
+ * truth about their own goal.
+ */
+function goalOutlook(toLoseKg: number, kg: number, deficit: number, deficitDays: number): GoalOutlook {
+  const linear = (deficit * deficitDays) / KCAL_PER_KG;
+  const highKg = Math.min(linear * REALISTIC_SHARE, toLoseKg);
+  return { kg, toLoseKg, lowKg: Math.min(linear * 0.4, highKg), highKg, reachable: linear * REALISTIC_SHARE + 0.25 >= toLoseKg };
+}
+
 export function buildPlan(raw: Profile): Plan {
   const profile = effectiveProfile(raw);
   const timeline = buildTimeline(profile.startDate, profile.weddingDate, profile.goals, profile.fittingDate);
   const cardioSessions = profile.activities
-    .filter((a) => CARDIO.includes(a.type))
+    .filter((a) => CARDIO.includes(a.type) || a.id === EASY_CARDIO_ID)
     .reduce((t, a) => t + new Set(a.days).size, 0);
   const loseFat = profile.goals.includes('lose_fat') && timeline.totalWeeks >= 4;
   const from = profile.goalSetOn && profile.goalSetOn > timeline.startMonday ? profile.goalSetOn : timeline.startMonday;
@@ -37,7 +57,7 @@ export function buildPlan(raw: Profile): Plan {
   const t = targets(profile, loseFat, deficitDays);
   const expectation = loseFat && !profile.safety.edHistory ? expectedLoss(profile, t.deficit, deficitDays / 7) : null;
   const goalKg = loseFat && !profile.safety.edHistory ? profile.goalWeightKg : undefined;
-  const goal = goalKg && goalKg < profile.weightKg ? { kg: goalKg, toLoseKg: profile.weightKg - goalKg, reachable: !!expectation && expectation.highKg + 0.25 >= profile.weightKg - goalKg } : null;
+  const goal = goalKg && goalKg < profile.weightKg ? goalOutlook(profile.weightKg - goalKg, goalKg, t.deficit, deficitDays) : null;
   return {
     profile,
     timeline,
@@ -125,7 +145,8 @@ function strengthView(plan: Plan, ref: SessionRef & { kind: 'strength' }, phase:
     exercises,
     restMin,
     restMax,
-    warmup: WARMUP[equipment],
+    // WHO advises balance training for adults 65 and over; it slots into the warm-up.
+    warmup: p.age >= OLDER_ADULT_AGE ? `${WARMUP[equipment]} · 30 sec standing on each leg (hold something steady if needed)` : WARMUP[equipment],
     weightTip: weightTip(phase, p.units),
   };
 }
@@ -155,7 +176,8 @@ export function dayPlan(plan: Plan, schedule: Schedule | WeekTemplate | null, da
           ref,
           title: ref.label,
           how: activityHow(ref.type, ref.label, phase.name, taper, ref.type === 'walk' ? walkMinutesFor(plan, ref) : undefined),
-          isWalk: ref.type === 'walk',
+          // Planned easy cardio is a session of its own, not the everyday walk.
+          isWalk: ref.type === 'walk' && ref.activityId !== EASY_CARDIO_ID,
         },
   );
   const mainSessions = sessions.filter((s) => s.kind === 'strength' || !s.isWalk);

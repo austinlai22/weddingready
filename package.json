@@ -16,7 +16,8 @@
     "demos:record": "tsx scripts/record-demos.ts",
     "coach:eval": "tsx scripts/coach-eval.ts",
     "experiment:generate": "tsx experiment/generate.ts",
-    "experiment:summarize": "tsx experiment/summarize.ts"
+    "experiment:summarize": "tsx experiment/summarize.ts",
+    "plan:sweep": "tsx scripts/plan-sweep.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

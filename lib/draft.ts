@@ -242,7 +242,7 @@ export function validateStep(step: number, d: Draft, today: string): string | nu
       const age = num(d.age);
       if (!Number.isInteger(age) || age < 1 || age > 110) return 'Enter your age in whole years.';
       if (!isAdult(age)) return `under-${MIN_AGE}`;
-      if (!d.sex) return 'Choose the option to use for the calorie math.';
+      if (!d.sex) return 'Choose an option for sex (or Prefer not to say).';
       const cm = draftHeightCm(d);
       if (!Number.isFinite(cm) || cm < 120 || cm > 230) return 'Check your height.';
       const kg = draftWeightKg(d);

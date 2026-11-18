@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 import type { AppState, FoodItem, MealEntry, Profile, SlotId, WeekTemplate } from '../types';
 import { addDays, todayISO } from '../engine/dates';
-import { freezeBefore, reconcileOverrides, templateForDate, thisWeekOnly, type Schedule } from '../engine/schedule';
+import { freezeBefore, lastingChange, reconcileOverrides, templateForDate, thisWeekOnly, type Schedule } from '../engine/schedule';
 import { emptyState, migrateState, parseState, STATE_VERSION } from './schema';
 
 export const STORAGE_KEY = 'weddingready-v1';
@@ -27,6 +27,8 @@ interface Actions {
   editSchedule: (next: WeekTemplate | null, from: string) => void;
   /** A change to the rest of this week only; the usual layout returns next Monday. */
   editScheduleThisWeek: (next: WeekTemplate, from: string) => void;
+  /** A lasting change from next Monday, with an optional matching change to the rest of this week. */
+  editScheduleLasting: (usual: WeekTemplate, from: string, thisWeek?: WeekTemplate | null) => void;
   /** Puts back a schedule saved before an edit (Undo). */
   restoreSchedule: (s: Schedule) => void;
   setAnalyticsOptOut: (v: boolean) => void;
@@ -176,6 +178,12 @@ export const useApp = create<Store>()(
         const s = get();
         if (!s.profile) return;
         const sched = thisWeekOnly(s.profile, { overrides: s.scheduleOverrides, history: s.scheduleHistory ?? [] }, next, from);
+        set({ scheduleOverrides: sched.overrides, scheduleHistory: sched.history });
+      },
+      editScheduleLasting: (usual, from, thisWeek) => {
+        const s = get();
+        if (!s.profile) return;
+        const sched = lastingChange(s.profile, { overrides: s.scheduleOverrides, history: s.scheduleHistory ?? [] }, usual, from, thisWeek);
         set({ scheduleOverrides: sched.overrides, scheduleHistory: sched.history });
       },
       restoreSchedule: (sched) => set({ scheduleOverrides: sched.overrides, scheduleHistory: sched.history }),

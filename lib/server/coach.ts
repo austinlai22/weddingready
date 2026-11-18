@@ -10,10 +10,10 @@ import { z } from 'zod';
 import { addDays, DAY_NAMES, dayIndex, isISODate, mondayOf } from '../engine/dates';
 import { kcalFromMacros } from '../engine/nutrition';
 import { buildPlan, dayPlan, type Plan } from '../engine/plan';
-import { applyOps, OpError, ScheduleOpSchema, templateForDate, validateTemplate, type Schedule, type ScheduleOp } from '../engine/schedule';
+import { applyOps, OpError, ScheduleOpSchema, templateForDate, usualTemplate, validateTemplate, type Schedule, type ScheduleOp } from '../engine/schedule';
 import { replanWeek } from '../engine/replan';
 import { splitFor } from '../engine/split';
-import { alternativesFor, equipmentOn, exerciseById, workoutSlots } from '../engine/workouts';
+import { alternativesFor, equipmentOn, exerciseById, possibleExerciseIds } from '../engine/workouts';
 import { dietConflict, searchFoods } from '../engine/meals';
 import { WeekTemplateSchema } from '../state/schema';
 import { DAY_IDS, type Diet, type Equipment, type MealEntry, type Profile, type SlotId, type WeekTemplate } from '../types';
@@ -51,7 +51,11 @@ export type CoachRequest = z.infer<typeof CoachRequestSchema>;
 
 /** Every proposal says what the person told the coach that it relies on, shown in the preview. */
 export type Proposal = { basedOn: string } & (
-  | { kind: 'schedule'; scope: 'this_week' | 'from_now_on'; ops: ScheduleOp[]; summary: string }
+  /**
+   * this_week: `ops` change the rest of this week. from_now_on: `ops` change the
+   * usual week from next Monday, and `thisWeekOps` (if any) the rest of this week.
+   */
+  | { kind: 'schedule'; scope: 'this_week' | 'from_now_on'; ops: ScheduleOp[]; thisWeekOps?: ScheduleOp[]; summary: string }
   | { kind: 'swap'; from: string; to: string; fromName: string; toName: string; reason: string }
   | { kind: 'equipment'; from: string; to: string; equipment: Equipment; reason: string }
   | { kind: 'meal'; slot: SlotId; entry: MealEntry }
@@ -86,7 +90,7 @@ const DECLARED = {
   },
   find_best_week: {
     description:
-      'The way to move strength sessions. Give the days the person can’t train; it searches every arrangement of their remaining strength sessions with the training rules (done sessions and other activities stay put), proposes the best one with the fewest changes, and if no arrangement keeps the rules this week, skips one session instead. scope this_week for a one-off, from_now_on for a lasting change. Replaces any earlier schedule proposal.',
+      'The way to move strength sessions. Give the days the person can’t train; it searches every arrangement of their remaining strength sessions with the training rules (done sessions and other activities stay put), proposes the best one with the fewest changes, and if no arrangement keeps the rules this week, skips one session instead. scope this_week for a one-off; from_now_on for a lasting change, which changes the usual week from next Monday and adjusts the rest of this week around what’s already done. Only sessions on days they can’t train move, unless a rule needs another to. Replaces any earlier schedule proposal.',
     schema: z.object({
       scope: z.enum(['this_week', 'from_now_on']),
       unavailable_days: z.array(z.enum(DAY_IDS)).max(7).describe('Days they can’t train, from what they told you.'),
@@ -96,7 +100,7 @@ const DECLARED = {
   },
   propose_schedule_change: {
     description:
-      'Propose moving, adding or removing sessions. scope this_week changes only the rest of this week (for a missed or busy day); from_now_on changes every week from today. Returns the resulting week and any rule problems: fix them or explain them. A new call replaces the earlier schedule proposal.',
+      'Propose moving, adding or removing sessions. scope this_week changes only the rest of this week (for a missed or busy day); from_now_on changes the usual week from next Monday, and the rest of this week too where it still fits. Returns the resulting week and any rule problems: fix them or explain them. A new call replaces the earlier schedule proposal.',
     schema: z.object({
       scope: z.enum(['this_week', 'from_now_on']),
       changes: z
@@ -209,6 +213,28 @@ function personSaid(req: CoachRequest): string {
   return [req.message, ...req.history.filter((h) => h.role === 'user').map((h) => h.text)].join(' ');
 }
 
+const DAY_WORDS: [RegExp, number][] = [
+  [/\bmon(day)?s?\b/i, 0],
+  [/\btue(s|sday)?s?\b/i, 1],
+  [/\bwed(nesday)?s?\b/i, 2],
+  [/\bthu(rs|rsday)?s?\b/i, 3],
+  [/\bfri(day)?s?\b/i, 4],
+  [/\bsat(urday)?s?\b/i, 5],
+  [/\bsun(day)?s?\b/i, 6],
+];
+const ANY_DAY = /\bany ?(day|time|of (them|those))\b|\bwhenever\b|doesn[’']?t matter|\bup to you\b|you (pick|choose|decide)/i;
+
+/** Days the person named (today, tomorrow, the weekend count), or 'any' if they said any day is fine. */
+export function daysTheySaid(text: string, todayIdx: number): Set<number> | 'any' {
+  if (ANY_DAY.test(text)) return 'any';
+  const out = new Set<number>();
+  for (const [re, d] of DAY_WORDS) if (re.test(text)) out.add(d);
+  if (/\bweekends?\b/i.test(text)) [5, 6].forEach((d) => out.add(d));
+  if (/\btomorrow\b/i.test(text)) out.add((todayIdx + 1) % 7);
+  if (/\b(today|tonight)\b/i.test(text)) out.add(todayIdx);
+  return out;
+}
+
 const EQUIPMENT_WORDS = /dumbbell|gym|machine|rack|barbell|cable|nothing|no equipment|bodyweight|body weight|weights|kettlebell|band/i;
 
 /** Replies that talk about a change to apply or log, or ask whether to make one. */
@@ -276,7 +302,7 @@ export class CoachSession {
   private swapOptions(id: string) {
     const p = this.plan.profile;
     const keys = [...new Set(splitFor(p.strengthDays))];
-    const sessions = keys.map((k) => workoutSlots(k, p.equipment, p.focusAreas).map((s) => p.exerciseSwaps?.[s.id] ?? s.id)).filter((ids) => ids.includes(p.exerciseSwaps?.[id] ?? id) || ids.includes(id));
+    const sessions = keys.map((k) => possibleExerciseIds(k, p.equipment, p.focusAreas, p, p.exerciseSwaps)).filter((ids) => ids.includes(id));
     const taken = new Set(sessions.flat());
     return alternativesFor(id, p.equipment).filter((o) => !taken.has(o.exercise.id));
   }
@@ -333,31 +359,53 @@ export class CoachSession {
         const unavailable = (a.unavailable_days as string[]).map((d) => DAY_IDS.indexOf(d as (typeof DAY_IDS)[number]));
         const monday = mondayOf(this.from);
         const template = templateForDate(p, this.schedule, this.from);
-        const done = scope === 'this_week' ? DAY_IDS.flatMap((_, i) => this.req.done[addDays(monday, i)] ?? []) : [];
+        const done = DAY_IDS.flatMap((_, i) => this.req.done[addDays(monday, i)] ?? []);
         const preferred = ((a.preferred_days as string[] | undefined) ?? []).map((d) => DAY_IDS.indexOf(d as (typeof DAY_IDS)[number]));
         // A one-off move needs a day the person said works: guessing one could land on a day they're busy.
-        if (scope === 'this_week' && preferred.length === 0) {
+        const said = daysTheySaid(personSaid(this.req), dayIndex(this.from));
+        const grounded = said === 'any' ? preferred : preferred.filter((d) => said.has(d));
+        if (scope === 'this_week' && grounded.length === 0) {
           return {
             error: 'Ask which day works for them first (ask_question, offering the days in move_options from get_week, plus “Skip it this week”), then call again with preferred_days. If they said any day is fine, pass those days.',
           };
         }
-        const r = replanWeek({ template, fromDay: scope === 'this_week' ? dayIndex(this.from) : 0, scope, unavailable, done, preferred, equipment: p.equipment, focusAreas: p.focusAreas });
-        if (!r.changed) return { no_change_needed: true, note: r.problems.length ? r.problems.join(' ') : 'The current week already works around those days.' };
-        const names = new Map(template.days.flat().map((s) => [s.id, s.kind === 'strength' ? `Strength ${s.workout}` : s.label]));
-        const parts = [
-          ...r.moved.map((m) => `${names.get(m.id)} ${DAY_NAMES[m.from]} → ${DAY_NAMES[m.to]}`),
-          ...r.skipped.map((id) => `skip ${names.get(id)} this week`),
-        ];
-        const proposal: Proposal = { kind: 'schedule', scope, ops: r.ops, summary: parts.join('; ') + '.', basedOn: String(a.based_on) };
+        const common = { unavailable, preferred: grounded, equipment: p.equipment, focusAreas: p.focusAreas };
+        // The rest of this week, around what's already done (for a lasting change too, so this week matches).
+        const week = replanWeek({ ...common, template, fromDay: dayIndex(this.from), scope: 'this_week', done });
+        // A lasting change is worked out on the usual week (not a one-off) and starts next Monday.
+        const usual = scope === 'from_now_on' ? usualTemplate(p, this.schedule, this.from) : null;
+        const lasting = usual ? replanWeek({ ...common, template: usual, fromDay: 0, scope: 'from_now_on', done: [] }) : null;
+        // A one-off move only goes to a day the person said works; otherwise ask rather than guess.
+        const unasked = scope === 'this_week' && said !== 'any' ? week.moved.filter((m) => !grounded.includes(m.to)) : [];
+        if (unasked.length) {
+          const best = unasked.map((m) => DAY_NAMES[m.to]).join(' and ');
+          return {
+            error: `The best fit is ${best}, which they haven’t said works. Ask with ask_question whether ${best} works (or they’d rather skip it this week), then call again with their answer as preferred_days.`,
+          };
+        }
+        const r = lasting ?? week;
+        if (!week.changed && !lasting?.changed) return { no_change_needed: true, note: r.problems.length ? r.problems.join(' ') : 'The current week already works around those days.' };
+        const names = new Map([...template.days.flat(), ...(usual?.days.flat() ?? [])].map((s) => [s.id, s.kind === 'strength' ? `Strength ${s.workout}` : s.label]));
+        const describe = (x: typeof week) => [...x.moved.map((m) => `${names.get(m.id)} ${DAY_NAMES[m.from]} → ${DAY_NAMES[m.to]}`), ...x.skipped.map((id) => `skip ${names.get(id)} this week`)];
+        const parts = lasting
+          ? [
+              ...(lasting.changed ? [`Every week from Monday ${addDays(monday, 7)}: ${describe(lasting).join('; ')}`] : []),
+              ...(week.changed ? [`This week: ${describe(week).join('; ')}`] : []),
+            ]
+          : describe(week);
+        const proposal: Proposal = lasting
+          ? { kind: 'schedule', scope, ops: lasting.ops, ...(week.changed ? { thisWeekOps: week.ops } : {}), summary: parts.join('. ') + '.', basedOn: String(a.based_on) }
+          : { kind: 'schedule', scope, ops: week.ops, summary: parts.join('; ') + '.', basedOn: String(a.based_on) };
         const at = this.proposals.findIndex((x) => x.kind === 'schedule');
         if (at >= 0) this.proposals[at] = proposal;
         else this.proposals.push(proposal);
         return {
           proposed: true,
           changes: parts,
-          skipped_because: r.skipped.length ? 'No arrangement of every session kept the recovery rules this week, so one is skipped rather than trained too close together.' : undefined,
-          week_after: this.weekView(monday, r.after).map((d) => ({ day: d.day, sessions: d.sessions.map((s) => s.name) })),
-          rule_problems: r.problems,
+          skipped_because: week.skipped.length && week.changed ? 'No arrangement of every session kept the recovery rules this week, so one is skipped rather than trained too close together.' : undefined,
+          ...(lasting ? { usual_week_after: lasting.after.days.map((d, i) => ({ day: DAY_NAMES[i], sessions: d.map((s) => (s.kind === 'strength' ? `Strength ${s.workout}` : s.label)) })) } : {}),
+          week_after: this.weekView(monday, week.changed ? week.after : template).map((d) => ({ day: d.day, sessions: d.sessions.map((s) => s.name) })),
+          rule_problems: [...new Set([...(lasting?.problems ?? []), ...(week.changed ? week.problems : [])])],
         };
       }
       case 'propose_schedule_change': {
@@ -372,18 +420,51 @@ export class CoachSession {
           const todayIdx = dayIndex(this.from);
           const past = ops.find((o) => (o.op === 'move' && DAY_IDS.indexOf(o.toDay) < todayIdx) || (o.op === 'add' && DAY_IDS.indexOf(o.day) < todayIdx));
           if (past) throw new ToolInputError('That day has already passed this week. Pick today or a later day.');
+          // Same rule as find_best_week: a one-off move goes only to a day the person named.
+          const said = daysTheySaid(personSaid(this.req), todayIdx);
+          const guess = said === 'any' ? undefined : ops.find((o) => o.op === 'move' && !said.has(DAY_IDS.indexOf(o.toDay)));
+          if (guess && guess.op === 'move') throw new ToolInputError(`They haven’t said ${DAY_NAMES[DAY_IDS.indexOf(guess.toDay)]} works. Ask with ask_question which day suits them, then propose.`);
         }
         const before = templateForDate(p, this.schedule, this.from);
-        const after = applyOps(before, ops, p);
-        const proposal: Proposal = { kind: 'schedule', scope, ops, summary: String(a.summary), basedOn: String(a.based_on) };
+        const rules = (t: WeekTemplate) => validateTemplate(t, p.equipment, p.focusAreas).filter((w) => w.severity === 'rule').map((w) => w.text);
+        let proposal: Proposal;
+        let result: Record<string, unknown>;
+        if (scope === 'from_now_on') {
+          // A lasting change goes on the usual week (not a one-off) from next Monday;
+          // the rest of this week gets the same change where it still fits.
+          const usualAfter = applyOps(usualTemplate(p, this.schedule, this.from), ops, p);
+          const todayIdx = dayIndex(this.from);
+          const monday = mondayOf(this.from);
+          const done = DAY_IDS.flatMap((_, i) => this.req.done[addDays(monday, i)] ?? []);
+          const thisWeekOps = ops.filter((o) => {
+            if (o.op === 'add') return DAY_IDS.indexOf(o.day) >= todayIdx;
+            if (o.op === 'swap') return false;
+            const at = before.days.findIndex((d) => d.some((x) => x.id === o.sessionId));
+            return at >= todayIdx && !done.includes(o.sessionId) && (o.op !== 'move' || DAY_IDS.indexOf(o.toDay) >= todayIdx);
+          });
+          let weekAfter: WeekTemplate | null = null;
+          try {
+            weekAfter = thisWeekOps.length ? applyOps(before, thisWeekOps, p) : null;
+          } catch {
+            weekAfter = null;
+          }
+          proposal = { kind: 'schedule', scope, ops, ...(weekAfter ? { thisWeekOps } : {}), summary: String(a.summary), basedOn: String(a.based_on) };
+          result = {
+            proposed: true,
+            starts: `Every week from Monday ${addDays(monday, 7)}${weekAfter ? ', and the rest of this week too' : '; this week stays as it is'}.`,
+            usual_week_after: usualAfter.days.map((d, i) => ({ day: DAY_NAMES[i], sessions: d.map((x) => (x.kind === 'strength' ? `Strength ${x.workout}` : x.label)) })),
+            week_after: this.weekView(monday, weekAfter ?? before).map((d) => ({ day: d.day, sessions: d.sessions.map((x) => x.name) })),
+            rule_problems: [...new Set([...rules(usualAfter), ...(weekAfter ? rules(weekAfter) : [])])],
+          };
+        } else {
+          const after = applyOps(before, ops, p);
+          proposal = { kind: 'schedule', scope, ops, summary: String(a.summary), basedOn: String(a.based_on) };
+          result = { proposed: true, week_after: this.weekView(mondayOf(this.from), after).map((d) => ({ day: d.day, sessions: d.sessions.map((x) => x.name) })), rule_problems: rules(after) };
+        }
         const at = this.proposals.findIndex((x) => x.kind === 'schedule');
         if (at >= 0) this.proposals[at] = proposal;
         else this.proposals.push(proposal);
-        return {
-          proposed: true,
-          week_after: this.weekView(mondayOf(this.from), after).map((d) => ({ day: d.day, sessions: d.sessions.map((s) => s.name) })),
-          rule_problems: validateTemplate(after, p.equipment, p.focusAreas).filter((w) => w.severity === 'rule').map((w) => w.text),
-        };
+        return result;
       }
       case 'propose_exercise_swap': {
         const from = exerciseById(a.from_exercise_id as string);

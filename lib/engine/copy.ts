@@ -3,41 +3,35 @@ import type { PhaseName } from './phases';
 
 // Written copy (no AI). Voice: short, warm, never shaming, gender-neutral.
 
-export const PHASE_COPY: Record<PhaseName, { focus: string; sets: string; rest: string; closer: string }> = {
+export const PHASE_COPY: Record<PhaseName, { focus: string; sets: string; closer: string }> = {
   foundation: {
     focus: 'Learn the moves and lock in the habit.',
     sets: '3 × 10–12',
-    rest: '60–90 sec',
     closer: 'Every rep now is the foundation for the big day.',
   },
   strength: {
     focus: 'Go heavier on the big lifts.',
     sets: '4 × 8–10 on the main lifts',
-    rest: '90–120 sec',
     closer: 'Stronger every week. Keep stacking it.',
   },
   shape: {
     focus: 'Extra work for your focus muscles.',
     sets: '+1 set on focus muscles',
-    rest: '60–90 sec',
     closer: 'This is the phase your outfit will show off.',
   },
   build: {
     focus: 'Heavier main lifts plus extra work for your focus muscles.',
     sets: '4 sets on main lifts and focus muscles',
-    rest: '90–120 sec main · 60–90 sec others',
     closer: 'Short timeline, smart plan. Keep showing up.',
   },
   maintain: {
     focus: 'Hold your strength and feel fresh. Same weights, nothing new.',
     sets: 'Same weights, 3 sets',
-    rest: '60–90 sec',
     closer: 'You’ve already done the work. Walk in feeling strong.',
   },
   feelgood: {
     focus: 'Move, sleep well and feel good. No big changes this close to the day.',
     sets: 'Same weights, 3 sets',
-    rest: '60–90 sec',
     closer: 'Feel good, rest well, enjoy it.',
   },
 };
