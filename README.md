@@ -1,6 +1,6 @@
 # WeddingReady
 
-**WeddingReady helps people getting married in the next few months look and feel their best on the day, by working back from the wedding and fitting dates to a daily training and food plan that adjusts when life gets in the way.** Free, with no sign-up, and your data stays on your device.
+**WeddingReady helps people with a wedding in the next few months look and feel their best on the day, by working back from the wedding and fitting dates to a daily training and food plan that adjusts when life gets in the way.** Free, with no sign-up, and your data stays on your device.
 
 Tell it your wedding date (and your outfit fitting, if you know it). It works backwards to build a phased training and nutrition plan, fits strength sessions around the runs, classes and sports you already do, and shows you exactly what to do today.
 

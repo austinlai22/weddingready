@@ -15,7 +15,7 @@ import { exampleDay, exampleDaysToGo, exampleMinutes, examplePlan, exampleTarget
 export const metadata: Metadata = {
   title: { absolute: 'WeddingReady · A plan for every day until your wedding' },
   description:
-    'For anyone getting married in the next few months: a free daily workout and food plan that works back from your wedding and fitting dates, and adjusts when life gets in the way.',
+    'For anyone with a wedding in the next few months: a free daily workout and food plan that works back from your wedding and fitting dates, and adjusts when life gets in the way.',
   openGraph: { title: 'WeddingReady', description: 'A free daily workout and food plan that works back from your wedding and fitting dates.', type: 'website' },
 };
 
@@ -55,7 +55,7 @@ const FEATURES: Feature[] = [
     title: 'Your week',
     body: 'Strength days are placed around the runs, classes and sports you already do. When life gets in the way, move things.',
     points: [
-      { icon: 'move', text: 'Drag a session, or ask the coach: “I can’t train tomorrow”' },
+      { icon: 'move', text: 'Drag a session, or tell the coach what came up, like a trip' },
       { icon: 'rest', text: 'Warns when a change leaves too little time to recover' },
       { icon: 'undo', text: 'Undo, or go back to the suggested week' },
     ],
@@ -83,7 +83,15 @@ const FAQS: { q: string; a: ReactNode }[] = [
   },
   {
     q: 'Do I have to count calories?',
-    a: 'Only if you want to. You can see calorie targets, only a protein target, or no numbers at all and go by portion sizes. Every version keeps one or two dessert nights a week.',
+    a: 'Only if you want to. You can see calorie targets, only a protein target, or no numbers at all and go by portion sizes. Every version keeps one or two dessert nights a week. If you’re losing fat, you can set a goal weight, and it tells you honestly whether it’s reachable at a safe pace.',
+  },
+  {
+    q: 'I’ve never lifted. Where do I start?',
+    a: 'Tap “Choose for me” in setup. It picks how many strength days to do and adds easy cardio if you need it, based on your goals and what you already do, and tells you why. You can change anything afterwards.',
+  },
+  {
+    q: 'Is it different for men and women?',
+    a: 'A little, where the evidence supports it: calorie needs, rest between sets, and where new lifters start push-ups. Otherwise good training is the same for everyone.',
   },
   {
     q: 'I already run or go to classes. Will it fit?',
@@ -107,7 +115,7 @@ const FAQS: { q: string; a: ReactNode }[] = [
     q: 'Where does my information go?',
     a: (
       <>
-        It stays on your device. The only things sent anywhere are the words you type into the two AI features, and anonymous usage counts. <Link href="/privacy">Privacy details</Link>.
+        Your plan, logs, weight and health answers stay on your device. What you type into the AI features (describing your plans, a meal or a question for the coach) goes to the AI, along with what the coach looks up to answer, such as this week’s sessions. Anonymous usage counts can be turned off in Settings. <Link href="/privacy">Privacy details</Link>.
       </>
     ),
   },
@@ -151,7 +159,7 @@ export default function Home() {
           <div>
             <h1 className="font-display text-[44px] font-semibold leading-[1.05] tracking-tight text-ink sm:text-6xl">A plan for every day between now and your wedding.</h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-2">
-              For anyone getting married in the next few months who wants to feel their best on the day. WeddingReady works back from your wedding and fitting dates to a daily workout and food plan, and adjusts it when life gets in the way.
+              For anyone with a wedding in the next few months who wants to feel their best on the day. WeddingReady works back from your wedding and fitting dates to a daily workout and food plan, and adjusts it when life gets in the way.
             </p>
             <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted">Free, for brides, grooms, partners and anyone in the wedding party.</p>
             <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -226,7 +234,7 @@ export default function Home() {
         <section className="bg-plum">
           <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-5 py-16 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
             <p className="max-w-xl font-display text-3xl font-semibold leading-tight text-ground sm:text-4xl">
-              It’s free and takes about two minutes to set up.
+              It’s free and takes about two minutes to set up, or one sentence if you describe your plans.
             </p>
             <OpenAppLink className={`${BTN} bg-ground text-plum hover:bg-rose-tint hover:text-plum`} where="home_closing" />
           </div>

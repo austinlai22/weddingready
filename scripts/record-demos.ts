@@ -153,9 +153,30 @@ const CLIPS: Record<string, (page: Page) => Promise<void>> = {
   },
 
   async plan(page) {
-    await page.route('**/api/edit-schedule', async (route) => {
-      await new Promise((r) => setTimeout(r, 1200));
-      await route.fulfill({ json: { ops: [{ op: 'add', activity: 'yoga', day: 'sun' }], summary: 'Added yoga on Sunday, an easy day that keeps your strength days apart.' } });
+    // The coach's model steps are scripted (the shape /api/coach returns) so the
+    // clip doesn't wait on the network; the app runs the tools and checks as usual.
+    const nextMonday = addDays(mondayOf(today), 7);
+    const steps = [
+      { calls: [{ name: 'ask_question', args: { question: 'What will you have to train with at the hotel?', options: ['Dumbbells only', 'Full gym', 'Nothing'] } }] },
+      {
+        calls: [
+          {
+            name: 'propose_equipment_change',
+            args: { from_date: nextMonday, to_date: addDays(nextMonday, 6), equipment: 'home_dumbbells', reason: 'Hotel gym with dumbbells only.', based_on: 'hotel gym has dumbbells only' },
+          },
+        ],
+      },
+      { text: 'I suggest dumbbell versions of your workouts while you’re away. Everything else stays the same.' },
+    ];
+    let n = 0;
+    await page.route('**/api/coach', async (route) => {
+      const s = steps[Math.min(n, steps.length - 1)];
+      n++;
+      await new Promise((r) => setTimeout(r, 900));
+      const calls = (s.calls ?? []).map((c, i) => ({ ...c, id: `demo-${n}-${i}` }));
+      await route.fulfill({
+        json: { model: 'demo', text: s.text ?? '', calls, turn: { role: 'model', parts: [...calls.map((c) => ({ functionCall: c })), ...(s.text ? [{ text: s.text }] : [])] } },
+      });
     });
     await page.goto(`${BASE}/plan`);
     await page.getByRole('heading', { level: 1 }).waitFor();
@@ -171,15 +192,18 @@ const CLIPS: Record<string, (page: Page) => Promise<void>> = {
     await page.mouse.move(b.x + 70, b.y + b.height / 2, { steps: 28 });
     await page.mouse.up();
     await pause(page, 1500);
-    await scrollTo(page, '.card-lg:has(textarea)', 120);
-    await typeSlow(page, 'What should change?', 'Add yoga on Sunday');
-    await page.getByRole('button', { name: 'Preview changes' }).click();
-    await page.getByRole('button', { name: 'Apply' }).waitFor();
-    await pause(page, 1800);
-    await page.getByRole('button', { name: 'Apply' }).click();
+    await scrollTo(page, '#coach', 20);
     await pause(page, 600);
-    await scrollTo(page, '#sched-heading', 40);
-    await pause(page, 1600);
+    await page.getByRole('button', { name: 'I’m travelling next week with only a hotel gym.' }).click();
+    await page.getByRole('button', { name: 'Dumbbells only' }).waitFor();
+    await pause(page, 1500);
+    await page.getByRole('button', { name: 'Dumbbells only' }).click();
+    await page.getByRole('button', { name: 'Apply', exact: true }).waitFor();
+    await pause(page, 600);
+    await page.getByRole('button', { name: 'Apply', exact: true }).scrollIntoViewIfNeeded();
+    await pause(page, 1800);
+    await page.getByRole('button', { name: 'Apply', exact: true }).click();
+    await pause(page, 1800);
   },
 };
 
